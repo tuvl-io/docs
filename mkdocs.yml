@@ -1,0 +1,133 @@
+site_name: tuvl
+site_description: A lightweight, local-first workflow orchestration engine for AI-powered business automation
+site_author: tuvl Team
+site_url: https://tuvl.dev
+
+repo_name: tuvl/tuvl
+repo_url: https://github.com/tuvl/tuvl
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/logo.png
+  favicon: assets/favicon.ico
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/tuvl/tuvl
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/tuvl
+  generator: false
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+      - Project Structure: getting-started/project-structure.md
+  - Concepts:
+      - Architecture: concepts/architecture.md
+      - Workflows: concepts/workflows.md
+      - Nodes: concepts/nodes.md
+      - Models: concepts/models.md
+      - Repositories: concepts/repositories.md
+      - Context Object: concepts/context.md
+  - Configuration:
+      - Overview: configuration/overview.md
+      - Datasources: configuration/datasources.md
+      - Agents: configuration/agents.md
+  - CLI Reference:
+      - Overview: cli/overview.md
+      - Commands: cli/commands.md
+  - API Reference:
+      - Endpoints: api/endpoints.md
+      - Schemas: api/schemas.md
+  - Examples:
+      - Candidate Onboarding: examples/candidate-onboarding.md
+      - Custom Nodes: examples/custom-nodes.md
+  - Contributing: contributing.md
