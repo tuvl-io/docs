@@ -1,0 +1,84 @@
+/* tuvl documentation custom styles */
+
+/* Hero section styling */
+.md-typeset h1 {
+    font-weight: 700;
+}
+
+/* Code block enhancements */
+.md-typeset code {
+    font-size: 0.85em;
+}
+
+/* Grid cards styling */
+.md-typeset .grid.cards > ul > li {
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+    border-color: var(--md-primary-fg-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Admonition styling */
+.md-typeset .admonition {
+    border-radius: 0.25rem;
+}
+
+/* Table improvements */
+.md-typeset table:not([class]) {
+    font-size: 0.85rem;
+}
+
+.md-typeset table:not([class]) th {
+    background-color: var(--md-default-fg-color--lightest);
+}
+
+/* Navigation improvements */
+.md-nav__link {
+    font-size: 0.85rem;
+}
+
+/* Footer links */
+.md-footer-meta {
+    background-color: var(--md-default-bg-color--light);
+}
+
+/* Mermaid diagram styling */
+.mermaid {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+/* Button styling */
+.md-typeset .md-button {
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+/* Code annotation markers */
+.md-typeset .md-annotation__index {
+    font-size: 0.7rem;
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 76.1875em) {
+    .md-typeset h1 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Tab styling */
+.md-typeset .tabbed-labels > label {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Search highlighting */
+.md-search-result mark {
+    background-color: var(--md-accent-fg-color--transparent);
+    color: inherit;
+}

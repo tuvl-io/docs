@@ -1,0 +1,326 @@
+# Models
+
+Models define your data structures using YAML. tuvl automatically generates SQLModel classes, Pydantic schemas, and CRUD API endpoints.
+
+## Model Definition
+
+```yaml title="models/contact.yaml"
+kind: "ModelDefinition"
+version: "v1"
+metadata:
+  name: "Contact"
+spec:
+  tablename: "contacts"
+  schema: true
+  fields:
+    - name: "id"
+      type: "uuid"
+      primary_key: true
+      default: "uuid4"
+      input: false
+      description: "Unique identifier"
+
+    - name: "email"
+      type: "string"
+      unique: true
+      required: true
+      input: true
+      description: "Contact email address"
+
+    - name: "name"
+      type: "string"
+      required: true
+      input: true
+
+    - name: "company"
+      type: "string"
+      input: true
+
+    - name: "created_at"
+      type: "timestamp"
+      input: false
+```
+
+## Field Types
+
+| Type | Python Type | PostgreSQL Type |
+|------|-------------|-----------------|
+| `string` | `str` | `VARCHAR` |
+| `text` | `str` | `TEXT` |
+| `integer` | `int` | `INTEGER` |
+| `bigint` | `int` | `BIGINT` |
+| `smallint` | `int` | `SMALLINT` |
+| `float` | `float` | `FLOAT` |
+| `numeric` | `float` | `NUMERIC` |
+| `boolean` | `bool` | `BOOLEAN` |
+| `uuid` | `uuid.UUID` | `UUID` |
+| `date` | `datetime.date` | `DATE` |
+| `timestamp` | `datetime.datetime` | `TIMESTAMP` |
+| `timestamptz` | `datetime.datetime` | `TIMESTAMPTZ` |
+| `jsonb` | `dict` | `JSONB` |
+| `bytea` | `bytes` | `BYTEA` |
+
+## Field Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | string | Required | Field name |
+| `type` | string | Required | Data type |
+| `primary_key` | bool | `false` | Is this the primary key? |
+| `required` | bool | `false` | Is this field required? |
+| `unique` | bool | `false` | Must values be unique? |
+| `index` | bool | `false` | Create an index? |
+| `default` | any | `null` | Default value |
+| `input` | bool | `true` | Include in Create schema? |
+| `description` | string | `""` | Field description |
+
+## Default Values
+
+### Static Defaults
+
+```yaml
+- name: "status"
+  type: "string"
+  default: "pending"
+
+- name: "priority"
+  type: "integer"
+  default: 0
+```
+
+### Auto-Generated Defaults
+
+| Type | Default | Behavior |
+|------|---------|----------|
+| `uuid` | `"uuid4"` | Generate UUID v4 |
+| `uuid` | (none) | Generate UUID v4 |
+| `date` | (none) | Current date |
+| `timestamp` | (none) | Current datetime |
+| `timestamptz` | (none) | Current datetime |
+
+```yaml
+# All of these auto-generate values:
+- name: "id"
+  type: "uuid"
+  primary_key: true
+  default: "uuid4"
+
+- name: "created_at"
+  type: "timestamp"
+  # No default needed - auto-generates
+```
+
+## Schema Generation
+
+When `schema: true` is set, three Pydantic schemas are generated:
+
+### Create Schema
+
+Used for POST requests. Includes fields with `input: true`:
+
+```python
+class ContactCreate(BaseModel):
+    email: str
+    name: str
+    company: Optional[str] = None
+```
+
+### Read Schema
+
+Used for responses. Includes all fields:
+
+```python
+class ContactRead(BaseModel):
+    id: UUID
+    email: str
+    name: str
+    company: Optional[str]
+    created_at: datetime
+```
+
+### Update Schema
+
+Used for PATCH requests. All fields optional:
+
+```python
+class ContactUpdate(BaseModel):
+    email: Optional[str] = None
+    name: Optional[str] = None
+    company: Optional[str] = None
+```
+
+## Input vs Output Fields
+
+The `input` property controls schema inclusion:
+
+```yaml
+fields:
+  # Server-generated, never from client
+  - name: "id"
+    type: "uuid"
+    primary_key: true
+    input: false          # Not in Create schema
+
+  # Client-provided
+  - name: "email"
+    type: "string"
+    required: true
+    input: true           # In Create schema
+
+  # Server-computed
+  - name: "score"
+    type: "float"
+    input: false          # Not in Create schema
+```
+
+## Relationships (Coming Soon)
+
+!!! note "Future Feature"
+    Relationship definitions are planned for a future release.
+
+```yaml
+# Conceptual - not yet implemented
+fields:
+  - name: "orders"
+    type: "relation"
+    target: "Order"
+    relation_type: "one-to-many"
+    back_populates: "customer"
+```
+
+## Generated CRUD API
+
+Each model automatically gets CRUD endpoints:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/{model}` | Create new record |
+| `GET` | `/api/{model}` | List records |
+| `GET` | `/api/{model}/{id}` | Get single record |
+| `PATCH` | `/api/{model}/{id}` | Update record |
+| `DELETE` | `/api/{model}/{id}` | Delete record |
+
+### Example Requests
+
+**Create:**
+```bash
+curl -X POST http://localhost:8000/api/contact \
+  -H "Content-Type: application/json" \
+  -d '{"email": "jane@example.com", "name": "Jane Doe"}'
+```
+
+**List with filters:**
+```bash
+curl "http://localhost:8000/api/contact?company=Acme&limit=10"
+```
+
+**Update:**
+```bash
+curl -X PATCH http://localhost:8000/api/contact/uuid-here \
+  -H "Content-Type: application/json" \
+  -d '{"company": "New Company"}'
+```
+
+## Using Models in Workflows
+
+Reference models in workflow context:
+
+```yaml
+kind: "Workflow"
+metadata:
+  name: "create_contact"
+
+context: "Contact"           # Links to Contact model
+
+trigger:
+  path: "/api/contacts/intake"
+  method: "POST"
+  input_schema: "context"    # Uses ContactCreate
+  response_schema: "context" # Uses ContactRead
+```
+
+## Model Registry
+
+At runtime, models are stored in `MODEL_REGISTRY`:
+
+```python
+from tuvl_engine.models.loader import MODEL_REGISTRY
+
+# Access the SQLModel class
+ContactModel = MODEL_REGISTRY["Contact"]
+
+# Create an instance
+contact = ContactModel(email="test@example.com", name="Test")
+```
+
+## Schema Registry
+
+Pydantic schemas are in `SCHEMA_REGISTRY`:
+
+```python
+from tuvl_engine.models.schemas import SCHEMA_REGISTRY
+
+schemas = SCHEMA_REGISTRY["Contact"]
+# {
+#   "create": ContactCreate,
+#   "read": ContactRead,
+#   "update": ContactUpdate,
+# }
+```
+
+## Best Practices
+
+### 1. Use Descriptive Names
+
+```yaml
+# Good
+metadata:
+  name: "CustomerOrder"
+
+# Avoid
+metadata:
+  name: "Order1"
+```
+
+### 2. Always Set `input` Flag
+
+Be explicit about server vs client fields:
+
+```yaml
+- name: "created_by"
+  type: "uuid"
+  input: false    # Server sets this
+```
+
+### 3. Add Descriptions
+
+Help API consumers understand your schema:
+
+```yaml
+- name: "priority"
+  type: "integer"
+  default: 0
+  description: "0=low, 1=medium, 2=high, 3=urgent"
+```
+
+### 4. Use Appropriate Types
+
+```yaml
+# Use uuid for IDs
+- name: "id"
+  type: "uuid"
+
+# Use timestamptz for datetime with timezone
+- name: "event_time"
+  type: "timestamptz"
+
+# Use jsonb for flexible data
+- name: "metadata"
+  type: "jsonb"
+```
+
+## Next Steps
+
+- [Repositories](repositories.md) — Accessing data in nodes
+- [Workflows](workflows.md) — Using models in workflows
+- [Datasources](../configuration/datasources.md) — Database configuration
