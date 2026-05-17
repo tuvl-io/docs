@@ -120,7 +120,18 @@ nav:
   - Configuration:
       - Overview: configuration/overview.md
       - Datasources: configuration/datasources.md
+      - Redis: configuration/redis.md
       - Agents: configuration/agents.md
+  - Security:
+      - IAM: security/iam.md
+      - Federation: security/federation.md
+      - Tokens: security/tokens.md
+  - Tools:
+      - Spectrum: tools/spectrum.md
+  - TypeScript SDK:
+      - Overview: sdk/overview.md
+      - Quickstart: sdk/quickstart.md
+      - API Reference: sdk/api-reference.md
   - CLI Reference:
       - Overview: cli/overview.md
       - Commands: cli/commands.md

@@ -242,7 +242,52 @@ ssl:
   ca_cert: "${SSL_CA_PATH}"
 ```
 
+---
+
+## Redis Configuration
+
+Redis is a second supported datasource type used for distributed state — specifically
+OAuth CSRF tokens and the token revocation blacklist.
+
+```yaml title="datasources/redis-primary.yaml"
+kind: DataSource
+version: v1
+metadata:
+  name: redis-primary
+spec:
+  type: redis
+  connection:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    db: 0
+    password: ${REDIS_PASSWORD:}    # leave blank for no authentication
+```
+
+### Redis Connection Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `host` | string | `localhost` | Redis server hostname |
+| `port` | integer | `6379` | Redis server port |
+| `db` | integer | `0` | Database index (0–15) |
+| `password` | string | *(none)* | AUTH password; omit for unauthenticated connections |
+
+!!! note "Selection logic"
+    When multiple `type: redis` datasource files exist, tuvl picks the one that sorts
+    first alphabetically by filename. Name your primary Redis file `redis-primary.yaml`
+    or `00-redis.yaml` to ensure predictable selection.
+
+!!! warning "Multi-worker requirement"
+    Without a configured and reachable Redis datasource, OAuth state tokens and the token
+    revocation blacklist fall back to in-process memory. This is only safe for single-worker
+    development. For production multi-worker deployments Redis is **required**.
+
+For full details on scaling considerations and Docker setup, see [Redis Configuration](redis.md).
+
+---
+
 ## Next Steps
 
+- [Redis](redis.md) — Configure Redis for distributed state
 - [Agents](agents.md) — Configure LLM providers
 - [Models](../concepts/models.md) — Define data models

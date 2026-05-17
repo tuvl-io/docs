@@ -69,7 +69,9 @@ tuvl init --project-dir /path/to/project
 
 ## `tuvl dev`
 
-Start the development server with auto-reload.
+Start the development server with hot-reload. A per-session API key is generated and
+printed to the terminal on each start. The tuvl UI uses this key to authenticate all
+requests without requiring a user login.
 
 ### Usage
 
@@ -82,9 +84,8 @@ tuvl dev [OPTIONS]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--project-dir`, `-d` | `.` | Project directory |
-| `--host` | `0.0.0.0` | Bind address |
+| `--host` | `127.0.0.1` | Bind address |
 | `--port` | `8000` | Port number |
-| `--reload` | `true` | Enable auto-reload |
 
 ### Examples
 
@@ -95,21 +96,30 @@ tuvl dev
 # Custom port
 tuvl dev --port 3000
 
-# Specific project
+# Specific project directory
 tuvl dev --project-dir ./services/api
-
-# Disable reload
-tuvl dev --reload false
 ```
 
-### Output
+### Dev Session Key
+
+On each startup tuvl prints a session API key:
 
 ```
-INFO:     tuvl engine starting...
-INFO:     ✅  Models loaded: 3
-INFO:     ✅  Workflows mounted: 2 route(s)
-INFO:     Uvicorn running on http://0.0.0.0:8000
+🚀  tuvl dev server starting...
+🔑  Dev API key: <randomly-generated-key>
+🌐  UI: http://localhost:8000/ui
 ```
+
+The UI reads this key from a `<meta name="tuvl-dev-key">` tag injected into the
+placeholder `index.html`. It is automatically used for all API calls — you don't
+need to log in during development.
+
+The dev key also grants `iam:admin` scope on all `/auth/admin/*` endpoints, so you
+can manage users and roles without bootstrapping the IAM system.
+
+!!! warning "Dev mode only"
+    The dev server enables hot-reload, the `/dev/*` file management API, and the
+    Spectrum debugger. Never expose a dev server to the public internet.
 
 ---
 
@@ -209,19 +219,80 @@ With errors:
 
 ---
 
+## `tuvl stream-watch`
+
+Trigger a workflow and stream step events to the terminal over SSE. Useful for debugging long-running workflows without writing any code.
+
+### Usage
+
+```bash
+tuvl stream-watch WORKFLOW [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `WORKFLOW` | Workflow name (as registered in the server) |
+
+### Options
+
+| Option | Alias | Default | Description |
+|--------|-------|---------|-------------|
+| `--payload` | `-p` | `{}` | JSON string sent as the workflow input payload |
+| `--token` | `-t` | — | Biscuit Bearer token. Falls back to `TUVL_BISCUIT_TOKEN` env var |
+| `--url` | `-u` | `http://localhost:8000` | Base URL of the tuvl server |
+
+### Examples
+
+```bash
+# Stream hello workflow with no payload
+tuvl stream-watch hello
+
+# Stream with a JSON payload
+tuvl stream-watch screen-candidate -p '{"candidate_id": 42}'
+
+# Stream against a remote server with a token
+tuvl stream-watch onboard-employee \
+  --url https://api.mycompany.com \
+  --token "$TUVL_BISCUIT_TOKEN" \
+  -p '{"employee_id": "EMP-001"}'
+```
+
+### Output
+
+Each step prints when it completes:
+
+```
+[step] extract_profile  kind=functional  signal=default  (34ms)
+[step] lookup_ats       kind=api_call    signal=default  (812ms)
+[step] draft_response   kind=agent       signal=approved (2341ms)
+[done] output: {"message": "Onboarding email sent"}
+```
+
+A `[done]` line confirms the workflow finished and shows the final output. An `[error]` line appears on failure.
+
+---
+
 ## Environment Variables
 
-The CLI respects these environment variables:
+The CLI respects these environment variables (typically set in `<project>/.env`):
 
 | Variable | Description |
 |----------|-------------|
-| `TUVL_PROJECT_DIR` | Default project directory |
-| `TUVL_HOST` | Default bind address |
-| `TUVL_PORT` | Default port |
-| `POSTGRES_*` | Database configuration |
+| `TUVL_PROJECT_DIR` | Override project directory |
+| `TUVL_DEV_MODE` | Set to `true` in dev; `false` in production |
+| `TUVL_BISCUIT_PRIVATE_KEY` | Hex-encoded Ed25519 key for signing tokens (see [Tokens](../security/tokens.md)) |
+| `TUVL_TOKEN_TTL_SECONDS` | Token lifetime in seconds (default: `86400`) |
+| `TUVL_OAUTH_BASE_URL` | Public base URL for OAuth2 redirect URIs |
+| `TUVL_OAUTH_GOOGLE_CLIENT_ID` / `_SECRET` | Google OAuth2 credentials |
+| `TUVL_OAUTH_GITHUB_CLIENT_ID` / `_SECRET` | GitHub OAuth2 credentials |
+| `TUVL_OAUTH_MICROSOFT_CLIENT_ID` / `_SECRET` / `_TENANT_ID` | Microsoft Entra ID credentials |
+| `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | PostgreSQL connection |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Redis connection (optional — see [Redis](../configuration/redis.md)) |
 | `OPENAI_API_KEY` | OpenAI API key |
 | `ANTHROPIC_API_KEY` | Anthropic API key |
-| `LITELLM_*` | LiteLLM configuration |
+| `LITELLM_*` | LiteLLM pass-through configuration |
 
 ### Example `.env`
 
