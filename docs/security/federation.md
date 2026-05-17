@@ -26,8 +26,8 @@ sequenceDiagram
     tuvl->>Provider (Google / GitHub / Microsoft): POST token exchange
     Provider (Google / GitHub / Microsoft)-->>tuvl: access_token + id_token
     tuvl->>Provider (Google / GitHub / Microsoft): GET user profile (email, sub)
-    tuvl->>tuvl: Upsert IAMUser (create or link account)
-    tuvl-->>Browser: 302 Redirect → /ui/?token=<biscuit_b64>
+    tuvl->>tuvl: Upsert IAMUser + auto-assign default_role (if configured)
+    tuvl-->>Browser: 302 Redirect → TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit_b64>
 ```
 
 CSRF state tokens are stored in Redis (when configured) or in-process memory. In multi-worker
@@ -63,9 +63,14 @@ spec:
   client_id: ${GOOGLE_CLIENT_ID}
   client_secret: ${GOOGLE_CLIENT_SECRET}
   scope: "openid email profile"
-  # allowed_domains restricts login to specific Google Workspace domains
+  # Restrict login to users whose email domain is in this list.
+  # Omit to allow any address from the provider.
   # allowed_domains:
   #   - example.com
+  # Role to assign automatically when a brand-new federated user logs in.
+  # The role must already exist in the IAM database.
+  # Omit to leave new users with no roles (admin must assign manually).
+  # default_role: member
 ```
 
 Environment variables:
@@ -187,6 +192,14 @@ TUVL_OAUTH_BASE_URL=https://your-tuvl-instance.example.com
 This tells tuvl what base URL to use when constructing the redirect URI sent to the provider.
 In local development set it to `http://localhost:8000`.
 
+```bash
+TUVL_OAUTH_UI_REDIRECT_URL=https://app.example.com/auth/callback
+```
+
+After a successful OAuth login the browser is redirected to this URL with `?token=<biscuit_b64>`
+appended. Your frontend reads the token from the query string and passes it to `TuvlClient`.
+When unset the callback returns JSON instead (useful for server-side and CLI flows).
+
 ---
 
 ## Admin API
@@ -212,7 +225,8 @@ GET /auth/admin/federation/{name}
 Authorization: Bearer <admin_token>
 ```
 
-Returns the raw YAML content (secrets are visible — use with care).
+Returns the raw YAML content. The `client_secret` field is always redacted (`"***"`) in
+the response regardless of whether it was set as a literal or an env-var reference.
 
 ### Create / Update Provider
 
@@ -246,7 +260,23 @@ When a federated login succeeds, tuvl looks up a `iam_users` record by email:
    password (federated-only).
 
 The returned Biscuit token carries whatever roles the user has been assigned in the database.
-First-time federated users have no roles until an admin assigns them.
+
+!!! warning "First-time federated users have no roles by default"
+    When a user logs in via OAuth for the first time they arrive with **zero permissions**.
+    Any workflow call that requires a scope will return `403 Forbidden`.
+    To avoid this, add a `default_role` field to the provider YAML:
+
+    ```yaml
+    spec:
+      provider: google
+      client_id: ${GOOGLE_CLIENT_ID}
+      client_secret: ${GOOGLE_CLIENT_SECRET}
+      default_role: member   # role must exist in the IAM database
+    ```
+
+    tuvl will auto-assign that role the moment the user record is created.  The
+    role assignment is permanent — it is not removed if you later remove `default_role`
+    from the YAML.
 
 ---
 
