@@ -151,51 +151,178 @@ FastAPI auto-generates interactive documentation:
 
 ## Authentication
 
-!!! note "Coming Soon"
-    Built-in authentication is planned for a future release. Currently, implement authentication at the reverse proxy level or with custom middleware.
+tuvl has a built-in IAM system based on Biscuit tokens. All `/auth/*` endpoints are
+served under the prefix `/auth`. See [IAM](../security/iam.md) and
+[Tokens](../security/tokens.md) for full documentation.
 
-### Custom Middleware Example
+### Bootstrap
 
-```python
-from fastapi import Request, HTTPException
+One-time setup to create the first superadmin user. Disabled once any admin exists.
 
-async def auth_middleware(request: Request, call_next):
-    token = request.headers.get("Authorization")
-    if not token or not verify_token(token):
-        raise HTTPException(status_code=401)
-    return await call_next(request)
+```
+POST /auth/bootstrap
 ```
 
-## CORS Configuration
-
-Configure CORS in your FastAPI setup:
-
-```python
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+```json title="Request"
+{
+  "email": "admin@example.com",
+  "password": "changeme"
+}
 ```
 
-## Rate Limiting
-
-Implement rate limiting with middleware:
-
-```python
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-
-@app.get("/api/resource")
-@limiter.limit("10/minute")
-async def get_resource():
-    ...
+```json title="Response 200"
+{
+  "message": "Bootstrap complete",
+  "user_id": "550e8400-e29b-41d4-a716-446655440000"
+}
 ```
+
+### Login
+
+Standard OAuth2 password grant. Returns a Biscuit bearer token.
+
+```
+POST /auth/token
+Content-Type: application/x-www-form-urlencoded
+```
+
+```
+username=admin@example.com&password=changeme&grant_type=password
+```
+
+```json title="Response 200"
+{
+  "access_token": "<biscuit-token>",
+  "token_type": "bearer",
+  "expires_in": 86400
+}
+```
+
+Use the token in subsequent requests:
+
+```http
+Authorization: Bearer <biscuit-token>
+```
+
+### Refresh Token
+
+Exchange a valid token for a new one (old token is revoked):
+
+```
+POST /auth/refresh
+Authorization: Bearer <current-token>
+```
+
+```json title="Response 200"
+{
+  "access_token": "<new-biscuit-token>",
+  "token_type": "bearer",
+  "expires_in": 86400
+}
+```
+
+### Logout
+
+Revoke the current token immediately:
+
+```
+POST /auth/logout
+Authorization: Bearer <token>
+```
+
+Response: `204 No Content`
+
+### Admin — Users
+
+Requires scope `iam:admin`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/auth/admin/users` | List all users |
+| `POST` | `/auth/admin/users` | Create a user |
+| `GET` | `/auth/admin/users/{id}` | Get a user |
+| `PATCH` | `/auth/admin/users/{id}` | Update email / password / active |
+| `DELETE` | `/auth/admin/users/{id}` | Delete a user |
+
+```json title="POST /auth/admin/users – request"
+{
+  "email": "jane@example.com",
+  "password": "secret123"
+}
+```
+
+```json title="PATCH /auth/admin/users/{id} – request"
+{
+  "email": "new@example.com",
+  "password": "newpassword",
+  "is_active": false
+}
+```
+
+### Admin — Roles
+
+Requires scope `iam:admin`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/auth/admin/roles` | List all roles |
+| `POST` | `/auth/admin/roles` | Create a role |
+| `DELETE` | `/auth/admin/roles/{id}` | Delete a role |
+| `PATCH` | `/auth/admin/roles/{id}/scopes` | Add or remove scopes |
+
+```json title="POST /auth/admin/roles – request"
+{
+  "name": "analyst",
+  "description": "Read-only analyst access"
+}
+```
+
+```json title="PATCH /auth/admin/roles/{id}/scopes – request"
+{
+  "add": ["data:read", "models:read"],
+  "remove": ["iam:admin"]
+}
+```
+
+### Admin — Role Assignments
+
+Requires scope `iam:admin`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/auth/admin/users/{user_id}/roles/{role_id}` | Assign role to user |
+| `DELETE` | `/auth/admin/users/{user_id}/roles/{role_id}` | Remove role from user |
+
+### OAuth2 Federation
+
+Social login via configured providers. See [Federation](../security/federation.md).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/auth/oauth/{provider}/start` | Redirect to provider |
+| `GET` | `/auth/oauth/{provider}/callback` | OAuth2 callback (browser) |
+
+```bash
+# Start Google sign-in (open in browser)
+curl -L http://localhost:8000/auth/oauth/google/start
+```
+
+### Admin — Federation Providers
+
+Requires scope `iam:admin`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/auth/admin/federation` | List provider configs |
+| `GET` | `/auth/admin/federation/{name}` | Get a provider config |
+| `PUT` | `/auth/admin/federation/{name}` | Create / update a provider |
+| `DELETE` | `/auth/admin/federation/{name}` | Delete a provider |
+
+### Token in Dev Mode
+
+In dev mode (`tuvl dev`) no `Authorization` header is required. The dev middleware
+auto-injects a session key that grants all scopes. You can still pass a real token to
+test IAM flows.
 
 ## Error Handling
 

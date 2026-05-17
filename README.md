@@ -16,7 +16,7 @@ uv sync
 uv run mkdocs serve
 ```
 
-Visit `http://localhost:8000` to view the documentation.
+Visit `http://localhost:8005` to view the documentation.
 
 ### Build Static Site
 
