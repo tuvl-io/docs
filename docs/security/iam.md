@@ -115,6 +115,91 @@ Returns `204 No Content`. The token is added to the blacklist.
 
 ---
 
+## Using the TypeScript SDK
+
+The `@tuvl/client` package ships a `TuvlAuth` helper that wraps all `/auth/*`
+endpoints — no manual `fetch` required.
+
+### Install
+
+```bash
+npm install @tuvl/client
+```
+
+### Password login
+
+```ts
+import { TuvlAuth, TuvlClient } from "@tuvl/client";
+
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+
+const { access_token } = await auth.loginWithPassword("admin@example.com", "secret");
+
+// Attach the token to the workflow client
+const client = new TuvlClient({ baseUrl: "http://localhost:8000", token: access_token });
+```
+
+### OAuth2 login (browser)
+
+```ts
+// 1. Redirect the browser to the provider
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+window.location.href = auth.getOAuthLoginUrl("google");
+
+// 2. After login the server redirects to TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit>
+//    On that landing page, extract the token:
+const token = new URLSearchParams(window.location.search).get("token")!;
+const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+```
+
+!!! info "Configure the redirect"
+    Set `TUVL_OAUTH_UI_REDIRECT_URL` in your server `.env` to the URL of the page
+    that should receive the token after OAuth completes.  Without it the callback
+    returns JSON (suitable for server-side and CLI flows).
+
+    ```env title=".env"
+    TUVL_OAUTH_UI_REDIRECT_URL=https://app.example.com/auth/callback
+    ```
+
+### Token refresh
+
+```ts
+const { access_token: newToken } = await auth.refresh(currentToken);
+client.setToken(newToken);   // update the workflow client in-place
+```
+
+### Logout
+
+```ts
+await auth.logout(token);
+// discard the token from storage after this call
+```
+
+### Full bootstrap → login → call example
+
+```ts
+import { TuvlAuth, TuvlClient } from "@tuvl/client";
+
+const BASE_URL = "http://localhost:8000";
+const auth = new TuvlAuth({ baseUrl: BASE_URL });
+
+// Step 1 — on a fresh install: bootstrap the first admin
+// (curl -X POST .../auth/bootstrap  or via the tuvl UI)
+
+// Step 2 — login
+const { access_token } = await auth.loginWithPassword("admin@example.com", "secret");
+
+// Step 3 — use the token for workflow calls
+const client = new TuvlClient({ baseUrl: BASE_URL, token: access_token });
+const result = await client.execute("hello");
+
+// Step 4 — refresh before expiry (default TTL: 24 h)
+const { access_token: fresh } = await auth.refresh(access_token);
+client.setToken(fresh);
+```
+
+---
+
 ## Admin: Users
 
 All user management endpoints require the `iam:admin` scope.

@@ -141,10 +141,14 @@ Store the hex string in your `.env` file or secrets manager.
 
 ### Ephemeral mode (development only)
 
-If `TUVL_BISCUIT_PRIVATE_KEY` is not set, a new random key is generated on each startup.
-All tokens are invalidated on restart.
+If `TUVL_BISCUIT_PRIVATE_KEY` is not set:
 
-A warning is logged:
+- **Production mode** (`tuvl_dev_mode=false`, the default): the server **refuses to start**
+  with a `RuntimeError`. This prevents accidentally running production without a stable key.
+- **Dev mode** (`tuvl_dev_mode=true`, set by `tuvl dev`): a fresh random key is generated
+  in memory. All tokens are invalidated on restart.
+
+A warning is logged in dev mode:
 
 ```
 ⚠️  Auth: No TUVL_BISCUIT_PRIVATE_KEY found — using an EPHEMERAL key.
