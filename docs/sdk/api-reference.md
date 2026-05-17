@@ -4,6 +4,115 @@ Complete reference for all classes, methods, and types exported by `@tuvl/client
 
 ---
 
+## `TuvlAuth`
+
+Authentication helper. Wraps all `/auth/*` endpoints. Create one instance per application.
+
+```ts
+import { TuvlAuth } from "@tuvl/client";
+
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+```
+
+### Constructor options
+
+| Property | Type | Description |
+|---|---|---|
+| `baseUrl` | `string` | Base URL of the tuvl server. Trailing slash is stripped automatically. |
+
+---
+
+### `auth.loginWithPassword(email, password)`
+
+Exchange an email + password for a Biscuit bearer token.
+
+```ts
+loginWithPassword(email: string, password: string): Promise<TokenResponse>
+```
+
+Calls `POST /auth/token` with an `application/x-www-form-urlencoded` body (OAuth2 password-grant format).
+
+```ts
+const { access_token } = await auth.loginWithPassword("me@example.com", "secret");
+```
+
+---
+
+### `auth.getOAuthLoginUrl(provider)`
+
+Return the URL the browser should navigate to in order to start an OAuth2 login flow.
+
+```ts
+getOAuthLoginUrl(provider: string): string
+```
+
+Built-in providers: `"google"`, `"github"`, `"microsoft"`. Any provider configured in the server's `federation/` directory also works.
+
+```ts
+// In a React component
+<button onClick={() => { window.location.href = auth.getOAuthLoginUrl("google"); }}>
+  Login with Google
+</button>
+
+// On the landing page (TUVL_OAUTH_UI_REDIRECT_URL):
+const token = new URLSearchParams(window.location.search).get("token")!;
+```
+
+---
+
+### `auth.getMe(token)`
+
+Decode the token server-side and return the user's identity, role memberships, and permission scopes.
+
+```ts
+getMe(token: string): Promise<MeResponse>
+```
+
+This is the correct way to read "who is logged in" and "what can they do". Biscuit tokens are protobuf-encoded and cannot be decoded in pure JS without a WASM library — `getMe()` lets the server do the decoding and returns a plain JSON object.
+
+```ts
+const me = await auth.getMe(token);
+
+console.log(me.user_id);  // "550e8400-e29b-41d4-a716-446655440000"
+console.log(me.groups);   // ["hr_manager", "member"]
+console.log(me.scopes);   // ["requisition:write", "candidate:read"]
+
+// Role guard
+if (me.groups.includes("hr_manager")) { /* show HR UI */ }
+
+// Scope guard
+if (me.scopes.includes("iam:admin")) { /* show admin panel */ }
+```
+
+---
+
+### `auth.refresh(token)`
+
+Exchange a valid token for a fresh one with a new TTL. The old token is immediately blacklisted.
+
+```ts
+refresh(token: string): Promise<TokenResponse>
+```
+
+```ts
+const { access_token: newToken } = await auth.refresh(currentToken);
+client.setToken(newToken); // update TuvlClient in-place
+```
+
+---
+
+### `auth.logout(token)`
+
+Revoke the token. Resolves silently on success (HTTP 204).
+
+```ts
+logout(token: string): Promise<void>
+```
+
+After calling this, delete the token from all local storage. The token is blacklisted across all workers that share a Redis instance.
+
+---
+
 ## `TuvlClient`
 
 The main class. Create one instance per application and reuse it.
@@ -132,6 +241,39 @@ Call this if you hot-reload workflow YAML files and want the SDK to pick up chan
 ---
 
 ## Types
+
+### `TokenResponse`
+
+Returned by `loginWithPassword()` and `refresh()`.
+
+```ts
+interface TokenResponse {
+  access_token: string;
+  token_type:   string; // always "bearer"
+}
+```
+
+---
+
+### `MeResponse`
+
+Returned by `getMe()`. Contains the decoded identity and permissions for the current token, without requiring any Biscuit library in the browser.
+
+```ts
+interface MeResponse {
+  user_id: string;   // user UUID
+  groups:  string[]; // role names e.g. ["hr_manager", "member"]
+  scopes:  string[]; // permission scopes e.g. ["candidate:read"]
+}
+```
+
+| Field | Description |
+|---|---|
+| `user_id` | UUID of the authenticated user, extracted from the `user()` Datalog fact |
+| `groups` | All role names assigned to the user, from `group()` Datalog facts |
+| `scopes` | All permission scopes, from `scope()` Datalog facts — matches what the server checks on every workflow call |
+
+---
 
 ### `StepEvent`
 
