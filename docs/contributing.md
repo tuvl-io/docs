@@ -9,7 +9,7 @@ Thank you for your interest in contributing to tuvl!
 - Python 3.12+
 - uv package manager
 - PostgreSQL 16+
-- Node.js 20+ (for UI development)
+- Node.js 20+ and pnpm (for UI development)
 
 ### Clone and Install
 
@@ -18,29 +18,51 @@ Thank you for your interest in contributing to tuvl!
 git clone https://github.com/tuvl/tuvl.git
 cd tuvl
 
-# Install engine dependencies
-cd engine
-uv sync
+# Install Python dependencies and apply vendored patches
+make setup
 
-# Install CLI dependencies
-cd ../cli
-uv sync
-
-# Install UI dependencies
-cd ../ui
-npm install
+# Install UI node_modules (run once after clone)
+make ui-install
 ```
+
+`make setup` runs `uv sync` followed by `make apply-patches`, which re-applies the
+vendored fixes in `patches/` to sonora after every sync. If you add a new dependency
+with `uv add`, re-run `make apply-patches` (or just `make setup`).
 
 ### Run Development Servers
 
 ```bash
-# Terminal 1: Engine
-cd engine
-uv run uvicorn tuvl_engine.main:app --reload
+# Engine only (headless)
+make dev-core DIR=/path/to/your/project
 
-# Terminal 2: UI (optional)
-cd ui
-npm run dev
+# Engine + hot-reload Vite dev server
+make dev DIR=/path/to/your/project
+```
+
+The server starts on `http://localhost:8000`. The tuvl dev console is at
+`http://localhost:8000/insight` when `TUVL_DEV_MODE=true`.
+
+### Proto codegen
+
+If you modify any `.proto` file, regenerate the Python stubs:
+
+```bash
+make proto
+```
+
+### Vendored patches
+
+`patches/sonora-asgi-fixes.patch` contains two bug fixes for sonora 0.2.3:
+
+1. **Trailer bytes format** — gRPC-Web trailer keys/values must be plain strings, not
+   bytes tuples, for `pack_trailers()` to produce a valid ASCII frame.
+2. **Content-Type echo** — restricts sonora's response `Content-Type` to known gRPC-Web
+   MIME types so clients never receive `Content-Type: */*`.
+
+Applied automatically by `make setup` / `make setup-all`. To apply manually:
+
+```bash
+make apply-patches
 ```
 
 ## Code Style

@@ -3,7 +3,14 @@
 Spectrum is tuvl's built-in debugging and observability tool. It lets you test nodes in
 isolation or trace a complete workflow execution, capturing the context at every step.
 
-Spectrum is only available in **dev mode** (`tuvl dev`). All endpoints are under `/dev/inspect/`.
+Spectrum is only available in **dev mode** (`TUVL_DEV_MODE=true`). All operations are
+exposed as **gRPC-Web RPCs** on `DevService` (defined in `dev.proto`) and are accessible
+through the tuvl dev console UI at `/insight`.
+
+!!! note "Transport"
+    Spectrum and Lens moved from REST (`/dev/inspect/...`) to gRPC-Web in the current
+    release. The dev console communicates via `@protobuf-ts/grpcweb-transport`. Raw HTTP
+    access using cURL requires a gRPC-Web capable proxy or the `grpcurl` tool.
 
 ---
 
@@ -12,72 +19,52 @@ Spectrum is only available in **dev mode** (`tuvl dev`). All endpoints are under
 The **Lens** probe runs a single registered node against a given input context and returns
 the output context, execution time, and any error.
 
-### Endpoint
+### RPC
 
-```http
-POST /dev/inspect/lens
+```
+DevService.RunLens (dev.proto)
 ```
 
-### Request
+### Request message: `LensRequest`
 
-```json
-{
-  "node": "save_contact",
-  "context": {
-    "email": "jane@example.com",
-    "name": "Jane Doe"
-  }
+```proto
+message LensRequest {
+  string node    = 1;  // registered node name
+  string context_json = 2;  // JSON-encoded input context
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `node` | string | Name of the registered node to run |
-| `context` | object | Input context dict passed to the node |
+| `context_json` | string | JSON-encoded input context dict passed to the node |
 
-### Response
+### Response message: `LensResponse`
+
+```proto
+message LensResponse {
+  string node        = 1;
+  string input_json  = 2;
+  string output_json = 3;
+  float  duration_ms = 4;
+  string error       = 5;
+}
+```
+
+Example decoded response:
 
 ```json
 {
   "node": "save_contact",
-  "input": {
-    "email": "jane@example.com",
-    "name": "Jane Doe"
-  },
-  "output": {
-    "email": "jane@example.com",
-    "name": "Jane Doe",
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "status": "saved"
-  },
+  "input_json": "{\"email\":\"jane@example.com\",\"name\":\"Jane Doe\"}",
+  "output_json": "{\"email\":\"jane@example.com\",\"name\":\"Jane Doe\",\"id\":\"550e8400-...\",\"status\":\"saved\"}",
   "duration_ms": 12.4,
-  "error": null
+  "error": ""
 }
 ```
 
-If the node raises an exception:
-
-```json
-{
-  "node": "save_contact",
-  "input": { ... },
-  "output": null,
-  "duration_ms": 0.8,
-  "error": "IntegrityError: duplicate key value violates unique constraint"
-}
-```
-
-### cURL Example
-
-```bash
-curl -X POST http://localhost:8000/dev/inspect/lens \
-  -H "Authorization: Bearer <dev_key>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "node": "validate_email",
-    "context": {"email": "not-an-email"}
-  }'
-```
+If the node raises an exception the `output_json` field will be empty and `error` will
+contain the exception message.
 
 ---
 
@@ -86,31 +73,29 @@ curl -X POST http://localhost:8000/dev/inspect/lens \
 The **Spectrum** tracer runs a complete workflow and returns a step-by-step trace: the
 context before and after each step, routing decisions, durations, and errors.
 
-### Endpoint
+### RPC
 
-```http
-POST /dev/inspect/spectrum
+```
+DevService.RunSpectrum (dev.proto)
 ```
 
-### Request
+### Request message: `SpectrumRequest`
 
-```json
-{
-  "workflow": "candidate_onboarding",
-  "context": {
-    "email": "jane@example.com",
-    "name": "Jane Doe",
-    "experience_years": 5
-  }
+```proto
+message SpectrumRequest {
+  string workflow     = 1;  // metadata.name from the workflow YAML
+  string context_json = 2;  // JSON-encoded initial context
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `workflow` | string | Name of the workflow (matches `metadata.name` in YAML) |
-| `context` | object | Initial context dict for the workflow |
+| `context_json` | string | JSON-encoded initial context dict |
 
-### Response
+### Response message: `SpectrumResponse`
+
+The response includes a full trace with per-step snapshots:
 
 ```json
 {
@@ -139,23 +124,13 @@ POST /dev/inspect/spectrum
       "step_id": "ai_vetting",
       "kind": "agent",
       "runner": null,
-      "input_context": { ... },
+      "input_context": { "...": "..." },
       "output_context": {
         "priority": "senior",
         "_route": "fast_track"
       },
       "route_taken": "fast_track",
       "duration_ms": 312.7,
-      "error": null
-    },
-    {
-      "step_id": "fast_track",
-      "kind": "functional",
-      "runner": "send_fast_track_email",
-      "input_context": { ... },
-      "output_context": { ... },
-      "route_taken": null,
-      "duration_ms": 15.2,
       "error": null
     }
   ],
@@ -186,7 +161,8 @@ POST /dev/inspect/spectrum
 
 ## Spectrum UI
 
-The **Spectrum** page in the tuvl UI provides a visual representation of the trace:
+The **Spectrum** page in the tuvl dev console (`/insight`) provides a visual representation
+of the trace:
 
 - Each step is shown as a node on a flow graph with colour-coded status (success / error)
 - Select any step to inspect its input/output context diff in a side panel
@@ -194,6 +170,22 @@ The **Spectrum** page in the tuvl UI provides a visual representation of the tra
 - Traces can be triggered interactively with custom input contexts
 
 Navigate to **Spectrum** in the sidebar to open the Spectrum view.
+
+---
+
+## Authentication
+
+All `DevService` RPCs require the dev API key passed as gRPC metadata:
+
+```
+x-dev-key: <TUVL_DEV_API_KEY>
+```
+
+The key is set in your project's `.env` file:
+
+```env
+TUVL_DEV_API_KEY=your-secret-key
+```
 
 ---
 
@@ -207,3 +199,4 @@ Navigate to **Spectrum** in the sidebar to open the Spectrum view.
 | Test a node with multiple input variants | Lens (repeat calls) |
 | Find which step is slow | Spectrum (check `duration_ms` per step) |
 | Reproduce a production failure locally | Spectrum (copy the failing input) |
+
