@@ -46,13 +46,21 @@ Best for: LLM agent workflows, MCP calls, long-running API chains where showing 
 
 ### gRPC-Web
 
-Force with `mode: "grpc"`. Uses binary protobuf framing over HTTP/1.1 (the gRPC-Web spec) via `sonora` on the server. Requires optional peer dependencies:
+Force with `mode: "grpc"`. Uses binary protobuf framing over HTTP/1.1 (the gRPC-Web spec)
+via [sonora](https://github.com/public-apis/sonora) on the server. Requires optional peer
+dependencies:
 
 ```bash
 npm install @protobuf-ts/grpcweb-transport @protobuf-ts/runtime-rpc
 ```
 
 The gRPC module is dynamically imported — zero bundle cost if never used.
+
+!!! info "Server-side sonora patches"
+    tuvl ships vendored patches for sonora 0.2.3 (`patches/sonora-asgi-fixes.patch`) that
+    fix two wire-protocol bugs: incorrect trailer byte encoding and a `Content-Type` header
+    echo that caused `@protobuf-ts` to reject responses. These are applied automatically by
+    `make setup`. Client code requires no changes — the fixes are transparent.
 
 Best for: high-throughput environments, teams already using protobuf tooling, future server-defined UI plugins.
 

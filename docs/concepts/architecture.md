@@ -16,39 +16,57 @@ tuvl follows several key architectural principles:
 ```mermaid
 graph TB
     subgraph "Client Layer"
-        A[HTTP Client] 
-        B[tuvl UI]
+        A[HTTP Client]
+        B[tuvl UI / @tuvl/client SDK]
+        DevUI[Dev Console / tuvl_insight]
     end
-    
+
     subgraph "API Layer"
         C[FastAPI Server]
         D[Workflow Routes]
         E[CRUD Routes]
+        F_AUTH[Auth Routes]
+        DevMW[DevMiddleware\ntuvl_dev_mode only]
     end
-    
+
+    subgraph "gRPC-Web Layer"
+        G_GRPC[sonora ASGI\n/grpc/]
+        DevSvc[DevServicer]
+        IamSvc[IamServicer]
+        ExecSvc[ExecutionServicer]
+    end
+
     subgraph "Engine Layer"
         F[Workflow Engine]
         G[Node Registry]
         H[Agent Runner]
     end
-    
+
     subgraph "Data Layer"
         I[Repository]
         J[Model Registry]
         K[Schema Registry]
     end
-    
+
     subgraph "External Services"
         L[(PostgreSQL)]
         M[Ollama / OpenAI]
         N[MCP Servers]
     end
-    
+
     A --> C
     B --> C
+    B --> G_GRPC
+    DevUI --> DevMW
+    DevMW --> G_GRPC
     C --> D
     C --> E
+    C --> F_AUTH
+    G_GRPC --> DevSvc
+    G_GRPC --> IamSvc
+    G_GRPC --> ExecSvc
     D --> F
+    ExecSvc --> F
     E --> I
     F --> G
     F --> H
@@ -61,6 +79,24 @@ graph TB
 ```
 
 ## Core Components
+
+### gRPC-Web Layer
+
+All real-time and developer tooling traffic uses [gRPC-Web](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md) via [sonora](https://github.com/public-apis/sonora) — a pure-ASGI gRPC-Web server that runs inside the same FastAPI process.
+
+Three servicers are registered under the `/grpc/` mount:
+
+| Servicer | Proto | Responsibility |
+|---|---|---|
+| `ExecutionServicer` | `execution.proto` | Streaming workflow execution (current run events) |
+| `IamServicer` | `iam.proto` | User/role/scope management, token lifecycle |
+| `DevServicer` | `dev.proto` | Dev portal: file CRUD, Lens, Spectrum, AI chat |
+
+`DevServicer` is only active when `TUVL_DEV_MODE=true`. In production the servicer is not registered and the `/grpc/dev.*` routes do not exist.
+
+The `_GrpcMount` wrapper in `app.py` handles a Starlette 1.x path-stripping behaviour change — it ensures the full path including the `/grpc/` prefix reaches sonora correctly.
+
+Clients use `@protobuf-ts/grpcweb-transport` (browser and Node.js). The tuvl dev console (`tuvl_insight`) and the `@tuvl/client` SDK both speak gRPC-Web.
 
 ### Workflow Engine
 
