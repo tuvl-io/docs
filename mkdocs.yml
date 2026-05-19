@@ -122,12 +122,15 @@ nav:
       - Datasources: configuration/datasources.md
       - Redis: configuration/redis.md
       - Agents: configuration/agents.md
+      - Telemetry: configuration/telemetry.md
   - Security:
       - IAM: security/iam.md
       - Federation: security/federation.md
       - Tokens: security/tokens.md
   - Tools:
       - Spectrum: tools/spectrum.md
+      - Human-in-the-Loop: tools/hitl.md
+      - Testing Workflows: tools/testing.md
   - TypeScript SDK:
       - Overview: sdk/overview.md
       - Quickstart: sdk/quickstart.md

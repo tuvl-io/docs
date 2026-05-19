@@ -36,6 +36,25 @@ The command prompts for:
    - API key or base URL
    - Default model
 
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--project-dir`, `-d` | Alias for NAME argument |
+| `--sample` | Write recruitment sample files covering every step kind, plus telemetry config and test templates |
+
+### Interactive Prompts
+
+The command prompts for:
+
+1. **PostgreSQL configuration** (optional)
+   - Host, port, database, user, password
+
+2. **LLM provider** (optional)
+   - Provider: ollama, openai, anthropic, other
+   - API key or base URL
+   - Default model
+
 ### Output Structure
 
 ```
@@ -44,9 +63,13 @@ my-project/
 ├── workflows/        # Workflow YAMLs
 ├── datasources/      # DataSource YAMLs
 │   └── postgres.yaml # If postgres configured
-├── agents/           # AgentModel configs
+├── llms/             # AgentModel configs
 │   └── default.yaml  # If LLM configured
 ├── nodes/            # Python node implementations
+├── .tuvl/
+│   └── telemetry.yaml  # OTel config (written with --sample)
+├── tests/
+│   └── workflows/    # Workflow test cases (written with --sample)
 ├── .env              # Secrets (git-ignored)
 ├── .env.example      # Safe template
 └── .gitignore
@@ -63,6 +86,9 @@ tuvl init my-app
 
 # Specify path
 tuvl init --project-dir /path/to/project
+
+# Include sample files (workflow, nodes, tests, telemetry config)
+tuvl init my-app --sample
 ```
 
 ---
@@ -161,6 +187,49 @@ tuvl run --host 127.0.0.1 --port 8000 --workers 4
 # With environment
 POSTGRES_HOST=prod-db tuvl run --workers 4
 ```
+
+---
+
+## `tuvl test`
+
+Run LLM-as-a-Judge workflow tests. Discovers YAML test files, executes each workflow
+using stub-injected data (no real LLM/DB/HTTP calls), collects per-step traces, and
+optionally sends each trace to a judge model for natural-language evaluation.
+
+See the full guide: [Testing Workflows](../tools/testing.md)
+
+### Usage
+
+```bash
+tuvl test [OPTIONS]
+```
+
+### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--project-dir`, `-d` | `.` | Project root |
+| `--tests-dir` | `tests/workflows/` | Directory containing `*.yaml` test files |
+
+### Examples
+
+```bash
+# Run all tests in tests/workflows/ (deterministic only)
+tuvl test
+
+# With LLM judge evaluation
+TUVL_TEST_JUDGE=gpt-4o tuvl test
+
+# Custom test directory
+tuvl test --tests-dir path/to/tests
+```
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | All evaluations passed (or no judge configured) |
+| `1` | One or more evaluations failed |
 
 ---
 
@@ -288,6 +357,10 @@ The CLI respects these environment variables (typically set in `<project>/.env`)
 | `TUVL_OAUTH_GOOGLE_CLIENT_ID` / `_SECRET` | Google OAuth2 credentials |
 | `TUVL_OAUTH_GITHUB_CLIENT_ID` / `_SECRET` | GitHub OAuth2 credentials |
 | `TUVL_OAUTH_MICROSOFT_CLIENT_ID` / `_SECRET` / `_TENANT_ID` | Microsoft Entra ID credentials |
+| `TUVL_TEST_JUDGE` | litellm model string for the LLM-as-a-Judge evaluator (e.g. `gpt-4o`). If not set, evaluation assertions are skipped and only deterministic execution is validated. |
+| `TUVL_TELEMETRY_ENABLED` | Set to `false` to disable OTel span export in production mode |
+| `TUVL_OTLP_ENDPOINT` | gRPC OTLP collector endpoint (default: `http://localhost:4317`) |
+| `TUVL_SERVICE_NAME` | `service.name` attribute on every exported span (default: `tuvl`) |
 | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | PostgreSQL connection |
 | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Redis connection (optional — see [Redis](../configuration/redis.md)) |
 | `OPENAI_API_KEY` | OpenAI API key |

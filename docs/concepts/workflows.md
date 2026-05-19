@@ -120,7 +120,7 @@ steps:
 | Property | Required | Description |
 |----------|----------|-------------|
 | `id` | Yes | Unique identifier within the workflow |
-| `kind` | Yes | Step type: `functional`, `agent`, `router`, `api_call`, `mcp` |
+| `kind` | Yes | Step type: `functional`, `agent`, `router`, `api_call`, `mcp`, `HumanInTheLoop` |
 | `runner` | For functional | Node name from `NODE_REGISTRY` |
 | `agent` | For agent | LLM configuration |
 | `routes` | No | Signal-to-step mapping |
@@ -255,6 +255,113 @@ Call tools from MCP (Model Context Protocol) servers:
       map:
         results: search_results
 ```
+
+### Human-in-the-Loop Steps
+
+Pause workflow execution and hand off control to a human reviewer before continuing:
+
+```yaml
+- id: "approve_application"
+  kind: "HumanInTheLoop"
+  ui:
+    title: "Review Application"
+    instruction: "Approve or reject {{ candidate_name }}'s application for {{ role }}."
+    display_context:
+      - candidate_name
+      - role
+      - cv_summary
+  human_feedback:
+    - name: approved
+      type: boolean
+      required: true
+      label: "Approve application?"
+    - name: notes
+      type: string
+      label: "Reviewer notes"
+  output_key: approval_result
+  auth:
+    required_group: hr_manager
+    assignee_user: "{{ assigned_reviewer }}"
+  routes:
+    default: "send_outcome"
+```
+
+When the engine reaches a `HumanInTheLoop` step it:
+
+1. Persists a **HITL instance** (stored in Redis) containing the current context and the step definition.
+2. Raises a suspension signal — the workflow API responds with HTTP **202 Accepted** (or a `SUSPENDED` gRPC status) and returns a `hitl_request` payload.
+3. The frontend displays the review form to the designated user.
+4. Once the reviewer submits their response the workflow resumes from the next step, with the human's answers merged into the context under `output_key`.
+
+#### Human-in-the-Loop Properties
+
+| Property | Required | Description |
+|----------|----------|-------------|
+| `id` | Yes | Unique step identifier |
+| `kind` | Yes | Must be `HumanInTheLoop` |
+| `ui.title` | No | Heading shown to the reviewer. Supports `{{ var }}` interpolation. |
+| `ui.instruction` | No | Detailed instructions for the reviewer. Supports `{{ var }}` interpolation. |
+| `ui.display_context` | No | Allowlist of context keys sent to the reviewer. If omitted, **no** context data is forwarded. |
+| `human_feedback` | No | List of form field definitions (see below). If empty the reviewer can only approve/dismiss. |
+| `output_key` | No | Context key under which the reviewer's answers are stored. Defaults to `hitl_<id>`. |
+| `auth.required_group` | No | IAM group required to act on this review. |
+| `auth.assignee_user` | No | Specific user assigned as reviewer. Supports `{{ var }}` interpolation. |
+
+#### `human_feedback` Field Definition
+
+Each entry in `human_feedback` defines one input field on the review form:
+
+| Key | Required | Type | Description |
+|-----|----------|------|-------------|
+| `name` | Yes | string | Key used in the output dict |
+| `type` | Yes | string | `boolean`, `string`, `integer`, or `float` |
+| `label` | No | string | Human-readable label shown above the input |
+| `required` | No | boolean | Prevent form submission until filled. Defaults to `false`. |
+
+#### `hitl_request` Payload
+
+The payload delivered to the frontend when a workflow suspends:
+
+```json
+{
+  "instance_id": "550e8400-e29b-41d4-a716-446655440000",
+  "paused_step_id": "approve_application",
+  "output_key": "approval_result",
+  "ui": {
+    "title": "Review Application",
+    "instruction": "Approve or reject Jane Doe's application for Senior Engineer.",
+    "display_context": ["candidate_name", "role", "cv_summary"]
+  },
+  "human_feedback": [
+    { "name": "approved", "type": "boolean", "required": true, "label": "Approve application?" },
+    { "name": "notes",    "type": "string",  "required": false, "label": "Reviewer notes" }
+  ],
+  "context_data": {
+    "candidate_name": "Jane Doe",
+    "role": "Senior Engineer",
+    "cv_summary": "10 years backend, Python, distributed systems."
+  },
+  "auth": { "required_group": "hr_manager" }
+}
+```
+
+#### Resuming a Suspended Workflow
+
+POST the reviewer's answers to the HITL resume endpoint:
+
+```http
+POST /hitl/{instance_id}/respond
+Content-Type: application/json
+
+{
+  "approved": true,
+  "notes": "Strong candidate, approved."
+}
+```
+
+The engine resumes execution with `context["approval_result"]` set to that dict.
+
+See [Human-in-the-Loop](../tools/hitl.md) for the full API reference and UI builder details.
 
 ## Routing
 
@@ -422,4 +529,5 @@ output:
 
 - [Nodes](nodes.md) — Building node functions
 - [Agents](../configuration/agents.md) — Configuring LLM providers
+- [Human-in-the-Loop](../tools/hitl.md) — Full HITL reference, UI builder, and Lens testing
 - [Examples](../examples/candidate-onboarding.md) — Complete workflow examples
