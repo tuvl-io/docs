@@ -189,6 +189,59 @@ TUVL_DEV_API_KEY=your-secret-key
 
 ---
 
+## Testing Human-in-the-Loop Nodes with Lens
+
+`HumanInTheLoop` steps cannot complete in a single synchronous pass — they pause and
+wait for a reviewer. Lens handles this gracefully: instead of raising an error, it returns
+a **`suspended`** result so you can inspect exactly what payload would be sent to the
+human reviewer.
+
+### How it works
+
+1. Open Lens on a `HumanInTheLoop` node from the workflow canvas.
+2. Fill the **Mock Input** panel with the context keys your `display_context` list
+   references (plus any keys used in `ui.title`/`ui.instruction` interpolation).
+3. Click **Execute** — the engine hits the HITL branch, suspends, and Lens intercepts
+   the `SuspendWorkflowException`.
+4. The **Suspended** tab opens automatically, showing the full `hitl_request` payload
+   broken down into:
+
+| Section | Contents |
+|---------|----------|
+| **Review UI** | `title` and `instruction` after Jinja-style interpolation |
+| **Context Sent to Reviewer** | Only the keys whitelisted in `display_context` |
+| **Response Form Fields** | Each `human_feedback` field: name, type, label, required |
+| **Auth** | `required_group` / `assignee_user` after interpolation |
+| **Instance Info** | Generated `instance_id`, `paused_step_id`, and `output_key` |
+
+### Example mock input
+
+Given a step with `display_context: [candidate_name, role]`:
+
+```json
+{
+  "candidate_name": "Jane Doe",
+  "role": "Senior Engineer",
+  "cv_summary": "10 years backend, Python, distributed systems."
+}
+```
+
+Lens will show `candidate_name` and `role` in the **Context Sent to Reviewer** section
+(because they are in `display_context`) and omit `cv_summary`.
+
+### What Lens does NOT do for HITL
+
+Lens shows the *outbound* payload only. It does not:
+
+- store a real HITL instance in Redis
+- allow you to submit a reviewer response and see the resumed workflow output
+
+To test the full resume cycle use **Spectrum** with a workflow that includes the HITL step,
+or trigger the workflow normally in dev mode and use the `/hitl/{instance_id}/respond`
+endpoint with mock reviewer data.
+
+---
+
 ## Use Cases
 
 | Scenario | Tool |
@@ -199,4 +252,5 @@ TUVL_DEV_API_KEY=your-secret-key
 | Test a node with multiple input variants | Lens (repeat calls) |
 | Find which step is slow | Spectrum (check `duration_ms` per step) |
 | Reproduce a production failure locally | Spectrum (copy the failing input) |
+| Inspect the HITL payload a `HumanInTheLoop` step would send | Lens (see Suspended tab) |
 
