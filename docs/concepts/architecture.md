@@ -4,12 +4,12 @@ Understanding how tuvl components work together.
 
 ## Design Philosophy
 
-tuvl follows several key architectural principles:
+tuvl follows four core principles:
 
-1. **Local-First** — All services can run on your infrastructure
-2. **YAML-Driven** — Configuration over code for business logic
-3. **LLM as a Function** — AI is just another step in your workflow
-4. **Safe Side Effects** — LLMs generate intents, Python executes them
+1. **Local-First** — every component runs on your infrastructure; no cloud dependency required
+2. **YAML-Driven** — business logic lives in version-controlled YAML, not scattered across controller code
+3. **AI is a step, not the system** — LLM calls are first-class workflow steps alongside Python functions, HTTP calls, and MCP tools
+4. **Auditable by default** — every execution emits structured step events with signals, snapshots, and timings
 
 ## System Overview
 
@@ -17,41 +17,44 @@ tuvl follows several key architectural principles:
 graph TB
     subgraph "Client Layer"
         A[HTTP Client]
-        B[tuvl UI / @tuvl/client SDK]
-        DevUI[Dev Console / tuvl_insight]
+        B["@tuvl/client SDK"]
+        DevUI["tuvl insight UI\n(dev mode only)"]
     end
 
     subgraph "API Layer"
         C[FastAPI Server]
         D[Workflow Routes]
         E[CRUD Routes]
-        F_AUTH[Auth Routes]
-        DevMW[DevMiddleware\ntuvl_dev_mode only]
+        F_AUTH[Auth Routes /auth/*]
+        DevMW["DevMiddleware\n(TUVL_DEV_MODE=true)"]
     end
 
     subgraph "gRPC-Web Layer"
-        G_GRPC[sonora ASGI\n/grpc/]
-        DevSvc[DevServicer]
+        G_GRPC["sonora ASGI\n/grpc/"]
+        DevSvc["DevServicer\n(dev mode only)"]
         IamSvc[IamServicer]
         ExecSvc[ExecutionServicer]
     end
 
     subgraph "Engine Layer"
-        F[Workflow Engine]
-        G[Node Registry]
-        H[Agent Runner]
+        F[WorkflowEngine]
+        G[NODE_REGISTRY]
+        H[Agent Runner / LiteLLM]
+        HITL[HITL Pause/Resume]
+        OTel[OTel Tracer]
     end
 
     subgraph "Data Layer"
-        I[Repository]
-        J[Model Registry]
-        K[Schema Registry]
+        I[BaseRepository]
+        J[MODEL_REGISTRY]
+        Redis[(Redis\nHITL state)]
     end
 
-    subgraph "External Services"
+    subgraph "External"
         L[(PostgreSQL)]
-        M[Ollama / OpenAI]
+        M["Ollama / OpenAI\n/ Anthropic / ..."]
         N[MCP Servers]
+        Collector[OTLP Collector]
     end
 
     A --> C
@@ -70,12 +73,15 @@ graph TB
     E --> I
     F --> G
     F --> H
+    F --> HITL
+    F --> OTel
     G --> I
     H --> M
     F --> N
+    HITL --> Redis
     I --> J
-    J --> K
     I --> L
+    OTel --> Collector
 ```
 
 ## Core Components
@@ -88,236 +94,128 @@ Three servicers are registered under the `/grpc/` mount:
 
 | Servicer | Proto | Responsibility |
 |---|---|---|
-| `ExecutionServicer` | `execution.proto` | Streaming workflow execution (current run events) |
+| `ExecutionServicer` | `execution.proto` | Streaming workflow execution events |
 | `IamServicer` | `iam.proto` | User/role/scope management, token lifecycle |
 | `DevServicer` | `dev.proto` | Dev portal: file CRUD, Lens, Spectrum, AI chat |
 
-`DevServicer` is only active when `TUVL_DEV_MODE=true`. In production the servicer is not registered and the `/grpc/dev.*` routes do not exist.
+`DevServicer` is only active when `TUVL_DEV_MODE=true`. In production it is not registered and the `/grpc/dev.*` routes do not exist.
 
-The `_GrpcMount` wrapper in `app.py` handles a Starlette 1.x path-stripping behaviour change — it ensures the full path including the `/grpc/` prefix reaches sonora correctly.
-
-Clients use `@protobuf-ts/grpcweb-transport` (browser and Node.js). The tuvl dev console (`tuvl_insight`) and the `@tuvl/client` SDK both speak gRPC-Web.
+Clients use `@protobuf-ts/grpcweb-transport` (browser and Node.js). Both the tuvl insight developer portal and the `@tuvl/client` SDK speak gRPC-Web.
 
 ### Workflow Engine
 
-The `WorkflowEngine` is the orchestrator. It:
+`WorkflowEngine` (and its subclass `WorkflowTestRunner` for testing) is the orchestrator. For each request it:
 
-1. Parses workflow YAML configuration
-2. Maintains step execution order and routing
-3. Manages the context object through each step
-4. Handles errors and routing signals
-
-```python
-class WorkflowEngine:
-    def __init__(self, workflow_yaml: dict) -> None:
-        self.name = workflow_yaml["metadata"]["name"]
-        self.steps = workflow_yaml.get("steps", [])
-        
-    async def run(self, context: dict[str, Any]) -> dict[str, Any]:
-        # Execute steps sequentially, following routes
-        ...
-```
+1. Deserialises the workflow YAML into step configs
+2. Maintains the mutable context dictionary throughout execution
+3. Resolves the next step via signal-based routing after every step
+4. Delegates to the appropriate step runner (functional / agent / api_call / mcp / HumanInTheLoop / model-op / response)
+5. Emits an OTel span per step when a tracer is configured
 
 ### Node Registry
 
-A global registry mapping node names to async Python functions:
+A global mapping of node names → async Python functions:
 
 ```python
-NODE_REGISTRY: dict[str, Callable[..., Coroutine]] = {}
+from tuvl.core.nodes.base import node, NODE_REGISTRY
 
-def node(name: str) -> Callable:
-    """Decorator to register a node function."""
-    def decorator(func: Callable) -> Callable:
-        NODE_REGISTRY[name] = func
-        return func
-    return decorator
+@node("my_node")
+async def my_node(ctx: dict) -> dict:
+    return ctx
+
+# NODE_REGISTRY["my_node"] is now set
 ```
+
+Nodes must be importable at process startup. The engine loads all Python files from the project's `nodes/` directory automatically.
 
 ### Model Registry
 
-Dynamic SQLModel classes generated from YAML definitions:
-
-```python
-MODEL_REGISTRY: Dict[str, Type[SQLModel]] = {}
-
-def load_all_models(config_dir: Path) -> None:
-    """Load all .yaml files and generate SQLModel classes."""
-    for yaml_file in config_dir.glob("*.yaml"):
-        schema = yaml.safe_load(yaml_file.read_text())
-        model_class = create_sqlmodel_class(schema)
-        MODEL_REGISTRY[schema["metadata"]["name"]] = model_class
-```
-
-### Schema Registry
-
-Pydantic schemas for API validation:
-
-```python
-SCHEMA_REGISTRY: Dict[str, Dict[str, Type[BaseModel]]] = {}
-
-# Example entry:
-# {
-#   "Contact": {
-#     "create": ContactCreate,
-#     "read": ContactRead,
-#     "update": ContactUpdate
-#   }
-# }
-```
+Dynamic SQLModel classes generated from YAML `ModelDefinition` files at startup. Each registered model also produces auto-generated CRUD routes at `/api/{model_name}`.
 
 ### Repository Pattern
 
-Generic data access layer for all models:
+`BaseRepository[T]` provides a clean async data-access layer backed by SQLAlchemy:
 
 ```python
-class BaseRepository(Generic[T]):
-    def __init__(self, model_name: str, session: AsyncSession):
-        self.model_class = MODEL_REGISTRY[model_name]
-        self.session = session
-    
-    async def add(self, data: dict) -> T: ...
-    async def get(self, ident: Any) -> Optional[T]: ...
-    async def list(self, criteria: dict) -> List[T]: ...
-    async def update(self, ident: Any, data: dict) -> Optional[T]: ...
-    async def remove(self, ident: Any) -> bool: ...
+from tuvl.core.repositories.registry import get_repository
+
+repo = get_repository("Contact", ctx["_session"])
+contact = await repo.add({"email": "...", "name": "..."})
 ```
 
-## Request Flow
+See [Repositories](repositories.md) for the full API.
 
-Here's what happens when a workflow endpoint receives a request:
+### Human-in-the-Loop (HITL)
+
+The `HumanInTheLoop` step kind pauses execution and stores state in Redis. A reviewer approves or rejects via the API (or the tuvl insight UI), after which the engine resumes exactly where it stopped. Timeouts are configurable per step.
+
+### OpenTelemetry
+
+Every step emits a span with `signal`, `duration_ms`, and context attributes when `TUVL_TELEMETRY_ENABLED=true`. Configure the OTLP exporter in `.tuvl/telemetry.yaml`. See [Telemetry](../configuration/telemetry.md).
+
+## Request Flow
 
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant F as FastAPI
     participant W as WorkflowEngine
-    participant N as Node
+    participant N as Node / Agent
     participant R as Repository
     participant DB as PostgreSQL
-    participant LLM as Ollama/OpenAI
-    
-    C->>F: POST /api/contacts
+
+    C->>F: POST /api/my-endpoint
     F->>F: Validate input schema
     F->>W: run(context)
-    
+
     loop For each step
-        W->>W: Determine step kind
+        W->>W: Resolve step kind
         alt functional
             W->>N: node_func(context)
-            N->>R: repository.add(data)
-            R->>DB: INSERT
-            DB-->>R: record
-            R-->>N: entity
-            N-->>W: updated context
+            N-->>W: updated context / signal
         else agent
-            W->>LLM: prompt with context
-            LLM-->>W: JSON response
-            W->>W: Map output to context
+            W->>N: LiteLLM call + prompt
+            N-->>W: JSON → context keys + signal
+        else HumanInTheLoop
+            W->>W: Pause, store state in Redis
+            Note over W: Resumed by reviewer
         end
-        W->>W: Evaluate routes
+        W->>W: Follow signal → next step
     end
-    
+
     W-->>F: final context
-    F->>F: Validate response schema
     F->>DB: COMMIT
     F-->>C: JSON response
 ```
 
 ## Step Kinds
 
-The workflow engine supports multiple step kinds:
+| Kind | Description |
+|------|-------------|
+| `functional` | Call a registered Python node from `NODE_REGISTRY` |
+| `agent` | LLM call via LiteLLM; structured JSON output maps to context keys |
+| `api_call` | Outbound HTTP request; response mapped into context |
+| `mcp` | Invoke a tool on an MCP server (stdio or SSE) |
+| `HumanInTheLoop` | Pause execution; await a human approve/reject decision |
+| `model-op` | Direct CRUD operation on a registered data model |
+| `router` | Evaluate a condition expression; branch via signal |
+| `response` | Shape and emit the final HTTP response from context keys |
 
-| Kind | Description | Execution |
-|------|-------------|-----------|
-| `functional` | Python node function | `NODE_REGISTRY[runner](context)` |
-| `agent` | LLM-powered step | Calls LLM via LiteLLM, parses JSON |
-| `router` | Conditional branching | Evaluates expressions, returns signal |
-| `api_call` | External HTTP request | Makes HTTP call, maps response |
-| `mcp` | MCP server tool call | Invokes MCP server tool |
+## Context Keys
 
-## Context Object
+All engine-injected keys begin with `_` and are stripped from HTTP responses:
 
-The context is a mutable dictionary that flows through every step:
-
-```python
-context = {
-    # User input
-    "email": "jane@example.com",
-    "name": "Jane Doe",
-    
-    # Engine-injected
-    "_session": AsyncSession,  # Database session
-    
-    # Step outputs
-    "id": "uuid...",           # From save step
-    "priority": "high",        # From AI step
-    
-    # Error tracking
-    "_last_error": "...",      # Set on error
-}
-```
-
-!!! note "Underscore Convention"
-    Keys starting with `_` are internal and excluded from API responses.
-
-## Transaction Management
-
-The workflow manager handles database transactions:
-
-```python
-async def _run_engine(wf_name, config, context, session):
-    try:
-        engine = WorkflowEngine(config)
-        final_context = await engine.run(context)
-        await session.commit()  # Commit on success
-        return JSONResponse(...)
-    except Exception:
-        await session.rollback()  # Rollback on failure
-        return JSONResponse(status_code=500, ...)
-```
-
-This ensures atomicity — either all database operations succeed, or none do.
-
-## Plugin Architecture
-
-### Custom Nodes
-
-Extend functionality by registering Python functions:
-
-```python
-@node("send_email")
-async def send_email(ctx: dict[str, Any]) -> dict[str, Any]:
-    # Your email logic
-    return ctx
-```
-
-### MCP Servers
-
-Integrate external tools via Model Context Protocol:
-
-```yaml
-- id: "search_files"
-  kind: "mcp"
-  mcp:
-    server: "file-search"
-    tool: "search"
-    arguments:
-      query: "{{ search_term }}"
-```
-
-### Custom Step Kinds
-
-The engine is extensible for new step kinds (advanced use).
-
-## Performance Considerations
-
-- **Async I/O** — All operations are async for high concurrency
-- **Connection Pooling** — PostgreSQL connections are pooled
-- **Lazy Loading** — Models and workflows load on startup
-- **Streaming** — Agent responses can be streamed (future)
+| Key | Set by | Description |
+|-----|--------|-------------|
+| `_session` | Engine | `AsyncSession` for the current request |
+| `_db` | Engine | Unit-of-work repository accessor |
+| `_user_id` | Auth middleware | Authenticated user ID |
+| `_last_error` | Engine | Last step error string |
+| `_api_status_code` | `api_call` step | HTTP status of last outbound call |
+| `_response` | `response` step | Shaped payload returned to client |
 
 ## Next Steps
 
-- [Workflows](workflows.md) — Deep dive into workflow configuration
+- [Workflows](workflows.md) — Step-by-step workflow configuration
 - [Nodes](nodes.md) — Building custom node functions
-- [Context Object](context.md) — Understanding the context lifecycle
+- [Context Object](context.md) — The context lifecycle in detail

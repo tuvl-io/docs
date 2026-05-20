@@ -173,4 +173,4 @@ try {
 ## Next steps
 
 - [API Reference](api-reference.md) — complete method, type, and transport documentation
-- [CLI: stream-watch](../cli/commands.md#stream-watch) — stream workflows from the terminal without writing any code
+- [CLI: stream-watch](../cli/commands.md#tuvl-stream-watch) — stream workflows from the terminal without writing any code

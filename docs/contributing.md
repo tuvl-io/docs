@@ -15,7 +15,7 @@ Thank you for your interest in contributing to tuvl!
 
 ```bash
 # Clone repository
-git clone https://github.com/tuvl/tuvl.git
+git clone https://github.com/tuvl-io/tuvl.git
 cd tuvl
 
 # Install Python dependencies and apply vendored patches
@@ -235,8 +235,8 @@ mkdocs serve
 
 ## Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/tuvl/tuvl/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/tuvl/tuvl/discussions)
+- **Issues**: [GitHub Issues](https://github.com/tuvl-io/tuvl/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/tuvl-io/tuvl/discussions)
 - **Discord**: [Join our Discord](https://discord.gg/tuvl)
 
 ## License

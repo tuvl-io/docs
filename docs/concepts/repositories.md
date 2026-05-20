@@ -4,15 +4,14 @@ Repositories provide a clean interface for database operations within workflow n
 
 ## Overview
 
-The repository pattern abstracts database access:
+The recommended way to access repositories in nodes is through `ctx["_db"]`, a `WorkflowUoW` object that routes each model to the correct datasource and enforces that only models declared in the workflow's `context:` field are accessible:
 
 ```python
-from tuvl_engine.repositories.registry import get_repository
+from tuvl.core.nodes.base import node
 
 @node("save_order")
-async def save_order(ctx: dict[str, Any]) -> dict[str, Any]:
-    session = ctx["_session"]
-    repo = get_repository("Order", session)
+async def save_order(ctx: dict) -> dict:
+    repo = ctx["_db"]["Order"]   # model must be listed in workflow's context:
     
     order = await repo.add({
         "customer_id": ctx["customer_id"],
@@ -23,17 +22,29 @@ async def save_order(ctx: dict[str, Any]) -> dict[str, Any]:
     return ctx
 ```
 
-## Getting a Repository
-
-Use `get_repository()` with model name and session:
+For cases where you need a model outside the workflow context (or need the raw session), use `get_repository()` directly:
 
 ```python
-from tuvl_engine.repositories.registry import get_repository
+from tuvl.core.repositories.registry import get_repository
 
-repo = get_repository("Contact", session)
+repo = get_repository("Order", ctx["_session"])
 ```
 
-The session is always available in the context as `ctx["_session"]`.
+## Getting a Repository
+
+### Via `_db` (recommended)
+
+```python
+repo = ctx["_db"]["Contact"]    # raises PermissionError if model not in context:
+```
+
+### Via `get_repository`
+
+```python
+from tuvl.core.repositories.registry import get_repository
+
+repo = get_repository("Contact", ctx["_session"])
+```
 
 ## CRUD Operations
 
@@ -209,11 +220,9 @@ Access multiple models in a single node:
 
 ```python
 @node("create_order_with_items")
-async def create_order_with_items(ctx: dict[str, Any]) -> dict[str, Any]:
-    session = ctx["_session"]
-    
-    order_repo = get_repository("Order", session)
-    item_repo = get_repository("OrderItem", session)
+async def create_order_with_items(ctx: dict) -> dict:
+    order_repo = ctx["_db"]["Order"]
+    item_repo = ctx["_db"]["OrderItem"]
     
     # Create order
     order = await order_repo.add({
@@ -288,7 +297,7 @@ async def search_contacts(ctx: dict[str, Any]) -> dict[str, Any]:
     session = ctx["_session"]
     
     # Get model class from registry
-    from tuvl_engine.models.loader import MODEL_REGISTRY
+    from tuvl.core.models.loader import MODEL_REGISTRY
     Contact = MODEL_REGISTRY["Contact"]
     
     # Custom query

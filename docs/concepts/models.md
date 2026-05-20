@@ -11,7 +11,6 @@ metadata:
   name: "Contact"
 spec:
   tablename: "contacts"
-  schema: true
   fields:
     - name: "id"
       type: "uuid"
@@ -72,7 +71,16 @@ spec:
 | `index` | bool | `false` | Create an index? |
 | `default` | any | `null` | Default value |
 | `input` | bool | `true` | Include in Create schema? |
+| `secure` | bool | `false` | Mark as PII — masked in OTel spans |
 | `description` | string | `""` | Field description |
+
+At the model level, `spec.datasource` routes the model to a named datasource (defaults to `"main_postgres"`):
+
+```yaml
+spec:
+  tablename: "orders"
+  datasource: "orders_db"   # matches metadata.name in datasources/orders_db.yaml
+  fields: ...
 
 ## Default Values
 
@@ -112,7 +120,7 @@ spec:
 
 ## Schema Generation
 
-When `schema: true` is set, three Pydantic schemas are generated:
+Three Pydantic schemas are automatically generated for every model:
 
 ### Create Schema
 
@@ -173,19 +181,53 @@ fields:
     input: false          # Not in Create schema
 ```
 
-## Relationships (Coming Soon)
+## Relationships
 
-!!! note "Future Feature"
-    Relationship definitions are planned for a future release.
+Declare relations in `spec.relations` to enable expanded read responses and `model-op` steps with `include:`.
 
-```yaml
-# Conceptual - not yet implemented
-fields:
-  - name: "orders"
-    type: "relation"
-    target: "Order"
-    relation_type: "one-to-many"
-    back_populates: "customer"
+```yaml title="models/application.yaml"
+kind: "ModelDefinition"
+version: "v1"
+metadata:
+  name: "Application"
+spec:
+  tablename: "applications"
+  fields:
+    - name: "id"
+      type: "uuid"
+      primary_key: true
+    - name: "candidate_id"
+      type: "uuid"
+      required: true
+    - name: "role"
+      type: "string"
+      required: true
+  relations:
+    - name: "candidate"         # key in the expanded response
+      model: "Candidate"        # MODEL_REGISTRY name of the related model
+      foreign_key: "candidate_id"   # FK column on THIS model
+      type: "many_to_one"       # many_to_one | one_to_many
+```
+
+### Relation Types
+
+| Type | FK column lives on | Use case |
+|------|--------------------|----------|
+| `many_to_one` | This model | `application.candidate_id → candidates.id` |
+| `one_to_many` | Related model | `assessments.application_id → applications.id` |
+
+Expanded reads (via `GET /api/application/{id}?include=candidate` or a `model-op` step with `include: candidate`) return nested objects:
+
+```json
+{
+  "id": "...",
+  "role": "Senior Engineer",
+  "candidate": {
+    "id": "...",
+    "name": "Jane Doe",
+    "email": "jane@example.com"
+  }
+}
 ```
 
 ## Generated CRUD API
@@ -244,7 +286,7 @@ trigger:
 At runtime, models are stored in `MODEL_REGISTRY`:
 
 ```python
-from tuvl_engine.models.loader import MODEL_REGISTRY
+from tuvl.core.models.loader import MODEL_REGISTRY
 
 # Access the SQLModel class
 ContactModel = MODEL_REGISTRY["Contact"]
@@ -258,7 +300,7 @@ contact = ContactModel(email="test@example.com", name="Test")
 Pydantic schemas are in `SCHEMA_REGISTRY`:
 
 ```python
-from tuvl_engine.models.schemas import SCHEMA_REGISTRY
+from tuvl.core.models.schemas import SCHEMA_REGISTRY
 
 schemas = SCHEMA_REGISTRY["Contact"]
 # {

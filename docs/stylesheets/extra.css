@@ -1,5 +1,68 @@
 /* tuvl documentation custom styles */
 
+/* ── Header / nav — tuvl cyan brand colour ─────────────────────────────── */
+:root {
+    --tuvl-cyan:      #22d3ee;
+    --tuvl-cyan-dark: #06b6d4;
+    --tuvl-cyan-dim:  rgba(34, 211, 238, 0.15);
+}
+
+/* Override the Material primary colour tokens so the header bg, active links,
+   and interactive elements all use the tuvl cyan. */
+[data-md-color-primary="cyan"] {
+    --md-primary-fg-color:              #06b6d4;
+    --md-primary-fg-color--light:       #22d3ee;
+    --md-primary-fg-color--dark:        #0891b2;
+    --md-primary-bg-color:              #fff;
+    --md-primary-bg-color--light:       rgba(255,255,255,0.7);
+}
+
+/* Header background — deep cyan-tinted dark panel */
+.md-header {
+    background: linear-gradient(90deg, #021a1f 0%, #042f3a 100%);
+    box-shadow: 0 1px 0 rgba(34, 211, 238, 0.3);
+}
+
+/* Header title text */
+.md-header__title {
+    color: #22d3ee;
+    font-weight: 700;
+}
+
+/* Nav tabs */
+.md-tabs {
+    background: rgba(2, 26, 31, 0.95);
+    border-bottom: 1px solid rgba(34, 211, 238, 0.2);
+}
+
+.md-tabs__link {
+    color: rgba(186, 230, 253, 0.75) !important;
+}
+
+.md-tabs__link:hover,
+.md-tabs__link--active {
+    color: #22d3ee !important;
+}
+
+.md-tabs__link--active::after {
+    background-color: #22d3ee;
+}
+
+/* Search bar focus ring */
+.md-search__input:focus {
+    border-color: var(--tuvl-cyan);
+}
+
+/* Repo link icon */
+.md-header__source {
+    color: rgba(186, 230, 253, 0.75);
+}
+
+/* Active nav item underline / highlight */
+.md-nav__link--active {
+    color: var(--tuvl-cyan) !important;
+}
+
 /* Hero section styling */
 .md-typeset h1 {
     font-weight: 700;
