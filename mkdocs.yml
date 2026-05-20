@@ -94,6 +94,20 @@ markdown_extensions:
   - pymdownx.tilde
 
 extra:
+  analytics:
+    provider: google
+    property: G-7NBSPKBZSP
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/thumb-up-outline
+          name: Yes
+          data: 1
+          note: Thanks for your feedback!
+        - icon: material/thumb-down-outline
+          name: No
+          data: 0
+          note: Thanks — we'll work on improving this page.
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/tuvl-io/tuvl
@@ -103,6 +117,9 @@ extra:
 
 extra_css:
   - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/analytics.js
 
 nav:
   - Home: index.md
