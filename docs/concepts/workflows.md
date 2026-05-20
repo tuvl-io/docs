@@ -120,7 +120,7 @@ steps:
 | Property | Required | Description |
 |----------|----------|-------------|
 | `id` | Yes | Unique identifier within the workflow |
-| `kind` | Yes | Step type: `functional`, `agent`, `router`, `api_call`, `mcp`, `HumanInTheLoop` |
+| `kind` | Yes | Step type: `functional`, `agent`, `router`, `api_call`, `mcp`, `model-op`, `response`, `HumanInTheLoop` |
 | `runner` | For functional | Node name from `NODE_REGISTRY` |
 | `agent` | For agent | LLM configuration |
 | `routes` | No | Signal-to-step mapping |
@@ -157,7 +157,10 @@ Execute an LLM call with structured output:
 - id: "classify"
   kind: "agent"
   agent:
-    model: "ollama/llama3"              # LiteLLM model string
+    model: "default"                # preset name from llms/default.yaml
+    # or use a LiteLLM model string directly:
+    # model: "ollama/llama3"
+    # model: "gpt-4o-mini"
     system: |
       You are a customer support classifier.
     prompt: |
@@ -184,7 +187,7 @@ Execute an LLM call with structured output:
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `model` | Required | LiteLLM model identifier |
+| `model` | Required | Preset name from `llms/<name>.yaml` (no `/`) or a LiteLLM model string (e.g. `ollama/llama3`, `gpt-4o`) |
 | `system` | `""` | System prompt |
 | `prompt` | Required | User prompt with Jinja2 templating |
 | `output.format` | `"json"` | Output format: `json`, `text`, `signal` |
@@ -197,24 +200,59 @@ Execute an LLM call with structured output:
 
 ### Router Steps
 
-Conditional branching based on context values:
+Evaluate a condition on the context and branch to different steps:
 
 ```yaml
 - id: "check_amount"
   kind: "router"
-  router:
-    conditions:
-      - if: "amount > 10000"
-        signal: "high_value"
-      - if: "amount > 1000"
-        signal: "medium_value"
-      - else: true
-        signal: "low_value"
+  condition:
+    field: "amount"          # context key (dot-path supported: "order.amount")
+    operator: "gte"          # eq | neq | gt | gte | lt | lte | in | contains | is_empty | is_not_empty
+    value: 10000
   routes:
-    high_value: "manual_review"
-    medium_value: "auto_approve"
-    low_value: "instant_approve"
+    "true": "manual_review"
+    "false": "auto_approve"
 ```
+
+The router emits `"true"` or `"false"` as the route signal. Chain multiple routers for more complex branching:
+
+```yaml
+steps:
+  - id: "check_high"
+    kind: "router"
+    condition:
+      field: "amount"
+      operator: "gte"
+      value: 10000
+    routes:
+      "true": "manual_review"
+      "false": "check_medium"
+
+  - id: "check_medium"
+    kind: "router"
+    condition:
+      field: "amount"
+      operator: "gte"
+      value: 1000
+    routes:
+      "true": "auto_approve"
+      "false": "instant_approve"
+```
+
+#### Supported Operators
+
+| Operator | Description |
+|----------|-------------|
+| `eq` | Equal to value |
+| `neq` | Not equal to value |
+| `gt` | Greater than value |
+| `gte` | Greater than or equal to value |
+| `lt` | Less than value |
+| `lte` | Less than or equal to value |
+| `in` | Value is in a list |
+| `contains` | String contains value |
+| `is_empty` | Field is `None`, `""`, or `[]` |
+| `is_not_empty` | Field is not empty |
 
 ### API Call Steps
 
@@ -223,38 +261,141 @@ Make HTTP requests to external services:
 ```yaml
 - id: "fetch_weather"
   kind: "api_call"
-  api:
+  http:
     url: "https://api.weather.com/v1/current"
     method: "GET"
     headers:
       Authorization: "Bearer {{ api_key }}"
-    params:
-      location: "{{ city }}"
-    output:
-      map:
-        temp: temperature
-        conditions: weather_conditions
+    timeout: 30               # seconds (default: 30)
+  response:
+    output_key: "weather_raw" # context key for the full response body
+    extract:
+      - path: "current.temp_c"
+        as: "temperature"
+      - path: "current.condition.text"
+        as: "weather_conditions"
   routes:
-    success: "next_step"
+    default: "next_step"
     error: "fallback"
 ```
 
+On HTTP errors the engine sets `_last_error` and `_api_status_code` in context and emits the `"error"` signal.
+
 ### MCP Steps
 
-Call tools from MCP (Model Context Protocol) servers:
+Call tools from MCP (Model Context Protocol) servers. Two transports are supported: **SSE** (default) and **stdio**.
+
+**SSE transport:**
 
 ```yaml
 - id: "search_docs"
   kind: "mcp"
   mcp:
-    server: "docs-server"
+    transport: "sse"                          # default
+    url: "http://localhost:3001/sse"
     tool: "search"
     arguments:
       query: "{{ search_query }}"
-    output:
-      map:
-        results: search_results
+  response:
+    output_key: "search_results"              # full response stored here
+    extract:
+      - path: "0.title"
+        as: "first_result_title"
 ```
+
+**stdio transport (local MCP server):**
+
+```yaml
+- id: "list_issues"
+  kind: "mcp"
+  mcp:
+    transport: "stdio"
+    command: "npx"
+    args: ["@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_TOKEN: "{{ github_token }}"
+    tool: "list_issues"
+    arguments:
+      owner: "{{ repo_owner }}"
+      repo: "{{ repo_name }}"
+  response:
+    output_key: "issues"
+```
+
+### Model-Op Steps
+
+Perform a CRUD operation on a registered model without writing a Python node. The model must be declared in the workflow's `context:` field.
+
+```yaml
+- id: "create_candidate"
+  kind: "model-op"
+  model: "Candidate"            # PascalCase model name from MODEL_REGISTRY
+  operation: "create"           # create | read | list | update | delete
+  payload: "{{ candidate }}"    # dict or {{template}} — used by create / update
+  output: "new_candidate"       # context key to store the result
+  routes:
+    default: "next_step"
+    error: "handle_error"
+```
+
+**Read with relations:**
+
+```yaml
+- id: "fetch_candidate"
+  kind: "model-op"
+  model: "Candidate"
+  operation: "read"
+  record_id: "{{ candidate_id }}"
+  include: "education,experience"   # comma-separated relation names
+  output: "candidate"
+```
+
+**List with filters:**
+
+```yaml
+- id: "list_pending"
+  kind: "model-op"
+  model: "Application"
+  operation: "list"
+  filters:
+    status: "pending"
+  limit: 50
+  output: "pending_applications"
+```
+
+#### Model-Op Properties
+
+| Property | Required | Description |
+|----------|----------|-------------|
+| `model` | Yes | PascalCase model name from `MODEL_REGISTRY` |
+| `operation` | Yes | `create` \| `read` \| `list` \| `update` \| `delete` |
+| `payload` | For create/update | Dict or `{{template}}` reference to a context dict |
+| `record_id` | For read/update/delete | Primary key value; supports `{{template}}` |
+| `filters` | For list | Equality filter dict |
+| `include` | No | Comma-separated relation names to expand (read/list only) |
+| `limit` | No | Max rows for list (default 100) |
+| `output` | No | Context key for the result (default: `{step_id}_result`) |
+
+### Response Steps
+
+Shape the HTTP response without ending the workflow (useful as the last step in complex workflows):
+
+```yaml
+# Source mode — expose an existing context key as-is
+- id: "respond"
+  kind: "response"
+  source: "candidate"
+
+# Mapping mode — project specific fields from nested context
+- id: "respond"
+  kind: "response"
+  mapping:
+    id: "candidate.id"
+    full_name: "candidate.name"
+    score: "evaluation.total_score"
+```
+
+The shaped payload is stored in `context["_response"]`, which the engine returns as the HTTP response body (takes priority over the default context serialisation).
 
 ### Human-in-the-Loop Steps
 
@@ -288,7 +429,7 @@ Pause workflow execution and hand off control to a human reviewer before continu
 
 When the engine reaches a `HumanInTheLoop` step it:
 
-1. Persists a **HITL instance** (stored in Redis) containing the current context and the step definition.
+1. Persists a **HITL instance** (a `SystemWorkflowInstance` row in the database) containing the current context snapshot and the step definition.
 2. Raises a suspension signal — the workflow API responds with HTTP **202 Accepted** (or a `SUSPENDED` gRPC status) and returns a `hitl_request` payload.
 3. The frontend displays the review form to the designated user.
 4. Once the reviewer submits their response the workflow resumes from the next step, with the human's answers merged into the context under `output_key`.

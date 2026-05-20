@@ -3,23 +3,23 @@ site_description: A lightweight, local-first workflow orchestration engine for A
 site_author: tuvl Team
 site_url: https://tuvl.dev
 
-repo_name: tuvl/tuvl
-repo_url: https://github.com/tuvl/tuvl
+repo_name: tuvl-io/tuvl
+repo_url: https://github.com/tuvl-io/tuvl
 
 theme:
   name: material
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: deep purple
-      accent: amber
+      primary: cyan
+      accent: cyan
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: deep purple
-      accent: amber
+      primary: cyan
+      accent: cyan
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -96,7 +96,7 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/tuvl/tuvl
+      link: https://github.com/tuvl-io/tuvl
     - icon: fontawesome/brands/discord
       link: https://discord.gg/tuvl
   generator: false

@@ -5,8 +5,10 @@ The tuvl CLI helps you scaffold, run, and manage tuvl projects.
 ## Installation
 
 ```bash
-uv tool install tuvl-cli
+uv tool install "tuvl[standard]"
 ```
+
+`tuvl[standard]` includes the dev server, built-in UI, and hot-reload. Use `uv tool install tuvl` for the minimal CLI without UI support.
 
 Verify installation:
 

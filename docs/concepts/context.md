@@ -56,16 +56,20 @@ async def enrich(ctx: dict[str, Any]) -> dict[str, Any]:
 
 ## Reserved Keys
 
-Keys starting with underscore (`_`) are reserved for internal use:
+Keys starting with underscore (`_`) are reserved for internal use and are **stripped from HTTP responses**:
 
-| Key | Description |
-|-----|-------------|
-| `_session` | SQLAlchemy async session |
-| `_last_error` | Error message from failed step |
-| `_workflow_name` | Name of executing workflow |
+| Key | Set by | Description |
+|-----|--------|-------------|
+| `_session` | Engine | `AsyncSession` for the current request — passed to repository calls |
+| `_db` | Engine | Unit-of-work repository accessor: `ctx["_db"]["ModelName"].add(...)` |
+| `_user_id` | Auth middleware | Authenticated user ID from the Biscuit token |
+| `_last_error` | Engine | String description of the last step error |
+| `_last_error_type` | Engine | Error category for the last agent failure: `"error"`, `"timeout"`, or `"parse_error"` |
+| `_api_status_code` | `api_call` step | HTTP status code of the last outbound HTTP call |
+| `_response` | `response` step | Shaped payload that will be returned as the HTTP response body |
 
 !!! warning "Private Keys"
-    Never store user data in keys starting with `_`. They are stripped from API responses.
+    Never store user data in keys starting with `_`. They are excluded from API responses and may be overwritten by the engine.
 
 ## Context in Agent Steps
 

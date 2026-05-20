@@ -5,21 +5,33 @@ Build your first AI-powered workflow in under 5 minutes.
 ## Create a New Project
 
 ```bash
+# Minimal scaffold
 tuvl init my-app
+
+# Recommended: include sample workflow, nodes, tests, and telemetry config
+tuvl init my-app --sample
+
 cd my-app
 ```
+
+!!! tip
+    `--sample` writes a ready-to-run recruitment screening workflow, two LLM-as-a-Judge test cases, and a `.tuvl/telemetry.yaml` config. It's the fastest way to see every feature in action.
 
 This creates the following structure:
 
 ```
 my-app/
-├── models/         # Data model definitions
-├── workflows/      # Workflow definitions
-├── datasources/    # Database configurations
-├── agents/         # LLM agent presets
-├── nodes/          # Python node implementations
-├── .env            # Environment variables
-└── .env.example    # Safe-to-commit template
+├── models/           # Data model definitions
+├── workflows/        # Workflow definitions
+├── datasources/      # Database configurations
+├── llms/             # LLM agent presets
+├── nodes/            # Python node implementations
+├── .tuvl/
+│   └── telemetry.yaml  # OTel config (--sample)
+├── tests/
+│   └── workflows/      # Test cases (--sample)
+├── .env              # Environment variables
+└── .env.example      # Safe-to-commit template
 ```
 
 ## Define a Model
@@ -166,7 +178,25 @@ POSTGRES_PASSWORD=your_password
 ## Run the Server
 
 ```bash
+# Start dev server in current directory
 tuvl dev
+
+# Specify a different port or project directory
+tuvl dev --port 3000
+tuvl dev --project-dir ./services/api
+```
+
+The dev server starts on `http://localhost:8000` with the built-in tuvl insight UI at `http://localhost:8000/ui/`. A one-time security key is printed on startup — paste it into the UI to authenticate.
+
+```
+╭─────────────────────────────── tuvl dev ───────────────────────────────╮
+│ Starting tuvl engine in dev mode on port 8000.                         │
+│                                                                        │
+│ Security key                                                           │
+│  XXXX-XXXX-XXXX-XXXX                                                   │
+│                                                                        │
+│ Open http://127.0.0.1:8000/ui/ and paste the key above.               │
+╰────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Test Your Workflow
@@ -203,11 +233,13 @@ Response:
 
 ## Explore the API
 
-Visit `http://localhost:8000/docs` to see:
+Open `http://localhost:8000/ui/` and paste the security key to access the tuvl insight developer portal, where you can:
 
-- Auto-generated Swagger UI
-- All your workflow endpoints
-- CRUD operations for your models
+- Browse and test all your workflow endpoints
+- Inspect live step events and execution traces
+- Manage models, datasources, and LLM providers visually
+
+The raw OpenAPI schema is also available at `http://localhost:8000/docs`.
 
 ## What's Next?
 

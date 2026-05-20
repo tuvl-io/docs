@@ -1,35 +1,317 @@
 # Nodes
 
-Nodes are Python functions that execute workflow steps. They receive a context dictionary and return an updated context or routing signal.
+Nodes are Python functions that execute `functional` workflow steps. Every step in a workflow has a **kind** — this page covers all available step kinds, their UI colours, and how to write custom `functional` nodes.
 
-## Basic Node
+---
 
-```python
-from typing import Any
-from tuvl_engine.nodes.base import node
+## Step Kind Reference
 
-@node("greet_user")
-async def greet_user(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Add a greeting message to the context."""
-    ctx["greeting"] = f"Hello, {ctx.get('name', 'Guest')}!"
+tuvl has 8 built-in step kinds. The table below maps each kind to its icon and colour in the workflow canvas UI (sourced from `ui/src/components/StepNode.tsx`), plus its purpose and the signals it can emit.
+
+<div class="step-kind-table" markdown>
+
+| Kind | UI colour | Icon | Purpose | Emits |
+|------|-----------|------|---------|-------|
+| `functional` | :material-circle:{ style="color:#3b82f6" } **Blue** | :material-code-braces: | Run a custom Python `@node()` function | Any string / tuple |
+| `agent` | :material-circle:{ style="color:#a855f7" } **Purple** | :material-star-four-points: | Call an LLM via LiteLLM or an `llms/` preset | `default` · `error` · `timeout` · `parse_error` · custom from `signal_from` |
+| `router` | :material-circle:{ style="color:#f59e0b" } **Amber** | :material-rhombus: | Evaluate a condition on context, branch true/false | `"true"` · `"false"` · `"error"` |
+| `api_call` | :material-circle:{ style="color:#14b8a6" } **Teal** | :material-web: | Make an outbound HTTP request | `default` · `error` |
+| `mcp` | :material-circle:{ style="color:#ec4899" } **Pink** | :material-connection: | Call a tool on an MCP server (SSE or stdio) | `default` · `error` |
+| `model-op` | :material-circle:{ style="color:#10b981" } **Emerald** | :material-database: | CRUD operation on a registered model (no Python needed) | `default` · `error` |
+| `response` | :material-circle:{ style="color:#ef4444" } **Red** | :material-send: | Shape the HTTP response body | `default` · `error` |
+| `HumanInTheLoop` | :material-circle:{ style="color:#f97316" } **Orange** | :material-account-clock: | Pause execution for a human reviewer | *(suspends — never routes)* |
+
+</div>
+
+---
+
+## functional
+
+**UI colour:** :material-circle:{ style="color:#3b82f6" } Blue — `border-blue-600 bg-blue-950`
+
+Run any custom Python async function registered with `@node("name")`.
+
+```yaml
+- id: "normalize"
+  kind: "functional"
+  runner: "normalize_email"    # must exist in NODE_REGISTRY
+  routes:
+    default: "save"
+    error: "handle_error"
+```
+
+```python title="nodes/contacts.py"
+from tuvl.core.nodes.base import node
+
+@node("normalize_email")
+async def normalize_email(ctx: dict) -> dict:
+    ctx["email"] = ctx.get("email", "").lower().strip()
     return ctx
 ```
 
-Use it in a workflow:
+**Signals:** return a `str` for a named signal, a `dict` for `"default"`, or a `tuple[dict, str]` for both.
+
+---
+
+## agent
+
+**UI colour:** :material-circle:{ style="color:#a855f7" } Purple — `border-purple-600 bg-purple-950`
+
+Call an LLM. Supports any LiteLLM model string or a named preset from `llms/<name>.yaml`.
 
 ```yaml
-steps:
-  - id: "greet"
-    kind: "functional"
-    runner: "greet_user"
+- id: "evaluate"
+  kind: "agent"
+  agent:
+    model: "default"              # llms/default.yaml — or "gpt-4o-mini", "ollama/llama3" etc.
+    system: "You are an HR evaluator."
+    prompt: |
+      Evaluate {{ name }}'s application.
+      Experience: {{ experience_years }} years.
+      Return JSON: {"score": <0-100>, "recommendation": "<hire|reject|maybe>"}
+    output:
+      format: json
+      map:
+        score: score
+        recommendation: recommendation
+      signal_from: recommendation   # route by LLM output
+    retry:
+      attempts: 3
+      on: [parse_error, timeout]
+    timeout: 30
+  routes:
+    hire:   "send_offer"
+    reject: "send_rejection"
+    maybe:  "manual_review"
+    error:  "handle_error"
 ```
+
+**Signals:** `default`, `error`, `timeout`, `parse_error`, or any value from `signal_from`.
+
+---
+
+## router
+
+**UI colour:** :material-circle:{ style="color:#f59e0b" } Amber — `border-amber-600 bg-amber-950`
+
+Evaluate a condition on the context dictionary and branch `"true"` / `"false"`. Chain routers for multi-way branching.
+
+```yaml
+- id: "check_score"
+  kind: "router"
+  condition:
+    field: "score"          # context key (dot-path supported: "candidate.score")
+    operator: "gte"         # eq | neq | gt | gte | lt | lte | in | contains | is_empty | is_not_empty
+    value: 70
+  routes:
+    "true":  "send_offer"
+    "false": "send_rejection"
+```
+
+**Signals:** `"true"`, `"false"`, `"error"`.
+
+---
+
+## api_call
+
+**UI colour:** :material-circle:{ style="color:#14b8a6" } Teal — `border-teal-600 bg-teal-950`
+
+Make an outbound HTTP request. Supports `{{ context }}` templating in URL, headers, and body.
+
+```yaml
+- id: "enrich_company"
+  kind: "api_call"
+  http:
+    url: "https://api.clearbit.com/v2/companies/find?domain={{ email_domain }}"
+    method: "GET"
+    headers:
+      Authorization: "Bearer ${CLEARBIT_API_KEY}"
+    timeout: 15
+  response:
+    output_key: "company_data"     # full response body stored here
+    extract:
+      - path: "name"
+        as: "company_name"
+      - path: "metrics.employees"
+        as: "company_size"
+  routes:
+    default: "next_step"
+    error:   "fallback"
+```
+
+On HTTP errors: sets `_last_error` and `_api_status_code` in context, emits `"error"`.
+
+**Signals:** `default`, `error`.
+
+---
+
+## mcp
+
+**UI colour:** :material-circle:{ style="color:#ec4899" } Pink — `border-pink-600 bg-pink-950`
+
+Call a tool on any [Model Context Protocol](https://modelcontextprotocol.io) server. Supports SSE and stdio transports.
+
+=== "SSE"
+
+    ```yaml
+    - id: "search_kb"
+      kind: "mcp"
+      mcp:
+        transport: "sse"                         # default
+        url: "http://localhost:3001/sse"
+        tool: "search"
+        arguments:
+          query: "{{ user_query }}"
+      response:
+        output_key: "kb_results"
+        extract:
+          - path: "0.content"
+            as: "top_result"
+    ```
+
+=== "stdio"
+
+    ```yaml
+    - id: "list_prs"
+      kind: "mcp"
+      mcp:
+        transport: "stdio"
+        command: "npx"
+        args: ["@modelcontextprotocol/server-github"]
+        env:
+          GITHUB_TOKEN: "{{ github_token }}"
+        tool: "list_pull_requests"
+        arguments:
+          owner: "{{ repo_owner }}"
+          repo:  "{{ repo_name }}"
+      response:
+        output_key: "pull_requests"
+    ```
+
+**Signals:** `default`, `error`.
+
+---
+
+## model-op
+
+**UI colour:** :material-circle:{ style="color:#10b981" } Emerald — `border-emerald-600 bg-emerald-950`
+
+Direct CRUD on any registered model — no Python node required. The model must be declared in the workflow's `context:` field.
+
+```yaml
+- id: "save_candidate"
+  kind: "model-op"
+  model: "Candidate"
+  operation: "create"              # create | read | list | update | delete
+  payload: "{{ candidate }}"       # dict or {{template}} — used by create / update
+  output: "saved_candidate"        # context key for the result
+
+- id: "fetch_with_relations"
+  kind: "model-op"
+  model: "Application"
+  operation: "read"
+  record_id: "{{ application_id }}"
+  include: "candidate,education"   # comma-separated relation names
+  output: "application"
+
+- id: "list_pending"
+  kind: "model-op"
+  model: "Application"
+  operation: "list"
+  filters:
+    status: "pending"
+  limit: 50
+  output: "pending_list"
+```
+
+**Signals:** `default`, `error`.
+
+---
+
+## response
+
+**UI colour:** :material-circle:{ style="color:#ef4444" } Red — `border-red-500 bg-red-950`
+
+Shape the HTTP response body. Usually placed as the last step. The payload is stored in `context["_response"]` and returned verbatim to the API caller.
+
+=== "source"
+
+    ```yaml
+    - id: "respond"
+      kind: "response"
+      source: "saved_candidate"   # expose an existing context key as-is
+    ```
+
+=== "mapping"
+
+    ```yaml
+    - id: "respond"
+      kind: "response"
+      mapping:
+        id:         "saved_candidate.id"
+        name:       "saved_candidate.name"
+        score:      "evaluation.score"
+        next_step:  "evaluation.recommendation"
+    ```
+
+**Signals:** `default`, `error`.
+
+---
+
+## HumanInTheLoop
+
+**UI colour:** :material-circle:{ style="color:#f97316" } Orange — `border-orange-500 bg-orange-950`
+
+Suspend the workflow and hand off to a human reviewer. The engine persists a `SystemWorkflowInstance` snapshot and returns HTTP **202 Accepted** with a `hitl_request` payload. Execution resumes when the reviewer submits their response.
+
+```yaml
+- id: "approve_application"
+  kind: "HumanInTheLoop"
+  ui:
+    title: "Review Application"
+    instruction: "Approve or reject {{ name }}'s application for {{ role }}."
+    display_context:            # allowlist of context keys shown to reviewer
+      - name
+      - role
+      - cv_summary
+      - score
+  human_feedback:
+    - name: approved
+      type: boolean
+      required: true
+      label: "Approve?"
+    - name: notes
+      type: string
+      label: "Reviewer notes"
+  output_key: "approval_result"  # merged into context under this key on resume
+  auth:
+    required_group: "hr_manager"
+    assignee_user:  "{{ assigned_reviewer }}"
+```
+
+Resume endpoint:
+
+```http
+POST /hitl/{instance_id}/respond
+Content-Type: application/json
+
+{ "approved": true, "notes": "Strong candidate." }
+```
+
+**Signals:** *(suspends — does not pass through routes)*
+
+---
+
+## Writing a `functional` Node
+
+
 
 ## The `@node` Decorator
 
 The decorator registers your function in the global `NODE_REGISTRY`:
 
 ```python
-from tuvl_engine.nodes.base import node, NODE_REGISTRY
+from tuvl.core.nodes.base import node, NODE_REGISTRY
 
 @node("my_node")
 async def my_node(ctx):
@@ -103,14 +385,39 @@ async def process_order(ctx: dict[str, Any]) -> tuple[dict[str, Any], str]:
 
 ## Accessing the Database
 
-The workflow manager injects `_session` into the context:
+The engine injects two database helpers into the context:
+
+- `ctx["_db"]` — a `WorkflowUoW` that gates access to the models declared in the workflow's `context:` field (recommended).
+- `ctx["_session"]` — the raw `AsyncSession` for advanced use-cases (pass to `get_repository` if you need access to a model outside the workflow context).
+
+### Using `_db` (recommended)
 
 ```python
-from tuvl_engine.nodes.base import node
-from tuvl_engine.repositories.registry import get_repository
+from tuvl.core.nodes.base import node
 
 @node("save_contact")
-async def save_contact(ctx: dict[str, Any]) -> dict[str, Any]:
+async def save_contact(ctx: dict) -> dict:
+    repo = ctx["_db"]["Contact"]   # WorkflowUoW — model must be in workflow's context:
+    
+    contact = await repo.add({
+        "email": ctx["email"],
+        "name": ctx["name"],
+    })
+    
+    ctx["id"] = str(contact.id)
+    return ctx
+```
+
+### Using `get_repository` directly
+
+Use this when you need to access a model that is not declared in the workflow's `context:` field:
+
+```python
+from tuvl.core.nodes.base import node
+from tuvl.core.repositories.registry import get_repository
+
+@node("save_contact")
+async def save_contact(ctx: dict) -> dict:
     session = ctx["_session"]
     repo = get_repository("Contact", session)
     
@@ -137,9 +444,8 @@ async def save_contact(ctx: dict[str, Any]) -> dict[str, Any]:
 
 ```python
 @node("find_duplicates")
-async def find_duplicates(ctx: dict[str, Any]) -> dict[str, Any]:
-    session = ctx["_session"]
-    repo = get_repository("Contact", session)
+async def find_duplicates(ctx: dict) -> dict:
+    repo = ctx["_db"]["Contact"]
     
     existing = await repo.list(
         criteria={"email": ctx["email"]},
@@ -240,25 +546,15 @@ Organize nodes by domain:
 
 ```
 nodes/
-├── __init__.py
 ├── contacts.py      # Contact-related nodes
 ├── orders.py        # Order processing nodes
 ├── notifications.py # Email, SMS, push notifications
 └── integrations.py  # External API integrations
 ```
 
-### Import Registration
+### Auto-Discovery
 
-Create an `__init__.py` that imports all modules:
-
-```python title="nodes/__init__.py"
-from . import contacts
-from . import orders
-from . import notifications
-from . import integrations
-```
-
-This ensures all nodes are registered when the package is imported.
+tuvl automatically imports all `.py` files from the project's `nodes/` directory at startup — no `__init__.py` required. Every `@node()`-decorated function in those files is registered in `NODE_REGISTRY` and becomes available to workflow steps.
 
 ## Utility Functions
 

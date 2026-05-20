@@ -36,8 +36,15 @@ Before installing tuvl, ensure you have:
 Install the tuvl CLI globally using uv:
 
 ```bash
-uv tool install tuvl-cli
+# Base CLI only
+uv tool install tuvl
+
+# With dev server and built-in UI (recommended)
+uv tool install "tuvl[standard]"
 ```
+
+!!! tip
+    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, and hot-reload support. Use the base install for production-only deployments where the UI is not needed.
 
 Verify the installation:
 
@@ -45,18 +52,22 @@ Verify the installation:
 tuvl --version
 ```
 
-## Installing tuvl Engine
+## Installing tuvl as a Project Dependency
 
-For projects that need the engine directly:
+For projects that embed the engine directly:
 
 ```bash
-uv add tuvl-engine
+# Base engine
+uv add tuvl
+
+# With dev server and built-in UI
+uv add "tuvl[standard]"
 ```
 
 Or with pip:
 
 ```bash
-pip install tuvl-engine
+pip install "tuvl[standard]"
 ```
 
 ## Optional Dependencies
@@ -130,7 +141,7 @@ For contributing to tuvl or developing locally:
 
 ```bash
 # Clone the repository
-git clone https://github.com/tuvl/tuvl.git
+git clone https://github.com/tuvl-io/tuvl.git
 cd tuvl
 
 # Install dependencies
@@ -146,23 +157,32 @@ cd ../engine && uv run tuvl dev
 Create a test project to verify everything works:
 
 ```bash
-# Initialize a new project
-tuvl init my-project
+# Scaffold with sample files (recommended)
+tuvl init my-project --sample
 cd my-project
 
 # Start the development server
 tuvl dev
+
+# Options: custom port or project directory
+# tuvl dev --port 3000
+# tuvl dev --project-dir /path/to/project
 ```
 
 You should see output like:
 
 ```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     ✅  Models loaded: 0
-INFO:     ✅  Workflows mounted: 0
+╭─────────────────────────────── tuvl dev ───────────────────────────────╮
+│ Starting tuvl engine in dev mode on port 8000.                         │
+│                                                                        │
+│ Security key                                                           │
+│  XXXX-XXXX-XXXX-XXXX                                                   │
+│                                                                        │
+│ Open http://127.0.0.1:8000/ui/ and paste the key above.               │
+╰────────────────────────────────────────────────────────────────────────╯
 ```
 
-Visit `http://localhost:8000/docs` to see the auto-generated API documentation.
+Open `http://127.0.0.1:8000/ui/` in your browser and paste the printed security key to access the tuvl insight developer portal.
 
 ## Next Steps
 
