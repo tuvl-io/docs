@@ -1,70 +1,71 @@
 # tuvl Documentation
 
-This directory contains the documentation for tuvl, built with [MkDocs](https://www.mkdocs.org/) and the [Material theme](https://squidfunk.github.io/mkdocs-material/).
+Source for the [tuvl](https://github.com/tuvl-io/tuvl) documentation site, built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) and published to [tuvl.dev](https://tuvl.dev).
+
+## Prerequisites
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) — used for dependency management
 
 ## Local Development
 
-### Install Dependencies
-
 ```bash
+# Install dependencies
 uv sync
-```
 
-### Serve Locally
-
-```bash
+# Serve with live reload (default: http://127.0.0.1:8000)
 uv run mkdocs serve
-```
 
-Visit `http://localhost:8005` to view the documentation.
+# Serve on a custom port
+uv run mkdocs serve --dev-addr 127.0.0.1:8001
+```
 
 ### Build Static Site
 
 ```bash
-uv run mkdocs build
+uv run mkdocs build --strict
 ```
 
-The built site will be in the `site/` directory.
+Output goes to `site/`. The `--strict` flag treats warnings as errors — use it to catch broken links before deploying.
 
 ## Structure
 
 ```
-documentation/
-├── mkdocs.yml           # MkDocs configuration
-├── pyproject.toml       # Python dependencies (uv)
-├── README.md           # This file
+tuvl_documentation/
+├── mkdocs.yml            # Site config, nav, theme, plugins
+├── pyproject.toml        # Python deps managed by uv
+├── .github/
+│   └── workflows/
+│       └── publish-docs.yml   # CI: build & deploy on release branch / tag
 └── docs/
-    ├── index.md         # Home page
-    ├── getting-started/ # Installation, quickstart
-    ├── concepts/        # Architecture, workflows, nodes
-    ├── configuration/   # Datasources, agents
-    ├── cli/             # CLI reference
-    ├── api/             # API reference
-    ├── examples/        # Complete examples
-    ├── contributing.md  # Contribution guide
-    ├── stylesheets/     # Custom CSS
-    └── assets/          # Images, favicon
+    ├── index.md          # Home page
+    ├── getting-started/  # Installation, quickstart, project structure
+    ├── concepts/         # Architecture, workflows, nodes, models, context
+    ├── configuration/    # Datasources, LLM presets, environment vars
+    ├── cli/              # CLI command reference
+    ├── api/              # REST API endpoints & schemas
+    ├── sdk/              # Python SDK reference
+    ├── tools/            # Built-in tool integrations
+    ├── security/         # Auth, secrets, hardening
+    ├── examples/         # End-to-end workflow examples
+    ├── contributing.md   # Contribution guide
+    ├── stylesheets/      # Custom CSS overrides
+    └── assets/           # Logo, favicon, images
 ```
 
 ## Adding Pages
 
-1. Create a new `.md` file in the appropriate directory
-2. Add the page to `nav` in `mkdocs.yml`
-3. Cross-reference with relative links: `[Link](../other-page.md)`
-
-## Writing Guidelines
-
-- Use clear, concise language
-- Include code examples with language hints
-- Add diagrams using Mermaid when helpful
-- Cross-reference related pages
+1. Create a `.md` file in the appropriate `docs/` subdirectory
+2. Register it under `nav:` in `mkdocs.yml`
+3. Use root-relative links: `[Link](../concepts/nodes.md)`
 
 ## Deployment
 
-The documentation is automatically deployed on push to `main` using GitHub Pages.
+Docs are published automatically via GitHub Actions:
 
-To manually deploy:
+| Event | Action |
+|-------|--------|
+| Push to `release` branch | Build & deploy to GitHub Pages |
+| Tag matching `v*` | Build & deploy to GitHub Pages |
 
-```bash
-uv run mkdocs gh-deploy
-```
+See [.github/workflows/publish-docs.yml](.github/workflows/publish-docs.yml) for details.
