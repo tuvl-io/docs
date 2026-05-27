@@ -14,25 +14,27 @@ tuvl is a modular workflow engine that bridges the gap between deterministic cod
 
 ```yaml title="workflows/onboarding.yaml"
 kind: "Workflow"
+version: "v1"
 metadata:
   name: "candidate_onboarding"
   description: "AI-powered candidate vetting workflow"
 
-steps:
-  - id: "save_draft"
-    kind: "functional"
-    runner: "db_save"
+spec:
+  steps:
+    - id: "save_draft"
+      kind: "functional"
+      runner: "db_save"
 
-  - id: "ai_vetting"
-    kind: "agent"
-    agent:
-      model: "ollama/llama3"
-      prompt: |
-        Evaluate this candidate: {{ full_name }}
-        Experience: {{ experience_years }} years
-    routes:
-      senior: "fast_track"
-      needs_review: "manual_review"
+    - id: "ai_vetting"
+      kind: "agent"
+      agent:
+        model: "ollama/llama3"
+        prompt: |
+          Evaluate this candidate: {{ full_name }}
+          Experience: {{ experience_years }} years
+      routes:
+        senior: "fast_track"
+        needs_review: "manual_review"
 ```
 
 ## Key Features
