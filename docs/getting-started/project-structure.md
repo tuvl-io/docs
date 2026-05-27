@@ -68,27 +68,29 @@ YAML `Workflow` files. Each file's `trigger` section defines the HTTP endpoint t
 
 ```yaml title="workflows/contact_intake.yaml"
 kind: "Workflow"
+version: "v1"
 metadata:
   name: "contact_intake"
-context: "Contact"
-trigger:
-  path: "/api/contacts"
-  method: "POST"
-steps:
-  - id: "save"
-    kind: "functional"
-    runner: "save_contact"
-    routes:
-      default: "prioritize"
-  - id: "prioritize"
-    kind: "agent"
-    agent:
-      model: "default"
-      prompt: "Classify {{ name }} as high | medium | low priority. Return JSON: {\"priority\": \"...\"}"
-      output:
-        format: json
-        map:
-          priority: priority
+spec:
+  context: "Contact"
+  trigger:
+    path: "/api/contacts"
+    method: "POST"
+  steps:
+    - id: "save"
+      kind: "functional"
+      runner: "save_contact"
+      routes:
+        default: "prioritize"
+    - id: "prioritize"
+      kind: "agent"
+      agent:
+        model: "default"
+        prompt: "Classify {{ name }} as high | medium | low priority. Return JSON: {\"priority\": \"...\"}"
+        output:
+          format: json
+          map:
+            priority: priority
 ```
 
 ### `datasources/`

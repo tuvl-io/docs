@@ -8,23 +8,25 @@ A workflow is defined in YAML with four main sections:
 
 ```yaml
 kind: "Workflow"
+version: "v1"
 
 metadata:
   name: "my_workflow"
   description: "What this workflow does"
 
-trigger:
-  path: "/api/my-endpoint"
-  method: "POST"
-  input_schema: "context"
-  response_schema: "context"
+spec:
+  trigger:
+    path: "/api/my-endpoint"
+    method: "POST"
+    input_schema: "context"
+    response_schema: "context"
 
-context: "MyModel"
+  context: "MyModel"
 
-steps:
-  - id: "step_1"
-    kind: "functional"
-    runner: "my_node"
+  steps:
+    - id: "step_1"
+      kind: "functional"
+      runner: "my_node"
 ```
 
 ## Metadata
@@ -197,6 +199,7 @@ Execute an LLM call with structured output:
 | `retry.on` | `[]` | Error types to retry on |
 | `retry.backoff` | `1` | Backoff multiplier between retries |
 | `timeout` | `60` | Timeout in seconds |
+| `context_injection` | `[]` | List of context keys whose values are appended as a system message (RAG / search-result grounding) |
 
 ### Router Steps
 

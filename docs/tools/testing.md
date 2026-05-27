@@ -151,19 +151,40 @@ evaluations:
   - step_id: compute_score
     instruction: >
       The score field must be a positive number between 0 and 100.
-    judge_model: gpt-4o-mini   # optional — overrides TUVL_TEST_JUDGE
+    judge_model: openai/gpt-4o-mini   # optional — overrides persisted config and env var
 ```
 
 ### Evaluation fields
 
 | Field | Required | Description |
-|-------|----------|-------------|
+|-------|----------|--------------|
 | `step_id` | Yes | ID of the step to evaluate (must appear in the trace) |
 | `instruction` | Yes | Natural-language condition the step output must satisfy |
-| `judge_model` | No | litellm model string for this evaluation. Falls back to `TUVL_TEST_JUDGE`. |
+| `judge_model` | No | litellm model string for this evaluation only. See resolution order below. |
+
+### Judge model resolution order
+
+For each evaluation tuvl resolves the judge model using the following priority (first
+non-empty value wins):
+
+1. **`judge_model` field on the evaluation** — highest priority, per-assertion override
+2. **`TUVL_TEST_JUDGE` environment variable** — process-level default
+3. **`.tuvl/testing.yaml` persisted config** — written by the Dev UI (Settings → Testing → LLM Judge)
+
+If none of the three provides a model the evaluation is **silently skipped** and the
+run exits `0`. No LLM API call is made.
 
 The judge model string follows litellm conventions, e.g. `openai/gpt-4o`,
 `anthropic/claude-3-5-sonnet-20241022`, `ollama/llama3`.
+
+### Private-key sanitization
+
+Before sending context snapshots to the judge, tuvl automatically strips any key whose
+name starts with `_` (underscore). These are treated as internal / private fields and
+should never be exposed to an external LLM.
+
+The original `step_trace` dict passed by the caller is **not mutated** — a deep copy is
+made before sanitization.
 
 ---
 
@@ -215,7 +236,12 @@ tuvl test [OPTIONS]
 
 | Variable | Description |
 |----------|-------------|
-| `TUVL_TEST_JUDGE` | litellm model string used as the default judge. Example: `gpt-4o`. If not set, evaluations that don't specify `judge_model` are skipped. |
+| `TUVL_TEST_JUDGE` | litellm model string used as the default judge (priority 2 of 3). Example: `openai/gpt-4o`. If not set and no persisted config exists, evaluations that don't specify `judge_model` are skipped. |
+
+!!! tip "Persistent config"
+    Use the Dev UI (**Settings → Testing → LLM Judge**) to persist a default judge model
+    to `.tuvl/testing.yaml` without needing an environment variable. The env var always
+    overrides the persisted config at runtime.
 
 ---
 
