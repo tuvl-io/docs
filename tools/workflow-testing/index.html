@@ -12,13 +12,13 @@
         <meta name="author" content="tuvl Team">
       
       
-        <link rel="canonical" href="https://tuvl.dev/security/tokens/">
+        <link rel="canonical" href="https://tuvl.dev/tools/workflow-testing/">
       
       
-        <link rel="prev" href="../federation/">
+        <link rel="prev" href="../spectrum/">
       
       
-        <link rel="next" href="../../tools/spectrum/">
+        <link rel="next" href="../hitl/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Tokens - tuvl</title>
+        <title>Workflow Canvas Test Mode - tuvl</title>
       
     
     
@@ -94,7 +94,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#biscuit-tokens" class="md-skip">
+        <a href="#workflow-canvas-test-mode" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Tokens
+              Workflow Canvas Test Mode
             
           </span>
         </div>
@@ -313,13 +313,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../iam/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../security/iam/" class="md-tabs__link">
           
   
   
@@ -335,11 +333,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../tools/spectrum/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../spectrum/" class="md-tabs__link">
           
   
   
@@ -1134,31 +1134,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
@@ -1176,7 +1173,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1194,7 +1191,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../iam/" class="md-nav__link">
+      <a href="../../security/iam/" class="md-nav__link">
         
   
   
@@ -1222,7 +1219,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../federation/" class="md-nav__link">
+      <a href="../../security/federation/" class="md-nav__link">
         
   
   
@@ -1230,6 +1227,126 @@
     
   
     Federation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tokens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spectrum/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectrum
   
 
     
@@ -1266,7 +1383,7 @@
   <span class="md-ellipsis">
     
   
-    Tokens
+    Workflow Canvas Test Mode
   
 
     
@@ -1284,7 +1401,7 @@
   <span class="md-ellipsis">
     
   
-    Tokens
+    Workflow Canvas Test Mode
   
 
     
@@ -1310,10 +1427,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#token-structure" class="md-nav__link">
+  <a href="#opening-test-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Structure
+        Opening Test Mode
       
     </span>
   </a>
@@ -1321,55 +1438,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#token-lifecycle" class="md-nav__link">
+  <a href="#the-test-input-panel-left" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Lifecycle
+        The Test Input Panel (left)
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-ttl" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token TTL
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-refresh" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Refresh
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-revocation-blacklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Revocation (Blacklist)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Token Revocation (Blacklist)">
+    <nav class="md-nav" aria-label="The Test Input Panel (left)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#storage-backends" class="md-nav__link">
+  <a href="#input-schema-auto-scaffold" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Storage backends
+        Input schema auto-scaffold
       
     </span>
   </a>
@@ -1377,10 +1461,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#automatic-ttl" class="md-nav__link">
+  <a href="#field-chips" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Automatic TTL
+        Field chips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editor-toolbar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editor toolbar
       
     </span>
   </a>
@@ -1393,33 +1488,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#signing-keys" class="md-nav__link">
+  <a href="#running-a-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Signing Keys
+        Running a Test
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Signing Keys">
+    <nav class="md-nav" aria-label="Running a Test">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#persistent-mode-recommended-for-production" class="md-nav__link">
+  <a href="#node-highlights-on-the-canvas" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Persistent mode (recommended for production)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ephemeral-mode-development-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ephemeral mode (development only)
+        Node highlights on the canvas
       
     </span>
   </a>
@@ -1432,10 +1516,110 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-guarantees" class="md-nav__link">
+  <a href="#the-test-out-panel-right-test-out-tab" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Guarantees
+        The Test Out Panel (right — "Test Out" tab)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Test Out Panel (right — &#34;Test Out&#34; tab)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#status-bar-top-of-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status bar (top of panel)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-list-left-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step list (left column)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-inspector-right-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step inspector (right column)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step inspector (right column)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#state-before-after-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State (before / after diff)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-state-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final State view
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bottom-status-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bottom Status Bar
       
     </span>
   </a>
@@ -1443,10 +1627,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#token-inspection" class="md-nav__link">
+  <a href="#stopping-and-aborting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Inspection
+        Stopping and Aborting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resizing-panels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resizing Panels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#differences-from-the-standalone-spectrum-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Differences from the Standalone Spectrum Page
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
       
     </span>
   </a>
@@ -1462,67 +1679,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Tools
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Tools
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
               
                 
   
@@ -1530,63 +1686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/spectrum/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Spectrum
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../tools/workflow-testing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Workflow Canvas Test Mode
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../tools/hitl/" class="md-nav__link">
+      <a href="../hitl/" class="md-nav__link">
         
   
   
@@ -1614,7 +1714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/testing/" class="md-nav__link">
+      <a href="../testing/" class="md-nav__link">
         
   
   
@@ -2192,10 +2292,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#token-structure" class="md-nav__link">
+  <a href="#opening-test-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Structure
+        Opening Test Mode
       
     </span>
   </a>
@@ -2203,55 +2303,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#token-lifecycle" class="md-nav__link">
+  <a href="#the-test-input-panel-left" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Lifecycle
+        The Test Input Panel (left)
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-ttl" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token TTL
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-refresh" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Refresh
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-revocation-blacklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Revocation (Blacklist)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Token Revocation (Blacklist)">
+    <nav class="md-nav" aria-label="The Test Input Panel (left)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#storage-backends" class="md-nav__link">
+  <a href="#input-schema-auto-scaffold" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Storage backends
+        Input schema auto-scaffold
       
     </span>
   </a>
@@ -2259,10 +2326,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#automatic-ttl" class="md-nav__link">
+  <a href="#field-chips" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Automatic TTL
+        Field chips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editor-toolbar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editor toolbar
       
     </span>
   </a>
@@ -2275,33 +2353,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#signing-keys" class="md-nav__link">
+  <a href="#running-a-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Signing Keys
+        Running a Test
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Signing Keys">
+    <nav class="md-nav" aria-label="Running a Test">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#persistent-mode-recommended-for-production" class="md-nav__link">
+  <a href="#node-highlights-on-the-canvas" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Persistent mode (recommended for production)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ephemeral-mode-development-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ephemeral mode (development only)
+        Node highlights on the canvas
       
     </span>
   </a>
@@ -2314,10 +2381,110 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-guarantees" class="md-nav__link">
+  <a href="#the-test-out-panel-right-test-out-tab" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Guarantees
+        The Test Out Panel (right — "Test Out" tab)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Test Out Panel (right — &#34;Test Out&#34; tab)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#status-bar-top-of-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status bar (top of panel)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-list-left-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step list (left column)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-inspector-right-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step inspector (right column)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step inspector (right column)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#state-before-after-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State (before / after diff)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-state-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final State view
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bottom-status-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bottom Status Bar
       
     </span>
   </a>
@@ -2325,10 +2492,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#token-inspection" class="md-nav__link">
+  <a href="#stopping-and-aborting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Inspection
+        Stopping and Aborting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resizing-panels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resizing Panels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#differences-from-the-standalone-spectrum-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Differences from the Standalone Spectrum Page
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
       
     </span>
   </a>
@@ -2355,172 +2555,296 @@
   
 
 
-<h1 id="biscuit-tokens">Biscuit Tokens<a class="headerlink" href="#biscuit-tokens" title="Permanent link">&para;</a></h1>
-<p>tuvl uses <a href="https://www.biscuitsec.org/">Biscuit</a> tokens for authentication and authorization.
-Biscuit is an open standard for capability tokens — they are cryptographically signed, carry
-Datalog facts (identity, roles, scopes, expiry), and cannot be forged or tampered with.</p>
+<h1 id="workflow-canvas-test-mode">Workflow Canvas — Test Mode<a class="headerlink" href="#workflow-canvas-test-mode" title="Permanent link">&para;</a></h1>
+<p>The Workflow Canvas editor ships a full <strong>integrated test runner</strong> so you can execute any
+workflow against custom input, watch steps stream in live, and inspect every context
+mutation — all without leaving the visual editor.</p>
 <hr />
-<h2 id="token-structure">Token Structure<a class="headerlink" href="#token-structure" title="Permanent link">&para;</a></h2>
-<p>Every tuvl Biscuit token contains an <strong>authority block</strong> with four kinds of Datalog facts:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>user(&quot;550e8400-e29b-41d4-a716-446655440000&quot;);  // user UUID
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>group(&quot;hr_manager&quot;);                            // role name(s)
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>scope(&quot;requisition:write&quot;);                     // permission scope(s)
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>scope(&quot;candidate:read&quot;);                        // multiple scopes allowed
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>exp(1747180800);                                // UNIX expiry timestamp (optional)
-</span></code></pre></div>
-<p>The token is signed with the server's Ed25519 private key and encoded as URL-safe Base64.
-It is sent in every API request as an HTTP Bearer token:</p>
-<div class="language-http highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="err">Authorization: Bearer &lt;biscuit_b64&gt;</span>
-</span></code></pre></div>
+<h2 id="opening-test-mode">Opening Test Mode<a class="headerlink" href="#opening-test-mode" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Open a workflow in the Workflow Canvas (<code>/insight</code> → <strong>Workflows</strong> → select a workflow).</li>
+<li>Click <strong>▶ Test</strong> in the top-right metadata bar.  The left panel switches to the <strong>Test</strong> tab.</li>
+<li>To close test mode, click <strong>× Test Mode</strong> in the same button (the label toggles).</li>
+</ol>
 <hr />
-<h2 id="token-lifecycle">Token Lifecycle<a class="headerlink" href="#token-lifecycle" title="Permanent link">&para;</a></h2>
-<pre class="mermaid"><code>stateDiagram-v2
-    [*] --&gt; Minted: POST /auth/token\nor OAuth callback
-    Minted --&gt; Active: Valid, not expired, not blacklisted
-    Active --&gt; Expired: exp() fact timestamp passed
-    Active --&gt; Revoked: POST /auth/logout\nor POST /auth/refresh (old token)
-    Active --&gt; Refreshed: POST /auth/refresh (new token issued)
-    Expired --&gt; [*]
-    Revoked --&gt; [*]</code></pre>
-<hr />
-<h2 id="token-ttl">Token TTL<a class="headerlink" href="#token-ttl" title="Permanent link">&para;</a></h2>
-<p>Tokens are minted with an embedded <code>exp({unix_ts})</code> fact. The default TTL is <strong>86400 seconds
-(24 hours)</strong>. You can change it per deployment:</p>
-<div class="language-text highlight"><span class="filename">.env</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>TUVL_TOKEN_TTL_SECONDS=3600   # 1 hour
-</span></code></pre></div>
-<p>Setting <code>TUVL_TOKEN_TTL_SECONDS=0</code> omits the expiry fact entirely. This is <strong>not recommended
-for production</strong> — tokens without an expiry can only be invalidated by blacklisting.</p>
-<p>When a request arrives with an expired token, tuvl returns:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="err">HTTP/</span><span class="mf">1.1</span><span class="w"> </span><span class="mi">401</span><span class="w"> </span><span class="err">U</span><span class="kc">naut</span><span class="err">horized</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="p">{</span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Token has expired.&quot;</span><span class="p">}</span>
-</span></code></pre></div>
-<hr />
-<h2 id="token-refresh">Token Refresh<a class="headerlink" href="#token-refresh" title="Permanent link">&para;</a></h2>
-<p>A client may request a new token before expiry using the refresh endpoint:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/refresh<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;current_token&gt;&quot;</span>
-</span></code></pre></div>
-<p>The server:
-1. Verifies the current token (must be valid and not expired)
-2. Looks up the user in the database (must still be active)
-3. Mints a new token with a fresh TTL
-4. <strong>Revokes the old token</strong> by adding it to the blacklist</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">&quot;access_token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;new_biscuit_b64&gt;&quot;</span><span class="p">,</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">&quot;token_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bearer&quot;</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">}</span>
-</span></code></pre></div>
-<hr />
-<h2 id="token-revocation-blacklist">Token Revocation (Blacklist)<a class="headerlink" href="#token-revocation-blacklist" title="Permanent link">&para;</a></h2>
-<p>Explicit revocation is handled by a <strong>token blacklist</strong>. Revoked tokens are rejected
-on every subsequent request, even before their <code>exp</code> timestamp is reached.</p>
-<p>The blacklist stores the <strong>SHA-256 hash</strong> of each revoked token string — the raw token
-value is never persisted.</p>
-<h3 id="storage-backends">Storage backends<a class="headerlink" href="#storage-backends" title="Permanent link">&para;</a></h3>
+<h2 id="the-test-input-panel-left">The Test Input Panel (left)<a class="headerlink" href="#the-test-input-panel-left" title="Permanent link">&para;</a></h2>
+<p>The left panel contains a <strong>CodeMirror JSON editor</strong> for the initial workflow input context.</p>
+<h3 id="input-schema-auto-scaffold">Input schema auto-scaffold<a class="headerlink" href="#input-schema-auto-scaffold" title="Permanent link">&para;</a></h3>
+<p>When you open the Test tab the editor automatically pre-fills every required field with an
+empty string, derived from the workflow's <code>input_schema</code> setting:</p>
 <table>
 <thead>
 <tr>
-<th>Backend</th>
-<th>When used</th>
-<th>Scope</th>
+<th><code>input_schema</code> value</th>
+<th>Where fields come from</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Redis</strong></td>
-<td>A <code>type: redis</code> datasource is configured</td>
-<td>Shared across all workers</td>
+<td><code>context</code> (default)</td>
+<td>Required fields from the context models attached to this workflow</td>
 </tr>
 <tr>
-<td><strong>In-process dict</strong></td>
-<td>No Redis configured (fallback)</td>
-<td>Single worker only</td>
+<td>A model name (e.g. <code>Candidate</code>)</td>
+<td>All fields of that model</td>
+</tr>
+<tr>
+<td>A JSON array (e.g. <code>["email","name"]</code>)</td>
+<td>The listed field names</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">Multi-worker deployments</p>
-<p>Without Redis, a token revoked by one worker is still accepted by all other workers
-because each process has its own blacklist. Configure a Redis datasource before scaling
-to multiple workers or processes. See <a href="../../configuration/redis/">Redis Configuration</a>.</p>
-</div>
-<h3 id="automatic-ttl">Automatic TTL<a class="headerlink" href="#automatic-ttl" title="Permanent link">&para;</a></h3>
-<p>When a token is blacklisted, the entry is stored with the token's remaining TTL (time until
-its <code>exp</code> fact). Once the natural expiry passes, the blacklist entry is cleaned up
-automatically. For tokens without an <code>exp</code> fact, a 24-hour fallback TTL is used.</p>
-<hr />
-<h2 id="signing-keys">Signing Keys<a class="headerlink" href="#signing-keys" title="Permanent link">&para;</a></h2>
-<p>tuvl tokens are signed with an <strong>Ed25519</strong> private key. The key lifecycle is handled by the
-<code>TuvlKeyManager</code>:</p>
-<h3 id="persistent-mode-recommended-for-production">Persistent mode (recommended for production)<a class="headerlink" href="#persistent-mode-recommended-for-production" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><span class="filename">.env</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>TUVL_BISCUIT_PRIVATE_KEY=&lt;hex-encoded-ed25519-private-key&gt;
-</span></code></pre></div>
-<p>Generate a key:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="s2">from biscuit_auth import PrivateKey</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s2">import secrets</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s2">key = PrivateKey.from_bytes(secrets.token_bytes(32))</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s2">print(key.to_bytes().hex())</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s2">&quot;</span>
-</span></code></pre></div>
-<p>Store the hex string in your <code>.env</code> file or secrets manager.</p>
-<h3 id="ephemeral-mode-development-only">Ephemeral mode (development only)<a class="headerlink" href="#ephemeral-mode-development-only" title="Permanent link">&para;</a></h3>
-<p>If <code>TUVL_BISCUIT_PRIVATE_KEY</code> is not set:</p>
+<h3 id="field-chips">Field chips<a class="headerlink" href="#field-chips" title="Permanent link">&para;</a></h3>
+<p>Above the editor a row of <strong>field chips</strong> shows every available key:</p>
 <ul>
-<li><strong>Production mode</strong> (<code>tuvl_dev_mode=false</code>, the default): the server <strong>refuses to start</strong>
-  with a <code>RuntimeError</code>. This prevents accidentally running production without a stable key.</li>
-<li><strong>Dev mode</strong> (<code>tuvl_dev_mode=true</code>, set by <code>tuvl dev</code>): a fresh random key is generated
-  in memory. All tokens are invalidated on restart.</li>
+<li><strong>Sky chip</strong> — field not yet present in the JSON; click to insert <code>"key": ""</code></li>
+<li><strong>Emerald chip with ✓</strong> — field already present in the JSON</li>
 </ul>
-<p>A warning is logged in dev mode:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>⚠️  Auth: No TUVL_BISCUIT_PRIVATE_KEY found — using an EPHEMERAL key.
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>   All Biscuit tokens will be invalid after process restart.
-</span></code></pre></div>
-<hr />
-<h2 id="security-guarantees">Security Guarantees<a class="headerlink" href="#security-guarantees" title="Permanent link">&para;</a></h2>
+<h3 id="editor-toolbar">Editor toolbar<a class="headerlink" href="#editor-toolbar" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Property</th>
-<th>How it is achieved</th>
+<th>Control</th>
+<th>Action</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Integrity</strong></td>
-<td>Ed25519 signature — any modification invalidates the token</td>
+<td><strong>Format</strong></td>
+<td>Pretty-prints the JSON</td>
 </tr>
 <tr>
-<td><strong>No server-side state</strong> (normal)</td>
-<td>Facts are self-contained in the authority block</td>
-</tr>
-<tr>
-<td><strong>Expiry</strong></td>
-<td><code>exp({ts})</code> Datalog fact checked against <code>time.time()</code> on every request</td>
-</tr>
-<tr>
-<td><strong>Revocation</strong></td>
-<td>SHA-256 blacklist in Redis or in-process memory</td>
-</tr>
-<tr>
-<td><strong>Scope injection prevention</strong></td>
-<td>Scope/group values validated against <code>^[\w:.\-/]+$</code> before minting</td>
+<td><strong>▶ Run</strong> / <strong>⏹ Stop</strong></td>
+<td>Start or abort a test run</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="token-inspection">Token Inspection<a class="headerlink" href="#token-inspection" title="Permanent link">&para;</a></h2>
-<p>You can decode a Biscuit token for debugging (the signature is not verified client-side):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Biscuit CLI (https://github.com/biscuit-auth/biscuit-cli)</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>biscuit<span class="w"> </span>inspect<span class="w"> </span>&lt;token&gt;
-</span></code></pre></div>
-<p>Or in Python:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">biscuit_auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">Biscuit</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tuvl.core.auth.keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">key_manager</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">biscuit</span> <span class="o">=</span> <span class="n">Biscuit</span><span class="o">.</span><span class="n">from_base64</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">key_manager</span><span class="o">.</span><span class="n">public_key</span><span class="p">)</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">biscuit</span><span class="o">.</span><span class="n">authority_block</span><span class="p">())</span>
-</span></code></pre></div>
+<h2 id="running-a-test">Running a Test<a class="headerlink" href="#running-a-test" title="Permanent link">&para;</a></h2>
+<p>Click <strong>▶ Run</strong>.  The following happens immediately and in sequence:</p>
+<ol>
+<li><strong>Canvas selection is cleared</strong> — deselects any focused node so the right panel is free.</li>
+<li><strong>Right panel opens</strong> on the <strong>Test Out</strong> tab automatically.</li>
+<li><strong>Status bar appears</strong> at the bottom of the canvas.</li>
+<li>Step events stream in from the server via a gRPC-Web SSE connection.</li>
+</ol>
+<h3 id="node-highlights-on-the-canvas">Node highlights on the canvas<a class="headerlink" href="#node-highlights-on-the-canvas" title="Permanent link">&para;</a></h3>
+<p>As each step executes, its canvas node updates in real time:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Node ring</th>
+<th>Status badge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Running</td>
+<td>Pulsing sky-blue ring</td>
+<td><code>●</code> sky</td>
+</tr>
+<tr>
+<td>Success</td>
+<td>Solid emerald ring</td>
+<td><code>✓</code> emerald</td>
+</tr>
+<tr>
+<td>Error</td>
+<td>Solid rose ring</td>
+<td><code>✗</code> rose</td>
+</tr>
+<tr>
+<td>Partial</td>
+<td>Amber ring</td>
+<td><code>!</code> amber</td>
+</tr>
+</tbody>
+</table>
+<p>The badge is a small <code>18 × 18 px</code> circle pinned to the top-right corner of the node and
+remains visible after the run completes so you can see at a glance which steps succeeded
+and which failed.</p>
+<hr />
+<h2 id="the-test-out-panel-right-test-out-tab">The Test Out Panel (right — "Test Out" tab)<a class="headerlink" href="#the-test-out-panel-right-test-out-tab" title="Permanent link">&para;</a></h2>
+<p>The right panel has two tabs: <strong>YAML</strong> (the existing YAML preview / editor) and
+<strong>Test Out</strong> (the streaming test inspector).  The <strong>Test Out</strong> tab opens automatically
+on Run.</p>
+<h3 id="status-bar-top-of-panel">Status bar (top of panel)<a class="headerlink" href="#status-bar-top-of-panel" title="Permanent link">&para;</a></h3>
+<p>Shows overall run status, step progress (<code>N/N steps ok</code>), and the ID of the currently
+executing node.  If a top-level error occurred it appears inline here.</p>
+<h3 id="step-list-left-column">Step list (left column)<a class="headerlink" href="#step-list-left-column" title="Permanent link">&para;</a></h3>
+<p>A narrow scrollable list updated as events arrive:</p>
+<table>
+<thead>
+<tr>
+<th>Entry</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>★ Final State</strong></td>
+<td>Pinned at the top once the run completes — click to browse the terminal context</td>
+</tr>
+<tr>
+<td><strong>⏳ \&lt;node id&gt;</strong></td>
+<td>The step currently executing (pulsing, disappears when done)</td>
+</tr>
+<tr>
+<td><strong>Step rows</strong></td>
+<td>Each completed step in reverse-chronological order — icon, ID, duration</td>
+</tr>
+</tbody>
+</table>
+<p>Click any row to load its details in the right column.</p>
+<h3 id="step-inspector-right-column">Step inspector (right column)<a class="headerlink" href="#step-inspector-right-column" title="Permanent link">&para;</a></h3>
+<p>Three sub-tabs:</p>
+<h4 id="state-before-after-diff">State (before / after diff)<a class="headerlink" href="#state-before-after-diff" title="Permanent link">&para;</a></h4>
+<p>A table showing every context key with colour-coded change type:</p>
+<table>
+<thead>
+<tr>
+<th>Row colour</th>
+<th>Change type</th>
+<th>Indicator</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Emerald</td>
+<td>Key added by this step</td>
+<td><code>+N</code> badge</td>
+</tr>
+<tr>
+<td>Amber</td>
+<td>Key value changed</td>
+<td><code>~N</code> badge</td>
+</tr>
+<tr>
+<td>None</td>
+<td>Value unchanged</td>
+<td><code>N same</code> badge</td>
+</tr>
+</tbody>
+</table>
+<p>Each row shows <strong>Key</strong>, <strong>Before</strong> value, and <strong>After</strong> value.  Long values are truncated
+to 80 characters.</p>
+<h4 id="logs">Logs<a class="headerlink" href="#logs" title="Permanent link">&para;</a></h4>
+<p>Raw log output captured during the step.  Displayed in a monospace pre-block.
+Shows "No logs for this step." when none were emitted.</p>
+<h4 id="error">Error<a class="headerlink" href="#error" title="Permanent link">&para;</a></h4>
+<p>The full exception detail if <code>status === 'error'</code>.  Displayed in rose monospace text.
+Shows "No error detail." for successful steps.</p>
+<h3 id="final-state-view">Final State view<a class="headerlink" href="#final-state-view" title="Permanent link">&para;</a></h3>
+<p>Selecting <strong>★ Final State</strong> in the step list switches the inspector to a flat key-value
+table of the complete terminal context (private keys prefixed with <code>_</code> are hidden).</p>
+<hr />
+<h2 id="bottom-status-bar">Bottom Status Bar<a class="headerlink" href="#bottom-status-bar" title="Permanent link">&para;</a></h2>
+<p>A thin bar at the bottom of the canvas appears as soon as a run starts and persists until
+explicitly cleared:</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Status badge</td>
+<td><code>⏳ Testing…</code> / <code>✓ Done</code> / <code>✗ Error</code> / <code>⚠ Partial</code></td>
+</tr>
+<tr>
+<td>Running node</td>
+<td><code>→ &lt;node_id&gt;</code> shown while executing</td>
+</tr>
+<tr>
+<td>Step counter</td>
+<td><code>N/N steps ok</code></td>
+</tr>
+<tr>
+<td>Error excerpt</td>
+<td>First line of any top-level error</td>
+</tr>
+<tr>
+<td><strong>View Output ›</strong></td>
+<td>Opens the right Test Out panel if it was closed</td>
+</tr>
+<tr>
+<td><strong>✕ Clear</strong></td>
+<td>Resets all test state and removes the bar</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="stopping-and-aborting">Stopping and Aborting<a class="headerlink" href="#stopping-and-aborting" title="Permanent link">&para;</a></h2>
+<p>Click <strong>⏹ Stop</strong> (the Run button label changes while running) to abort the gRPC stream
+immediately.  Any steps that completed before you stopped remain visible in the Test Out
+panel and on the canvas nodes.</p>
+<hr />
+<h2 id="resizing-panels">Resizing Panels<a class="headerlink" href="#resizing-panels" title="Permanent link">&para;</a></h2>
+<p>Both side panels are independently resizable:</p>
+<ul>
+<li><strong>Left Test panel</strong> — drag the right edge handle (appears on hover as a thin violet bar)</li>
+<li><strong>Right Test Out / YAML panel</strong> — drag the left edge handle</li>
+</ul>
+<p>Minimum / maximum widths are enforced so neither panel can collapse completely.</p>
+<hr />
+<h2 id="differences-from-the-standalone-spectrum-page">Differences from the Standalone Spectrum Page<a class="headerlink" href="#differences-from-the-standalone-spectrum-page" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Workflow Canvas Test Mode</th>
+<th>Standalone Spectrum page</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trigger</td>
+<td>Click <strong>▶ Run</strong> in editor toolbar</td>
+<td>Submit form with workflow name + JSON</td>
+</tr>
+<tr>
+<td>Streaming</td>
+<td>Live, step-by-step via gRPC SSE</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Canvas node highlights</td>
+<td>Yes — real-time ring + badge on each node</td>
+<td>No (separate flow view)</td>
+</tr>
+<tr>
+<td>Input auto-scaffold</td>
+<td>Yes — from <code>input_schema</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td>Run until step</td>
+<td>Yes — right-click "Run to here" on any node</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Scope</td>
+<td>Only the workflow currently open in the editor</td>
+<td>Any workflow by name</td>
+</tr>
+<tr>
+<td>Available in</td>
+<td>Workflow Canvas (<code>/insight</code>)</td>
+<td>Spectrum page (<code>/insight</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Both use the same underlying <code>DevService.RunSpectrum</code> gRPC call.</p>
+<hr />
+<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../spectrum/">Spectrum — Workflow Debugging</a> — standalone Spectrum page and API reference</li>
+<li><a href="../testing/">Testing Workflows</a> — automated YAML-driven test cases with LLM-as-a-Judge</li>
+<li><a href="../hitl/">Human-in-the-Loop</a> — testing HITL steps with Lens</li>
+</ul>
 
 
 
@@ -2610,7 +2934,7 @@ automatically. For tokens without an <code>exp</code> fact, a 24-hour fallback T
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../federation/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Federation">
+          <a href="../spectrum/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Spectrum">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2620,20 +2944,20 @@ automatically. For tokens without an <code>exp</code> fact, a 24-hour fallback T
                 Previous
               </span>
               <div class="md-ellipsis">
-                Federation
+                Spectrum
               </div>
             </div>
           </a>
         
         
           
-          <a href="../../tools/spectrum/" class="md-footer__link md-footer__link--next" aria-label="Next: Spectrum">
+          <a href="../hitl/" class="md-footer__link md-footer__link--next" aria-label="Next: Human-in-the-Loop">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Spectrum
+                Human-in-the-Loop
               </div>
             </div>
             <div class="md-footer__button md-icon">

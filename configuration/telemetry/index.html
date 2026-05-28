@@ -18,7 +18,7 @@
         <link rel="prev" href="../agents/">
       
       
-        <link rel="next" href="../../security/iam/">
+        <link rel="next" href="../llm-judge/">
       
       
         
@@ -94,7 +94,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#observability-opentelemetry" class="md-skip">
+        <a href="#observability" class="md-skip">
           Skip to content
         </a>
       
@@ -1137,13 +1137,135 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-traced" class="md-nav__link">
+  <a href="#structured-logging" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What is traced
+        Structured Logging
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Structured Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controlling-the-renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlling the renderer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#otel-correlation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTel correlation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standard-library-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standard library bridge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emitting-structured-logs-from-custom-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emitting structured logs from custom nodes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#distributed-tracing-opentelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distributed Tracing (OpenTelemetry)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Distributed Tracing (OpenTelemetry)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-w3c-traceparent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP / W3C traceparent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#litellm-genai-telemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LiteLLM GenAI telemetry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1273,6 +1395,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1499,6 +1649,34 @@
     
   
     Spectrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/workflow-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Canvas Test Mode
   
 
     
@@ -2125,13 +2303,135 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-traced" class="md-nav__link">
+  <a href="#structured-logging" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What is traced
+        Structured Logging
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Structured Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controlling-the-renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlling the renderer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#otel-correlation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTel correlation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standard-library-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standard library bridge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emitting-structured-logs-from-custom-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emitting structured logs from custom nodes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#distributed-tracing-opentelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distributed Tracing (OpenTelemetry)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Distributed Tracing (OpenTelemetry)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-w3c-traceparent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP / W3C traceparent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#litellm-genai-telemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LiteLLM GenAI telemetry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2277,17 +2577,90 @@
   
 
 
-<h1 id="observability-opentelemetry">Observability (OpenTelemetry)<a class="headerlink" href="#observability-opentelemetry" title="Permanent link">&para;</a></h1>
-<p>tuvl emits OpenTelemetry (OTel) spans for every workflow step, giving you distributed
-traces across your entire workflow graph in any OTLP-compatible collector.</p>
+<h1 id="observability">Observability<a class="headerlink" href="#observability" title="Permanent link">&para;</a></h1>
+<p>tuvl ships a two-pillar observability stack: <strong>structured JSON logging</strong> (structlog) and
+<strong>distributed tracing</strong> (OpenTelemetry). Both pillars are correlated — every log line
+automatically carries the current <code>trace_id</code> and <code>span_id</code> so you can jump from a log
+event straight to the trace in Jaeger or Grafana Tempo.</p>
 <div class="admonition note">
 <p class="admonition-title">Production only</p>
-<p>Span export is disabled in <code>tuvl dev</code> mode regardless of configuration. Spans
-are only emitted when the engine is started with <code>tuvl run</code>.</p>
+<p>Span export and HTTP-level tracing are disabled in <code>tuvl dev</code> mode. Use <code>tuvl run</code>
+to activate the full telemetry pipeline.</p>
 </div>
 <hr />
-<h2 id="what-is-traced">What is traced<a class="headerlink" href="#what-is-traced" title="Permanent link">&para;</a></h2>
-<p>A span is created for each workflow step execution with the following attributes:</p>
+<h2 id="structured-logging">Structured Logging<a class="headerlink" href="#structured-logging" title="Permanent link">&para;</a></h2>
+<p>tuvl uses <strong>structlog 25.5.0</strong> for all internal logging. In production every log line
+is a single JSON object written to stdout; in development a human-friendly coloured
+renderer is used instead.</p>
+<h3 id="log-format">Log format<a class="headerlink" href="#log-format" title="Permanent link">&para;</a></h3>
+<p>Production (<code>TUVL_ENV</code> ≠ <code>development</code>):</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;event&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Agent LLM response&quot;</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;info&quot;</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-01T12:00:00.123456Z&quot;</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">&quot;trace_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4bf92f3577b34da6a3ce929d0e0e4736&quot;</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">&quot;span_id&quot;</span><span class="p">:</span><span class="w">  </span><span class="s2">&quot;00f067aa0ba902b7&quot;</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">&quot;step_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;classify&quot;</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ollama/llama3&quot;</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="nt">&quot;input_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">312</span><span class="p">,</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nt">&quot;output_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">47</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Development (<code>TUVL_ENV=development</code>): human-readable coloured output via structlog's
+<code>ConsoleRenderer</code>.</p>
+<h3 id="controlling-the-renderer">Controlling the renderer<a class="headerlink" href="#controlling-the-renderer" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TUVL_ENV</code></td>
+<td><code>""</code></td>
+<td>Set to <code>development</code> for the coloured console renderer</td>
+</tr>
+</tbody>
+</table>
+<h3 id="otel-correlation">OTel correlation<a class="headerlink" href="#otel-correlation" title="Permanent link">&para;</a></h3>
+<p>The <code>inject_otel_context</code> structlog processor injects <code>trace_id</code> and <code>span_id</code> from
+the active OpenTelemetry span into every log record. Any log line emitted inside a
+<code>workflow.execute</code> or <code>node.&lt;kind&gt;</code> span automatically carries both identifiers — no
+extra instrumentation needed.</p>
+<h3 id="standard-library-bridge">Standard library bridge<a class="headerlink" href="#standard-library-bridge" title="Permanent link">&para;</a></h3>
+<p>Python's <code>logging</code> module is bridged via <code>structlog.stdlib.ProcessorFormatter</code> so that
+third-party libraries that use <code>logging.getLogger(...)</code> also produce correlated JSON
+log lines.</p>
+<h3 id="emitting-structured-logs-from-custom-nodes">Emitting structured logs from custom nodes<a class="headerlink" href="#emitting-structured-logs-from-custom-nodes" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">structlog</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">log</span> <span class="o">=</span> <span class="n">structlog</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyRunner</span><span class="p">:</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;processing request&quot;</span><span class="p">,</span> <span class="n">step_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="n">items</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;items&quot;</span><span class="p">]))</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="o">...</span>
+</span></code></pre></div>
+<hr />
+<h2 id="distributed-tracing-opentelemetry">Distributed Tracing (OpenTelemetry)<a class="headerlink" href="#distributed-tracing-opentelemetry" title="Permanent link">&para;</a></h2>
+<p>tuvl emits OTel spans for every workflow execution and every node step. Spans are
+exported over gRPC (OTLP) to any compatible collector.</p>
+<h3 id="span-hierarchy">Span hierarchy<a class="headerlink" href="#span-hierarchy" title="Permanent link">&para;</a></h3>
+<p>Each workflow invocation produces a <strong>parent span</strong> containing one <strong>child span per
+node</strong>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>workflow.execute          (parent)
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── node.agent            (child — agent step)
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>├── node.functional       (child — functional step)
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>├── node.router           (child — router step)
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>└── node.HumanInTheLoop   (child — HITL step)
+</span></code></pre></div>
+<p>Valid node kinds: <code>functional</code>, <code>agent</code>, <code>api_call</code>, <code>mcp</code>, <code>router</code>, <code>model-op</code>,
+<code>response</code>, <code>HumanInTheLoop</code>.</p>
+<h3 id="span-attributes">Span attributes<a class="headerlink" href="#span-attributes" title="Permanent link">&para;</a></h3>
+<p><strong>Parent span</strong> (<code>workflow.execute</code>):</p>
 <table>
 <thead>
 <tr>
@@ -2297,38 +2670,58 @@ are only emitted when the engine is started with <code>tuvl run</code>.</p>
 </thead>
 <tbody>
 <tr>
-<td>Span name</td>
-<td><code>workflow.&lt;workflow_name&gt;.&lt;step_id&gt;</code></td>
-</tr>
-<tr>
-<td><code>workflow.name</code></td>
-<td>Workflow <code>metadata.name</code></td>
-</tr>
-<tr>
-<td><code>workflow.step_id</code></td>
-<td>Step <code>id</code> field</td>
-</tr>
-<tr>
-<td><code>workflow.step_kind</code></td>
-<td>Step kind (e.g. <code>agent</code>, <code>functional</code>, <code>router</code>)</td>
-</tr>
-<tr>
-<td><code>workflow.signal</code></td>
-<td>Routing signal emitted by the step</td>
-</tr>
-<tr>
-<td><code>workflow.duration_ms</code></td>
-<td>Wall-clock duration in milliseconds</td>
-</tr>
-<tr>
-<td><code>service.name</code></td>
-<td>Configured service name (default: <code>tuvl</code>)</td>
+<td><code>tuvl.workflow.name</code></td>
+<td><code>metadata.name</code> from the workflow YAML</td>
 </tr>
 </tbody>
 </table>
-<p>Sensitive context values are <strong>automatically masked</strong> before they reach the span. Any
-field registered in <code>SECURE_FIELDS</code> (e.g. <code>password</code>, <code>token</code>, <code>api_key</code>) is replaced
-with <code>***REDACTED***</code>.</p>
+<p><strong>Child spans</strong> (<code>node.&lt;kind&gt;</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tuvl.node.id</code></td>
+<td>Step <code>id</code> field</td>
+</tr>
+<tr>
+<td><code>tuvl.node.kind</code></td>
+<td>Step kind</td>
+</tr>
+<tr>
+<td><code>tuvl.step.signal</code></td>
+<td>Routing signal emitted by the step</td>
+</tr>
+<tr>
+<td><code>tuvl.step.duration_ms</code></td>
+<td>Wall-clock duration in milliseconds</td>
+</tr>
+<tr>
+<td><code>tuvl.context.snapshot</code></td>
+<td>JSON-serialised workflow context (secure fields masked)</td>
+</tr>
+</tbody>
+</table>
+<p>Secure field values appear as <code>"*****"</code> in the context snapshot. The set of secure
+fields is populated from every model field with <code>secure: true</code> in its
+<a href="../../concepts/models/#field-options">ModelDefinition YAML</a>. See
+<a href="#data-masking">Data Masking</a> for details.</p>
+<h3 id="http-w3c-traceparent">HTTP / W3C traceparent<a class="headerlink" href="#http-w3c-traceparent" title="Permanent link">&para;</a></h3>
+<p>FastAPI is instrumented with <code>FastAPIInstrumentor</code> (production mode only). Incoming
+requests that carry a <code>traceparent</code> header (W3C Trace Context) are automatically
+linked as children of the upstream trace — enabling end-to-end context propagation
+from your gateway or frontend to the workflow engine.</p>
+<h3 id="litellm-genai-telemetry">LiteLLM GenAI telemetry<a class="headerlink" href="#litellm-genai-telemetry" title="Permanent link">&para;</a></h3>
+<p>tuvl registers LiteLLM's built-in OpenTelemetry callback at startup:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">litellm</span><span class="o">.</span><span class="n">callbacks</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;opentelemetry&quot;</span><span class="p">]</span>
+</span></code></pre></div>
+<p>This emits <code>gen_ai.*</code> semantic-convention spans for every LLM call, giving you
+per-model latency, token usage, and error rates in the same trace as the workflow
+spans.</p>
 <hr />
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>tuvl resolves telemetry config in this order (first wins):</p>
@@ -2340,23 +2733,23 @@ with <code>***REDACTED***</code>.</p>
 <h3 id="config-file">Config file<a class="headerlink" href="#config-file" title="Permanent link">&para;</a></h3>
 <p>The file lives at <code>&lt;project&gt;/.tuvl/telemetry.yaml</code> and uses the standard tuvl
 <code>kind/version/metadata/spec</code> envelope:</p>
-<div class="language-yaml highlight"><span class="filename">.tuvl/telemetry.yaml</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TelemetryConfig</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">metadata</span><span class="p">:</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nt">spec</span><span class="p">:</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="c1"># Disable to suppress span export while keeping production mode active.</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="c1"># gRPC endpoint of your OTLP collector.</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="c1"># Common values:</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="c1">#   Jaeger all-in-one:     http://localhost:4317</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="c1">#   Grafana Tempo:         http://localhost:4317</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="c1">#   OpenTelemetry Collector: http://localhost:4317</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nt">otlp_endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:4317</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span><span class="c1"># Attached to every span as service.name.</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span><span class="nt">service_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tuvl</span>
+<div class="language-yaml highlight"><span class="filename">.tuvl/telemetry.yaml</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TelemetryConfig</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="c1"># Disable to suppress span export while keeping production mode active.</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span><span class="c1"># gRPC endpoint of your OTLP collector.</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="c1"># Common values:</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="c1">#   Jaeger all-in-one:     http://localhost:4317</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="c1">#   Grafana Tempo:         http://localhost:4317</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span><span class="c1">#   OpenTelemetry Collector: http://localhost:4317</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span><span class="nt">otlp_endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:4317</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">  </span><span class="c1"># Attached to every span as service.name.</span>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">  </span><span class="nt">service_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tuvl</span>
 </span></code></pre></div>
 <p><code>tuvl init --sample</code> writes this file automatically.</p>
 <h3 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h3>
@@ -2372,14 +2765,24 @@ temporary changes:</p>
 </thead>
 <tbody>
 <tr>
+<td><code>TUVL_ENV</code></td>
+<td><code>""</code></td>
+<td><code>development</code> enables console log renderer; any other value uses JSON</td>
+</tr>
+<tr>
 <td><code>TUVL_TELEMETRY_ENABLED</code></td>
 <td><code>true</code></td>
 <td>Set to <code>false</code> to disable span export</td>
 </tr>
 <tr>
+<td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td>
+<td>—</td>
+<td>Standard OTel env var; takes precedence over <code>TUVL_OTLP_ENDPOINT</code></td>
+</tr>
+<tr>
 <td><code>TUVL_OTLP_ENDPOINT</code></td>
 <td><code>http://localhost:4317</code></td>
-<td>gRPC OTLP collector endpoint</td>
+<td>gRPC OTLP collector endpoint (fallback)</td>
 </tr>
 <tr>
 <td><code>TUVL_SERVICE_NAME</code></td>
@@ -2398,60 +2801,61 @@ immediately but take effect only after restarting the engine with <code>tuvl run
 <h2 id="collector-setup">Collector Setup<a class="headerlink" href="#collector-setup" title="Permanent link">&para;</a></h2>
 <h3 id="jaeger-local-development">Jaeger (local development)<a class="headerlink" href="#jaeger-local-development" title="Permanent link">&para;</a></h3>
 <p>The quickest way to visualise traces locally:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>jaeger<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">4317</span>:4317<span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># OTLP gRPC</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">16686</span>:16686<span class="w"> </span><span class="se">\ </span><span class="c1"># Jaeger UI</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>jaegertracing/all-in-one:latest
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>jaeger<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">4317</span>:4317<span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># OTLP gRPC</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">16686</span>:16686<span class="w"> </span><span class="se">\ </span><span class="c1"># Jaeger UI</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>jaegertracing/all-in-one:latest
 </span></code></pre></div>
 <p>Then set in <code>.tuvl/telemetry.yaml</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">spec</span><span class="p">:</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">otlp_endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:4317</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">service_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">otlp_endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:4317</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">service_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
 </span></code></pre></div>
 <p>Open <code>http://localhost:16686</code> to browse traces.</p>
 <h3 id="grafana-tempo">Grafana Tempo<a class="headerlink" href="#grafana-tempo" title="Permanent link">&para;</a></h3>
-<div class="language-yaml highlight"><span class="filename">docker-compose.yml (excerpt)</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">services</span><span class="p">:</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">tempo</span><span class="p">:</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">grafana/tempo:latest</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;4317:4317&quot;</span><span class="w">   </span><span class="c1"># OTLP gRPC receiver</span>
+<div class="language-yaml highlight"><span class="filename">docker-compose.yml (excerpt)</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">services</span><span class="p">:</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">tempo</span><span class="p">:</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">grafana/tempo:latest</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;4317:4317&quot;</span><span class="w">   </span><span class="c1"># OTLP gRPC receiver</span>
 </span></code></pre></div>
 <p>Point <code>otlp_endpoint</code> at <code>http://tempo:4317</code> inside Docker, or
 <code>http://localhost:4317</code> from the host.</p>
 <h3 id="opentelemetry-collector">OpenTelemetry Collector<a class="headerlink" href="#opentelemetry-collector" title="Permanent link">&para;</a></h3>
 <p>For production deployments that fan out to multiple backends:</p>
-<div class="language-yaml highlight"><span class="filename">otelcol-config.yaml (excerpt)</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">receivers</span><span class="p">:</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">otlp</span><span class="p">:</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">protocols</span><span class="p">:</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">      </span><span class="nt">grpc</span><span class="p">:</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">        </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:4317</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="nt">exporters</span><span class="p">:</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="nt">jaeger</span><span class="p">:</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jaeger:14250</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="nt">prometheus</span><span class="p">:</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:8889</span>
+<div class="language-yaml highlight"><span class="filename">otelcol-config.yaml (excerpt)</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">receivers</span><span class="p">:</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">otlp</span><span class="p">:</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">protocols</span><span class="p">:</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span><span class="nt">grpc</span><span class="p">:</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">        </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:4317</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nt">exporters</span><span class="p">:</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span><span class="nt">jaeger</span><span class="p">:</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jaeger:14250</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">  </span><span class="nt">prometheus</span><span class="p">:</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:8889</span>
 </span></code></pre></div>
 <hr />
 <h2 id="data-masking">Data Masking<a class="headerlink" href="#data-masking" title="Permanent link">&para;</a></h2>
-<p>tuvl's masking layer runs before any context data is attached to a span. Fields are
-identified by name (case-insensitive substring match against a built-in deny-list that
-includes <code>password</code>, <code>token</code>, <code>secret</code>, <code>api_key</code>, <code>private_key</code>, and others).</p>
-<p>Masked values appear as <code>***REDACTED***</code> in traces. The mask is applied recursively
-through nested dicts and lists.</p>
-<p>To add a project-specific field to the deny-list, extend <code>SECURE_FIELDS</code> in your
-custom node code:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tuvl.core.core.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">SECURE_FIELDS</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">SECURE_FIELDS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;my_internal_secret&quot;</span><span class="p">)</span>
+<p>tuvl's masking layer runs before any context data is attached to a span. Secure fields
+are identified by the <code>secure: true</code> flag on model fields defined in your project's
+<a href="../../concepts/models/#field-options">ModelDefinition YAMLs</a>. At startup tuvl collects
+every field name marked <code>secure: true</code> into the <code>SECURE_FIELDS</code> set.</p>
+<p>Masked values appear as <code>"*****"</code> in the <code>tuvl.context.snapshot</code> span attribute. The
+mask is applied recursively through nested dicts and lists.</p>
+<p>To add a project-specific field to the secure set at runtime:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tuvl.core.core.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">SECURE_FIELDS</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">SECURE_FIELDS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;my_internal_secret&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
 <h2 id="disabling-telemetry">Disabling Telemetry<a class="headerlink" href="#disabling-telemetry" title="Permanent link">&para;</a></h2>
 <p>Set <code>enabled: false</code> in the config file or use the environment variable:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">TUVL_TELEMETRY_ENABLED</span><span class="o">=</span><span class="nb">false</span><span class="w"> </span>tuvl<span class="w"> </span>run
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nv">TUVL_TELEMETRY_ENABLED</span><span class="o">=</span><span class="nb">false</span><span class="w"> </span>tuvl<span class="w"> </span>run
 </span></code></pre></div>
 <p>The engine logs <code>OTel: telemetry disabled</code> at startup and the <code>TracerProvider</code> is not
-configured. All spans are no-ops (<code>NonRecordingSpan</code>).</p>
+configured. All spans are no-ops (<code>NonRecordingSpan</code>). Structured logging continues to
+work normally.</p>
 
 
 
@@ -2558,13 +2962,13 @@ configured. All spans are no-ops (<code>NonRecordingSpan</code>).</p>
         
         
           
-          <a href="../../security/iam/" class="md-footer__link md-footer__link--next" aria-label="Next: IAM">
+          <a href="../llm-judge/" class="md-footer__link md-footer__link--next" aria-label="Next: LLM Judge">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                IAM
+                LLM Judge
               </div>
             </div>
             <div class="md-footer__button md-icon">

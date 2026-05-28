@@ -1095,6 +1095,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/llm-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1339,6 +1367,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../workflow-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Canvas Test Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../hitl/" class="md-nav__link">
         
   
@@ -1510,6 +1566,28 @@
     <span class="md-ellipsis">
       
         Evaluation fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#judge-model-resolution-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Judge model resolution order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#private-key-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private-key sanitization
       
     </span>
   </a>
@@ -2248,6 +2326,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#judge-model-resolution-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Judge model resolution order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#private-key-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private-key sanitization
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2538,7 +2638,7 @@ receives the step's before/after context snapshot and your instruction, and retu
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">step_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">compute_score</span>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">instruction</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">      </span><span class="no">The score field must be a positive number between 0 and 100.</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nt">judge_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt-4o-mini</span><span class="w">   </span><span class="c1"># optional — overrides TUVL_TEST_JUDGE</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nt">judge_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai/gpt-4o-mini</span><span class="w">   </span><span class="c1"># optional — overrides persisted config and env var</span>
 </span></code></pre></div>
 <h3 id="evaluation-fields">Evaluation fields<a class="headerlink" href="#evaluation-fields" title="Permanent link">&para;</a></h3>
 <table>
@@ -2563,12 +2663,28 @@ receives the step's before/after context snapshot and your instruction, and retu
 <tr>
 <td><code>judge_model</code></td>
 <td>No</td>
-<td>litellm model string for this evaluation. Falls back to <code>TUVL_TEST_JUDGE</code>.</td>
+<td>litellm model string for this evaluation only. See resolution order below.</td>
 </tr>
 </tbody>
 </table>
+<h3 id="judge-model-resolution-order">Judge model resolution order<a class="headerlink" href="#judge-model-resolution-order" title="Permanent link">&para;</a></h3>
+<p>For each evaluation tuvl resolves the judge model using the following priority (first
+non-empty value wins):</p>
+<ol>
+<li><strong><code>judge_model</code> field on the evaluation</strong> — highest priority, per-assertion override</li>
+<li><strong><code>TUVL_TEST_JUDGE</code> environment variable</strong> — process-level default</li>
+<li><strong><code>.tuvl/testing.yaml</code> persisted config</strong> — written by the Dev UI (Settings → Testing → LLM Judge)</li>
+</ol>
+<p>If none of the three provides a model the evaluation is <strong>silently skipped</strong> and the
+run exits <code>0</code>. No LLM API call is made.</p>
 <p>The judge model string follows litellm conventions, e.g. <code>openai/gpt-4o</code>,
 <code>anthropic/claude-3-5-sonnet-20241022</code>, <code>ollama/llama3</code>.</p>
+<h3 id="private-key-sanitization">Private-key sanitization<a class="headerlink" href="#private-key-sanitization" title="Permanent link">&para;</a></h3>
+<p>Before sending context snapshots to the judge, tuvl automatically strips any key whose
+name starts with <code>_</code> (underscore). These are treated as internal / private fields and
+should never be exposed to an external LLM.</p>
+<p>The original <code>step_trace</code> dict passed by the caller is <strong>not mutated</strong> — a deep copy is
+made before sanitization.</p>
 <hr />
 <h2 id="tuvl-test-command"><code>tuvl test</code> Command<a class="headerlink" href="#tuvl-test-command" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tuvl<span class="w"> </span><span class="nb">test</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -2634,10 +2750,16 @@ receives the step's before/after context snapshot and your instruction, and retu
 <tbody>
 <tr>
 <td><code>TUVL_TEST_JUDGE</code></td>
-<td>litellm model string used as the default judge. Example: <code>gpt-4o</code>. If not set, evaluations that don't specify <code>judge_model</code> are skipped.</td>
+<td>litellm model string used as the default judge (priority 2 of 3). Example: <code>openai/gpt-4o</code>. If not set and no persisted config exists, evaluations that don't specify <code>judge_model</code> are skipped.</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition tip">
+<p class="admonition-title">Persistent config</p>
+<p>Use the Dev UI (<strong>Settings → Testing → LLM Judge</strong>) to persist a default judge model
+to <code>.tuvl/testing.yaml</code> without needing an environment variable. The env var always
+overrides the persisted config at runtime.</p>
+</div>
 <hr />
 <h2 id="writing-effective-test-instructions">Writing Effective Test Instructions<a class="headerlink" href="#writing-effective-test-instructions" title="Permanent link">&para;</a></h2>
 <p>The judge model reads the full before/after context snapshot alongside your instruction.
