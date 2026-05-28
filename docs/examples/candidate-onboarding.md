@@ -95,74 +95,76 @@ spec:
 
 ```yaml title="workflows/onboarding.yaml"
 kind: "Workflow"
+version: "v1"
 metadata:
   name: "candidate_onboarding"
   description: "AI-powered candidate screening workflow"
 
-context: "Candidate"
+spec:
+  context: "Candidate"
 
-trigger:
-  path: "/api/candidates/onboard"
-  method: "POST"
-  input_schema: "context"
-  response_schema: "context"
+  trigger:
+    path: "/api/candidates/onboard"
+    method: "POST"
+    input_schema: "context"
+    response_schema: "context"
 
-steps:
-  - id: "save_draft"
-    kind: "functional"
-    runner: "save_candidate"
-    routes:
-      default: "ai_vetting"
-      error: "END"
+  steps:
+    - id: "save_draft"
+      kind: "functional"
+      runner: "save_candidate"
+      routes:
+        default: "ai_vetting"
+        error: "END"
 
-  - id: "ai_vetting"
-    kind: "agent"
-    agent:
-      model: "ollama/llama3"
-      system: |
-        You are a hiring assistant for a tech company.
-        Evaluate candidates based on their experience level.
-        Be fair and consistent in your assessments.
-      prompt: |
-        Evaluate this candidate:
-        
-        Name: {{ full_name }}
-        Experience: {{ experience_years }} years
-        
-        Based on experience level, classify as:
-        - "senior" if 5+ years experience
-        - "unqualified" if less than 1 year
-        - "needs_review" for everything in between
-        
-        Return ONLY valid JSON:
-        {"decision": "senior" | "unqualified" | "needs_review", "reasoning": "brief explanation"}
-      output:
-        format: json
-        map:
-          decision: vetting_decision
-          reasoning: vetting_reasoning
-        signal_from: decision
-      retry:
-        attempts: 3
-        on: [parse_error, timeout]
-        backoff: 2
-      timeout: 30
-    routes:
-      senior: "fast_track"
-      unqualified: "END"
-      needs_review: "manual_review"
-      error: "manual_review"
+    - id: "ai_vetting"
+      kind: "agent"
+      agent:
+        model: "ollama/llama3"
+        system: |
+          You are a hiring assistant for a tech company.
+          Evaluate candidates based on their experience level.
+          Be fair and consistent in your assessments.
+        prompt: |
+          Evaluate this candidate:
+          
+          Name: {{ full_name }}
+          Experience: {{ experience_years }} years
+          
+          Based on experience level, classify as:
+          - "senior" if 5+ years experience
+          - "unqualified" if less than 1 year
+          - "needs_review" for everything in between
+          
+          Return ONLY valid JSON:
+          {"decision": "senior" | "unqualified" | "needs_review", "reasoning": "brief explanation"}
+        output:
+          format: json
+          map:
+            decision: vetting_decision
+            reasoning: vetting_reasoning
+          signal_from: decision
+        retry:
+          attempts: 3
+          on: [parse_error, timeout]
+          backoff: 2
+        timeout: 30
+      routes:
+        senior: "fast_track"
+        unqualified: "END"
+        needs_review: "manual_review"
+        error: "manual_review"
 
-  - id: "fast_track"
-    kind: "functional"
-    runner: "fast_track_candidate"
-    routes:
-      default: "END"
+    - id: "fast_track"
+      kind: "functional"
+      runner: "fast_track_candidate"
+      routes:
+        default: "END"
 
-  - id: "manual_review"
-    kind: "functional"
-    runner: "flag_for_review"
-    routes:
+    - id: "manual_review"
+      kind: "functional"
+      runner: "flag_for_review"
+      routes:
       default: "END"
 ```
 

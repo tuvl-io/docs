@@ -140,12 +140,14 @@ nav:
       - Redis: configuration/redis.md
       - Agents: configuration/agents.md
       - Telemetry: configuration/telemetry.md
+      - LLM Judge: configuration/llm-judge.md
   - Security:
       - IAM: security/iam.md
       - Federation: security/federation.md
       - Tokens: security/tokens.md
   - Tools:
       - Spectrum: tools/spectrum.md
+      - Workflow Canvas Test Mode: tools/workflow-testing.md
       - Human-in-the-Loop: tools/hitl.md
       - Testing Workflows: tools/testing.md
   - TypeScript SDK:

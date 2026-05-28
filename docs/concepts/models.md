@@ -71,8 +71,30 @@ spec:
 | `index` | bool | `false` | Create an index? |
 | `default` | any | `null` | Default value |
 | `input` | bool | `true` | Include in Create schema? |
-| `secure` | bool | `false` | Mark as PII — masked in OTel spans |
+| `secure` | bool | `false` | Mark as PII — value replaced with `"*****"` in OTel span context snapshots |
 | `description` | string | `""` | Field description |
+
+## Controlling CRUD Generation (`spec.schema`)
+
+`spec.schema` controls whether tuvl generates Pydantic schemas and mounts CRUD API routes for the model.
+
+| Value | Behaviour |
+|-------|-----------|
+| `true` (default) | Schemas and CRUD routes (`POST / GET / PATCH / DELETE`) are generated automatically |
+| `false` | Table is created in the database, but **no Pydantic schemas and no CRUD endpoints** are exposed. Use this for internal / join tables that are only accessed via workflow steps. |
+
+```yaml
+spec:
+  tablename: "audit_logs"
+  schema: false   # table exists in DB, no REST endpoints generated
+  fields:
+    ...
+```
+
+!!! tip
+    The `tuvl init --sample` scaffold sets `schema: false` on the sample model intentionally.
+    When you create your own model from the template, change this to `schema: true` (or remove the
+    line entirely — `true` is the default) to have CRUD endpoints generated automatically.
 
 At the model level, `spec.datasource` routes the model to a named datasource (defaults to `"main_postgres"`):
 
@@ -269,16 +291,18 @@ Reference models in workflow context:
 
 ```yaml
 kind: "Workflow"
+version: "v1"
 metadata:
   name: "create_contact"
 
-context: "Contact"           # Links to Contact model
+spec:
+  context: "Contact"           # Links to Contact model
 
-trigger:
-  path: "/api/contacts/intake"
-  method: "POST"
-  input_schema: "context"    # Uses ContactCreate
-  response_schema: "context" # Uses ContactRead
+  trigger:
+    path: "/api/contacts/intake"
+    method: "POST"
+    input_schema: "context"    # Uses ContactCreate
+    response_schema: "context" # Uses ContactRead
 ```
 
 ## Model Registry
