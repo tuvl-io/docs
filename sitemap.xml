@@ -2,134 +2,134 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://tuvl.dev/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/contributing/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/api/endpoints/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/api/schemas/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/cli/commands/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/cli/overview/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/concepts/architecture/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/concepts/context/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/concepts/models/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/concepts/nodes/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/concepts/repositories/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/concepts/workflows/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/configuration/agents/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/configuration/datasources/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/configuration/llm-judge/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/configuration/overview/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/configuration/redis/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/configuration/telemetry/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/examples/candidate-onboarding/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/examples/custom-nodes/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/getting-started/installation/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/getting-started/project-structure/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/getting-started/quickstart/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/sdk/api-reference/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/sdk/overview/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/sdk/quickstart/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/security/federation/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/security/iam/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/security/tokens/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/tools/hitl/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/tools/spectrum/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/tools/testing/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
     <url>
          <loc>https://tuvl.dev/tools/workflow-testing/</loc>
-         <lastmod>2026-05-28</lastmod>
+         <lastmod>2026-05-29</lastmod>
     </url>
 </urlset>
