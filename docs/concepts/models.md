@@ -305,6 +305,99 @@ spec:
     response_schema: "context" # Uses ContactRead
 ```
 
+## Model Versioning
+
+Multiple versions of the same model can coexist inside a single YAML file (using `---`
+multi-document separation) or across separate files.
+
+### Declaring a version
+
+Add `metadata.schema_version` to tag a model definition:
+
+```yaml title="models/candidate.yaml"
+kind: "ModelDefinition"
+metadata:
+  name: "Candidate"
+  schema_version: "v1"        # default when omitted
+spec:
+  tablename: "candidates"
+  fields:
+    - name: "id"
+      type: "uuid"
+      primary_key: true
+      default: "uuid4"
+      input: false
+    - name: "name"
+      type: "string"
+      required: true
+
+---
+
+kind: "ModelDefinition"
+metadata:
+  name: "Candidate"
+  schema_version: "v2"        # new version in same file
+enabled: false                 # inactive until explicitly enabled
+spec:
+  tablename: "candidates"
+  fields:
+    - name: "id"
+      type: "uuid"
+      primary_key: true
+      default: "uuid4"
+      input: false
+    - name: "name"
+      type: "string"
+      required: true
+    - name: "tags"             # field added in v2
+      type: "jsonb"
+      input: true
+```
+
+`schema_version` defaults to `"v1"` when not specified.
+
+### The `enabled` flag
+
+| Value | Behaviour |
+|-------|-----------|
+| `true` (default) | Model is registered and active |
+| `false` | Model is tracked in `MODEL_VERSION_REGISTRY` for admin purposes but excluded from `MODEL_REGISTRY`; no CRUD endpoints are mounted |
+
+Disabled versions are still visible in the admin panel and can be activated without a
+server restart via the admin API.
+
+### Admin API
+
+The admin endpoints let you list, enable/disable, and fork model versions at runtime
+without editing YAML or restarting the server.
+
+See [Admin Version Management API](../api/endpoints.md#version-management-admin-api) for the full endpoint reference.
+
+### Forking a version
+
+The fork endpoint creates a new YAML file in `models/` pre-stamped with the new
+`schema_version`. Use it to branch off a released version for iterative changes:
+
+```bash
+# Create models/candidate_v3.yaml from v2
+POST /admin/models/Candidate/v2/fork
+{ "new_version": "v3" }
+```
+
+### Pinning a model version in a workflow
+
+To use a specific model version inside a workflow step, declare the version target in
+the `context.models` list:
+
+```yaml
+context:
+  models:
+    - name: "Candidate"
+      version: "v2"     # pin to v2 at execution time
+```
+
+See [Workflow context format](workflows.md#context-model) for details.
+
 ## Model Registry
 
 At runtime, models are stored in `MODEL_REGISTRY`:
@@ -317,6 +410,15 @@ ContactModel = MODEL_REGISTRY["Contact"]
 
 # Create an instance
 contact = ContactModel(email="test@example.com", name="Test")
+```
+
+The `MODEL_VERSION_REGISTRY` contains **all** versions regardless of `enabled` state:
+
+```python
+from tuvl.core.models.loader import MODEL_VERSION_REGISTRY
+
+# {name → {schema_version → raw config dict}}
+candidate_v2_config = MODEL_VERSION_REGISTRY["Candidate"]["v2"]
 ```
 
 ## Schema Registry

@@ -67,6 +67,7 @@ Keys starting with underscore (`_`) are reserved for internal use and are **stri
 | `_last_error_type` | Engine | Error category for the last agent failure: `"error"`, `"timeout"`, or `"parse_error"` |
 | `_api_status_code` | `api_call` step | HTTP status code of the last outbound HTTP call |
 | `_response` | `response` step | Shaped payload that will be returned as the HTTP response body |
+| `_context_model_versions` | Engine | `{ModelName: schema_version}` dict tracking which model version each model-aware step should use; populated from the workflow `context.models[].version` declarations |
 
 !!! warning "Private Keys"
     Never store user data in keys starting with `_`. They are excluded from API responses and may be overwritten by the engine.
