@@ -23,8 +23,10 @@ tuvl init [NAME] [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `--project-dir`, `-d` | Alias for NAME argument |
+| `--sample` | Write recruitment sample files covering every step kind, plus telemetry config and test templates |
+| `--multi-tenant` | Bootstrap a multi-tenant project — writes `.tuvl/system.yaml` with `mode: multi_tenant` and includes a sample tenant config |
 
-### Interactive Prompts
+### Examples
 
 The command prompts for:
 
@@ -35,13 +37,6 @@ The command prompts for:
    - Provider: ollama, openai, anthropic, other
    - API key or base URL
    - Default model
-
-### Options
-
-| Option | Description |
-|--------|-------------|
-| `--project-dir`, `-d` | Alias for NAME argument |
-| `--sample` | Write recruitment sample files covering every step kind, plus telemetry config and test templates |
 
 ### Interactive Prompts
 
@@ -67,7 +62,8 @@ my-project/
 │   └── default.yaml  # If LLM configured
 ├── nodes/            # Python node implementations
 ├── .tuvl/
-│   └── telemetry.yaml  # OTel config (written with --sample)
+│   ├── telemetry.yaml  # OTel config (written with --sample)
+│   └── system.yaml     # Multi-tenancy config (written with --multi-tenant)
 ├── tests/
 │   └── workflows/    # Workflow test cases (written with --sample)
 ├── .env              # Secrets (git-ignored)
@@ -89,6 +85,9 @@ tuvl init --project-dir /path/to/project
 
 # Include sample files (workflow, nodes, tests, telemetry config)
 tuvl init my-app --sample
+
+# Bootstrap a multi-tenant project
+tuvl init my-app --multi-tenant
 ```
 
 ---

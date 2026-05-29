@@ -324,6 +324,147 @@ In dev mode (`tuvl dev`) no `Authorization` header is required. The dev middlewa
 auto-injects a session key that grants all scopes. You can still pass a real token to
 test IAM flows.
 
+## Version Management Admin API
+
+The admin endpoints let you inspect, enable/disable, and fork versioned workflow and
+model definitions at runtime — no YAML edits or server restarts required.
+
+### Workflow version endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/admin/workflows` | List all workflow versions grouped by name |
+| `PATCH` | `/admin/workflows/{name}/{version}/toggle` | Toggle `enabled` flag |
+| `POST` | `/admin/workflows/{name}/{version}/fork` | Fork a version to a new YAML file |
+
+#### `GET /admin/workflows`
+
+Returns all versions from the `workflow_versions` table grouped by workflow name.
+
+```json title="Response 200"
+{
+  "onboard": [
+    {
+      "schema_version": "v1",
+      "enabled": true,
+      "trigger_path": "/api/onboard",
+      "trigger_method": "POST",
+      "description": "Initial onboarding flow"
+    },
+    {
+      "schema_version": "v2",
+      "enabled": false,
+      "trigger_path": "/api/onboard",
+      "trigger_method": "POST",
+      "description": null
+    }
+  ]
+}
+```
+
+#### `PATCH /admin/workflows/{name}/{version}/toggle`
+
+Flips the `enabled` field for the given `(name, schema_version)` pair. Returns 404
+if no such row exists.
+
+```json title="Response 200"
+{
+  "name": "onboard",
+  "schema_version": "v1",
+  "enabled": false
+}
+```
+
+#### `POST /admin/workflows/{name}/{version}/fork`
+
+Deep-copies the config of an existing version, stamps it with `new_version`, writes it
+to `workflows/{name}_{new_version}.yaml`, and returns the new file details.
+
+```json title="Request"
+{ "new_version": "v2" }
+```
+
+```json title="Response 200"
+{
+  "name": "onboard",
+  "source_version": "v1",
+  "new_version": "v2",
+  "file": "onboard_v2.yaml"
+}
+```
+
+Returns 404 if the source `(name, version)` is not found in the in-memory registry or
+in the database.
+
+---
+
+### Model version endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/admin/models` | List all model versions grouped by name |
+| `PATCH` | `/admin/models/{name}/{version}/toggle` | Toggle `enabled` flag |
+| `POST` | `/admin/models/{name}/{version}/fork` | Fork a version to a new YAML file |
+
+#### `GET /admin/models`
+
+Returns all versions from the `model_versions` table grouped by model name.
+
+```json title="Response 200"
+{
+  "Candidate": [
+    {
+      "schema_version": "v1",
+      "enabled": true,
+      "tablename": "candidates",
+      "datasource": "main_postgres",
+      "fields": ["id", "name", "email"],
+      "description": null
+    },
+    {
+      "schema_version": "v2",
+      "enabled": false,
+      "tablename": "candidates",
+      "datasource": "main_postgres",
+      "fields": ["id", "name", "email", "tags"],
+      "description": null
+    }
+  ]
+}
+```
+
+#### `PATCH /admin/models/{name}/{version}/toggle`
+
+Flips `enabled` for the given model version. Returns 404 if not found.
+
+```json title="Response 200"
+{
+  "name": "Candidate",
+  "schema_version": "v2",
+  "enabled": true
+}
+```
+
+#### `POST /admin/models/{name}/{version}/fork`
+
+Deep-copies the model config, stamps `new_version`, and writes it to
+`models/{name_lower}_{new_version}.yaml`.
+
+```json title="Request"
+{ "new_version": "v3" }
+```
+
+```json title="Response 200"
+{
+  "name": "Candidate",
+  "source_version": "v2",
+  "new_version": "v3",
+  "file": "candidate_v3.yaml"
+}
+```
+
+---
+
 ## Error Handling
 
 ### HTTP Status Codes

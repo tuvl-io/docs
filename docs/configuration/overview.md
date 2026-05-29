@@ -83,13 +83,15 @@ steps:
 
 ### Multi-Document Files
 
-tuvl reads each YAML document separately:
+tuvl reads each YAML document separately using `yaml.safe_load_all`. This lets you
+pack multiple definitions into a single file — useful for colocating related versions:
 
 ```yaml
 # models/all.yaml
 kind: "ModelDefinition"
 metadata:
   name: "User"
+  schema_version: "v1"
 spec:
   tablename: "users"
   # ...
@@ -98,6 +100,29 @@ spec:
 
 kind: "ModelDefinition"
 metadata:
+  name: "User"
+  schema_version: "v2"  # new version in same file
+enabled: false           # staged — activate via admin API
+spec:
+  tablename: "users"
+  # ...
+```
+
+The same pattern works for `Workflow` documents. Every version — enabled or disabled —
+is stored in the corresponding `*_VERSION_REGISTRY` so the admin API can list, toggle,
+and fork it.
+
+### `schema_version`
+
+`metadata.schema_version` tags a definition with a version string. It defaults to
+`"v1"` when omitted. Multiple definitions sharing the same `metadata.name` but
+different `schema_version` values coexist in the registry independently.
+
+### `enabled`
+
+Setting `enabled: false` excludes a definition from active use (no route mounted, no
+CRUD endpoints) but keeps it visible and manageable through the admin API. Omitting the
+field is equivalent to `enabled: true`.
   name: "Order"
 spec:
   tablename: "orders"
