@@ -42,20 +42,32 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      - name: Resolve version
+        id: ver
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            # Triggered by a tag push
+            VERSION="${GITHUB_REF_NAME#v}"
+          elif [[ -n "${{ inputs.tag }}" ]]; then
+            # Triggered via workflow_dispatch with explicit tag
+            VERSION="${{ inputs.tag }}"
+            VERSION="${VERSION#v}"
+          else
+            # Triggered by branch push — read from pyproject.toml
+            VERSION=$(grep '^version' pyproject.toml | sed 's/.*= *"\(.*\)"/\1/')
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Deploy versioned docs
         run: |
-          TAG="${GITHUB_REF_NAME:-${{ inputs.tag }}}"
-          VERSION="${TAG#v}"
+          VERSION="${{ steps.ver.outputs.version }}"
 
-          if [[ "$VERSION" == *"-beta."* || "$VERSION" == *"-alpha."* || "$VERSION" == *"-rc."* ]]; then
-            # Pre-release: deploy under the full version string and update 'beta' alias
+          if [[ "$VERSION" == *"-beta."* || "$VERSION" == *"-alpha."* || "$VERSION" == *"-rc."* || "$VERSION" == *b[0-9]* ]]; then
             uv run mike deploy --push --update-aliases "$VERSION" beta
-            # Make 'beta' the default only when no stable 'latest' exists yet
             if ! uv run mike list 2>/dev/null | grep -q '\blatest\b'; then
               uv run mike set-default --push beta
             fi
           else
-            # Stable release: deploy under the full version string and update 'latest' alias
             uv run mike deploy --push --update-aliases "$VERSION" latest
             uv run mike set-default --push latest
           fi
