@@ -145,6 +145,18 @@ nav:
       - IAM: security/iam.md
       - Federation: security/federation.md
       - Tokens: security/tokens.md
+  - Insight Portal:
+      - Overview: insight/overview.md
+      - Workflows: insight/workflows.md
+      - Models: insight/models.md
+      - Datasources: insight/datasources.md
+      - AI Models: insight/ai-models.md
+      - Embeddings & Collections: insight/embeddings-collections.md
+      - IAM: insight/iam.md
+      - Federation: insight/federation.md
+      - API Docs: insight/api-docs.md
+      - Spectrum: insight/spectrum.md
+      - Settings: insight/settings.md
   - Tools:
       - Spectrum: tools/spectrum.md
       - Workflow Canvas Test Mode: tools/workflow-testing.md
