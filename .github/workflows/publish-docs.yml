@@ -2,24 +2,32 @@ name: Publish Docs
 
 on:
   push:
-    branches:
-      - release
-  create:
     tags:
-      - "v*"
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to deploy (e.g. v2026.2.1-beta.1)"
+        required: true
 
 permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Deploy versioned docs
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0        # needed for git-revision-date plugins
+          fetch-depth: 0        # mike needs full gh-pages history
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -34,13 +42,20 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Build docs
-        run: uv run mkdocs build --strict
+      - name: Deploy versioned docs
+        run: |
+          TAG="${GITHUB_REF_NAME:-${{ inputs.tag }}}"
+          VERSION="${TAG#v}"
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          publish_branch: gh-pages
-          commit_message: "docs: deploy ${{ github.ref_name }} [skip ci]"
+          if [[ "$VERSION" == *"-beta."* || "$VERSION" == *"-alpha."* || "$VERSION" == *"-rc."* ]]; then
+            # Pre-release: deploy under the full version string and update 'beta' alias
+            uv run mike deploy --push --update-aliases "$VERSION" beta
+            # Make 'beta' the default only when no stable 'latest' exists yet
+            if ! uv run mike list 2>/dev/null | grep -q '\blatest\b'; then
+              uv run mike set-default --push beta
+            fi
+          else
+            # Stable release: deploy under the full version string and update 'latest' alias
+            uv run mike deploy --push --update-aliases "$VERSION" latest
+            uv run mike set-default --push latest
+          fi

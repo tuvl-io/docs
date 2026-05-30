@@ -94,6 +94,9 @@ markdown_extensions:
   - pymdownx.tilde
 
 extra:
+  version:
+    provider: mike
+    default: latest
   analytics:
     provider: google
     property: G-7NBSPKBZSP
