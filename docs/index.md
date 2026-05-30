@@ -77,6 +77,14 @@ spec:
 
     Every workflow becomes an HTTP endpoint. Every model gets CRUD operations.
 
+-   :material-monitor-dashboard:{ .lg .middle } **Insight Developer Portal**
+
+    ---
+
+    Browser-based UI for editing workflows, managing models, testing with Spectrum, and configuring IAM — all in dev mode.
+
+    [:octicons-arrow-right-24: Explore the portal](insight/overview.md)
+
 </div>
 
 ## Quick Example
