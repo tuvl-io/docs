@@ -240,6 +240,156 @@ Call this if you hot-reload workflow YAML files and want the SDK to pick up chan
 
 ---
 
+### `client.crud<TRead, TCreate, TUpdate>(modelName)`
+
+Return a `CrudClient` instance targeting `/models/{modelname}/`. Shares the same transport (base URL + auth token) as the parent `TuvlClient`.
+
+```ts
+crud<TRead = unknown, TCreate = Partial<TRead>, TUpdate = Partial<TRead>>(
+  modelName: string
+): CrudClient<TRead, TCreate, TUpdate>
+```
+
+See the [CrudClient](#crudclient) section below for full method documentation.
+
+---
+
+## `CrudClient`
+
+Typed REST client for tuvl model endpoints. Obtain via `client.crud(modelName)` — do not instantiate directly.
+
+### Methods
+
+#### `crud.list(options?)`
+
+```ts
+list(options?: CrudListOptions): Promise<TRead[]>
+```
+
+Fetches `GET /models/{model}/`. Returns an array of records.
+
+##### `CrudListOptions`
+
+```ts
+interface CrudListOptions {
+  limit?:   number;                   // default 100, max 1000
+  offset?:  number;
+  filters?: Record<string, string>;   // { stage: "screening" } → ?filter[stage]=screening
+  include?: string[];                 // ["posting"] → ?include=posting
+  token?:   string;
+  signal?:  AbortSignal;
+}
+```
+
+| Field | Description |
+|---|---|
+| `filters` | Bracket-notation field filters. Every key becomes `filter[key]=value` in the query string. |
+| `include` | Comma-joined relation names to embed in the response (server performs an IN-clause batch load, not N+1). |
+
+#### `crud.get(id, options?)`
+
+```ts
+get(id: string, options?: CrudGetOptions): Promise<TRead>
+```
+
+Fetches `GET /models/{model}/{id}`. Throws on HTTP 404.
+
+##### `CrudGetOptions`
+
+```ts
+interface CrudGetOptions {
+  include?: string[];
+  token?:   string;
+  signal?:  AbortSignal;
+}
+```
+
+#### `crud.create(body, options?)`
+
+```ts
+create(body: TCreate, options?: CrudMutateOptions): Promise<TRead>
+```
+
+Posts `POST /models/{model}/`. Returns the created record (HTTP 201).
+
+#### `crud.update(id, body, options?)`
+
+```ts
+update(id: string, body: TUpdate, options?: CrudMutateOptions): Promise<TRead>
+```
+
+Patches `PATCH /models/{model}/{id}`. Only fields present in `body` are modified. Throws on HTTP 404.
+
+#### `crud.delete(id, options?)`
+
+```ts
+delete(id: string, options?: CrudMutateOptions): Promise<void>
+```
+
+Sends `DELETE /models/{model}/{id}`. Resolves `void` on HTTP 204. Throws on HTTP 404.
+
+##### `CrudMutateOptions`
+
+```ts
+interface CrudMutateOptions {
+  token?:  string;
+  signal?: AbortSignal;
+}
+```
+
+### Auth scopes
+
+| Operation | Required Biscuit scope |
+|---|---|
+| `list()` / `get()` | `{modelname}:read` |
+| `create()` / `update()` | `{modelname}:write` |
+| `delete()` | `{modelname}:delete` |
+
+Scope names are derived from the lowercase model name. They can be overridden per-model via `spec.access.{read,write,delete}_scope` in the model YAML.
+
+### Error behaviour
+
+All `CrudClient` methods throw a plain `Error` on non-2xx HTTP responses. CRUD calls do **not** throw `TuvlWorkflowError` or `TuvlWorkflowSuspendedError`.
+
+### Example
+
+```ts
+import { TuvlClient } from "@tuvl/client";
+
+interface Candidate {
+  id:    string;
+  name:  string;
+  stage: string;
+  email: string;
+}
+
+const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+
+// List with filters + pagination + relations
+const candidates = await client.crud<Candidate>("candidate").list({
+  filters: { stage: "screening" },
+  include: ["posting"],
+  limit: 50,
+  offset: 0,
+});
+
+// Get one
+const c = await client.crud<Candidate>("candidate").get(id);
+
+// Create
+const created = await client.crud<Candidate, Omit<Candidate, "id">>("candidate")
+  .create({ name: "Alice", email: "alice@example.com", stage: "applied" });
+
+// Partial update
+const updated = await client.crud<Candidate, never, Pick<Candidate, "stage">>("candidate")
+  .update(created.id, { stage: "interview" });
+
+// Delete
+await client.crud("candidate").delete(updated.id);
+```
+
+---
+
 ## Types
 
 ### `TokenResponse`
@@ -387,6 +537,8 @@ const transport = new Transport({ baseUrl, defaultToken });
 transport.post(path, body, options?)       // → Promise<TResponse>
 transport.postStream(path, body, options?) // → Promise<Response>
 transport.get(path, options?)              // → Promise<TResponse>
+transport.patch(path, body, options?)      // → Promise<TResponse>
+transport.delete(path, options?)           // → Promise<void>  (expects 204)
 transport.setToken(token)                  // → void
 ```
 

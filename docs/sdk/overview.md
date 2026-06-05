@@ -99,6 +99,34 @@ await client.execute("admin-workflow", {
 
 ---
 
+## CRUD — model data access
+
+In addition to workflow execution, `TuvlClient` exposes a typed CRUD interface for tuvl model endpoints. Every model defined in your project's YAML gets five auto-generated REST routes at `/models/{modelname}/`. The SDK wraps these with a `CrudClient` returned by `client.crud(modelName)`:
+
+```ts
+// List all candidates
+const all = await client.crud("candidate").list();
+
+// Filter + embed related records
+const results = await client.crud("candidate").list({
+  filters: { stage: "screening" },
+  include: ["posting"],
+  limit: 50,
+});
+
+// Get one
+const c = await client.crud("candidate").get("uuid-here");
+
+// Create / update / delete
+const created = await client.crud("candidate").create({ name: "Alice", email: "alice@example.com" });
+const updated = await client.crud("candidate").update(created.id, { stage: "interview" });
+await client.crud("candidate").delete(updated.id);
+```
+
+CRUD operations use REST only — there is no SSE or gRPC surface for model data access.
+
+---
+
 ## Error handling
 
 `execute()` throws on:
