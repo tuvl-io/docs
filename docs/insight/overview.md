@@ -32,6 +32,9 @@ tuvl also opens the portal in your default browser automatically. Paste the secu
 !!! tip "Print the key directly"
     Use `tuvl dev --show-key` to print the key in the terminal output. The default is to store it silently so shell history recordings cannot capture it.
 
+!!! tip "Bypass the login screen"
+    Use `tuvl dev --auto-login` (or set `TUVL_DEV_AUTO_LOGIN=1`) to automatically authenticate the portal and bypass the security key prompt.
+
 !!! info "Dev mode only"
     The Insight portal is only available when `TUVL_DEV_MODE=true`. It is never served in production builds to eliminate any attack surface.
 
