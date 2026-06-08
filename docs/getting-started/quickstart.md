@@ -188,18 +188,19 @@ tuvl dev --port 3000
 tuvl dev --project-dir ./services/api
 ```
 
-The dev server starts on `http://localhost:8000` with the built-in tuvl insight UI at `http://localhost:8000/ui/`. A one-time security key is printed on startup — paste it into the UI to authenticate.
+The dev server starts on `http://localhost:8000` with the built-in tuvl insight UI at `http://localhost:8000/insight/`. A one-time security key is generated and saved to `.tuvl/.dev-session` — paste it into the UI to authenticate.
 
 ```
 ╭─────────────────────────────── tuvl dev ───────────────────────────────╮
 │ Starting tuvl engine in dev mode on port 8000.                         │
 │                                                                        │
-│ Security key                                                           │
-│  XXXX-XXXX-XXXX-XXXX                                                   │
-│                                                                        │
-│ Open http://127.0.0.1:8000/ui/ and paste the key above.               │
+│ Open http://127.0.0.1:8000/insight/ and the security key is stored    │
+│ in .tuvl/.dev-session (run tuvl dev --show-key to print it).           │
 ╰────────────────────────────────────────────────────────────────────────╯
 ```
+
+!!! tip
+    Use `tuvl dev --auto-login` to automatically authenticate the UI and bypass the security key prompt.
 
 ## Test Your Workflow
 
