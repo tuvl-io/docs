@@ -12,7 +12,7 @@ identity, group membership, and fine-grained permission scopes.
 
 A `User` is a principal that can authenticate with tuvl. Users can use:
 
-- **Password auth** — email + bcrypt-hashed password via `POST /auth/token`
+- **Password auth** — email (or phone number) + bcrypt-hashed password via `POST /auth/token`
 - **Federated auth** — OAuth2 login via Google, GitHub, or Microsoft ([see Federation](federation.md))
 - **Both** — a user may link both methods to the same account
 
@@ -73,7 +73,7 @@ username=admin@example.com&password=change-me-now
 !!! note "OAuth2 form format"
     `/auth/token` follows the OAuth2 password-grant standard — it expects
     `application/x-www-form-urlencoded` with fields `username` and `password`
-    (not JSON). This makes it compatible with the Swagger UI **Authorize** button.
+    (not JSON). The `username` field accepts either an email address or a phone number. This makes it compatible with the Swagger UI **Authorize** button.
 
 Response:
 
@@ -397,7 +397,7 @@ The IAM system creates four tables on startup:
 
 | Table | Purpose |
 |-------|---------|
-| `iam_users` | User credentials (email, bcrypt hash, federation fields) |
+| `iam_users` | User credentials (email, phone number, names, bcrypt hash, federation fields) |
 | `iam_roles` | Named roles with optional description |
 | `iam_user_roles` | Many-to-many: user ↔ role assignments |
 | `iam_role_scopes` | One row per scope per role |

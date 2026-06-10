@@ -25,7 +25,7 @@ Below the counters, tabs switch between the **users** and **roles** views.
 
 ### Listing users
 
-The users table shows email, display name, authentication method (password / federated), assigned roles, and whether the account is active. Use the search box to filter by email or name.
+The users table shows email, phone number, display name (first and last name), authentication method (password / federated), assigned roles, and whether the account is active. Use the search box to filter by email, phone number, or name.
 
 ### Creating a user
 
@@ -33,7 +33,9 @@ Click **+ New User** to open the creation dialog:
 
 | Field | Description |
 |-------|-------------|
-| Email | Unique email address — used as the login username |
+| Email | Unique email address — can be used as the login username |
+| Phone | Optional phone number — can also be used as the login username |
+| First/Last Name | Basic user details |
 | Password | Initial password (bcrypt-hashed at rest) |
 | Roles | One or more roles to assign at creation |
 | Active | Whether the account is immediately usable |
@@ -88,7 +90,7 @@ When running tuvl for the first time against an empty database, use the bootstra
 ```bash
 curl -X POST http://localhost:8000/auth/bootstrap \
   -H "Content-Type: application/json" \
-  -d '{"email": "admin@example.com", "password": "change-me-now"}'
+  -d '{"email": "admin@example.com", "phone_number": "+15551234567", "first_name": "Admin", "password": "change-me-now"}'
 ```
 
 See the [IAM reference](../security/iam.md#bootstrap) for full details.
