@@ -25,8 +25,8 @@ sequenceDiagram
     tuvl->>tuvl: Validate CSRF state
     tuvl->>Provider (Google / GitHub / Microsoft): POST token exchange
     Provider (Google / GitHub / Microsoft)-->>tuvl: access_token + id_token
-    tuvl->>Provider (Google / GitHub / Microsoft): GET user profile (email, sub)
-    tuvl->>tuvl: Upsert IAMUser + auto-assign default_role (if configured)
+    tuvl->>Provider (Google / GitHub / Microsoft): GET user profile (email, sub, name)
+    tuvl->>tuvl: Upsert IAMUser (including first_name/last_name) + auto-assign default_role (if configured)
     tuvl-->>Browser: 302 Redirect → TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit_b64>
 ```
 

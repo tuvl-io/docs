@@ -14,74 +14,37 @@ tuvl follows four core principles:
 ## System Overview
 
 ```mermaid
-graph TB
-    subgraph "Client Layer"
-        A[HTTP Client]
-        B["@tuvl/client SDK"]
-        DevUI["tuvl insight UI\n(dev mode only)"]
+flowchart TD
+    subgraph Configuration
+        YAML[YAML Definitions] -->|load_all_configs| Reg[In-Memory Registries]
     end
 
-    subgraph "API Layer"
-        C[FastAPI Server]
-        D[Workflow Routes]
-        E[CRUD Routes]
-        F_AUTH[Auth Routes /auth/*]
-        DevMW["DevMiddleware\n(TUVL_DEV_MODE=true)"]
+    subgraph Transport Layer
+        Reg -->|Mount Endpoints| REST[FastAPI REST Server]
+        Reg -->|Mount Services| GRPC[gRPC Server]
     end
 
-    subgraph "gRPC-Web Layer"
-        G_GRPC["sonora ASGI\n/grpc/"]
-        DevSvc["DevServicer\n(dev mode only)"]
-        IamSvc[IamServicer]
-        ExecSvc[ExecutionServicer]
+    Client([Clients]) -->|HTTP/JSON| REST
+    Client -->|HTTP/2 Protobuf| GRPC
+
+    subgraph Security: Authentication & Authorization
+        REST --> Auth[Biscuit Token Auth<br>Verify Crypto Signature]
+        GRPC --> Auth
+        Auth -->|Extract Identity| AuthZ[IAM Scope Guard<br>Enforce Model/Route Scopes]
     end
 
-    subgraph "Engine Layer"
-        F[WorkflowEngine]
-        G[NODE_REGISTRY]
-        H[Agent Runner / LiteLLM]
-        HITL[HITL Pause/Resume]
-        OTel[OTel Tracer]
-    end
+    AuthZ -->|Workflow Route| Engine{WorkflowEngine.run}
+    AuthZ -->|Auto-Generated CRUD| UoW[Workflow Unit of Work<br>Pydantic-Validated CRUD]
 
-    subgraph "Data Layer"
-        I[BaseRepository]
-        J[MODEL_REGISTRY]
-        Redis[(Redis\nHITL state)]
+    subgraph Execution & Integrations
+        Engine -->|model-op| UoW
+        UoW -->|SQLModel Object Mapper| PG[(PostgreSQL)]
+        Engine -->|agent| LLM[LiteLLM Any Provider]
+        Engine -->|DataSearch| RAG[(pgvector RAG)]
+        Engine -->|functional| Nodes[Custom Python Nodes]
+        Engine -->|mcp| MCP[MCP Tools]
+        Engine -->|api_call| ExtAPI[External APIs]
     end
-
-    subgraph "External"
-        L[(PostgreSQL)]
-        M["Ollama / OpenAI\n/ Anthropic / ..."]
-        N[MCP Servers]
-        Collector[OTLP Collector]
-    end
-
-    A --> C
-    B --> C
-    B --> G_GRPC
-    DevUI --> DevMW
-    DevMW --> G_GRPC
-    C --> D
-    C --> E
-    C --> F_AUTH
-    G_GRPC --> DevSvc
-    G_GRPC --> IamSvc
-    G_GRPC --> ExecSvc
-    D --> F
-    ExecSvc --> F
-    E --> I
-    F --> G
-    F --> H
-    F --> HITL
-    F --> OTel
-    G --> I
-    H --> M
-    F --> N
-    HITL --> Redis
-    I --> J
-    I --> L
-    OTel --> Collector
 ```
 
 ## Core Components
