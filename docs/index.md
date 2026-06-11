@@ -151,7 +151,7 @@ flowchart TD
 TUVL is fully compatible with AI coding agents. To empower your AI agent with complete knowledge of the TUVL declarative schema, YAML logic, and custom python nodes, provide it with our official agent instructions:
 
 - <a href="assets/AGENTS.txt" download="AGENTS.md">⬇️ Download <code>AGENTS.md</code></a> — Core framework rules and architectural invariants
-- <a href="assets/SKILLS.txt" download="SKILLS.md">⬇️ Download <code>SKILLS.md</code></a> — Procedural skillset definitions
+- <a href="assets/skills.zip" download="skills.zip">⬇️ Download <code>skills.zip</code></a> — Procedural skillset definitions (unzip to `.agents/skills/`)
 
 Place these files directly in the root of your project workspace to align your AI assistant with the TUVL framework.
 
