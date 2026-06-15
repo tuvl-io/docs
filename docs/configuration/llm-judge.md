@@ -124,7 +124,7 @@ The Spectrum dev UI exposes an ad-hoc evaluation panel without requiring a test 
    from the dropdown.
 5. Click **Run Evaluation** — the verdict appears immediately below.
 
-See [Spectrum — Evaluate Tab](../tools/spectrum.md#llm-as-a-judge--evaluate-tab) for full details.
+See [Spectrum — Evaluate Tab](../tools/spectrum.md#llm-as-a-judge-evaluate-tab) for full details.
 
 ---
 
