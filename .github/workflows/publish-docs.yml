@@ -2,24 +2,32 @@ name: Publish Docs
 
 on:
   push:
-    branches:
-      - release
-  create:
     tags:
-      - "v*"
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to deploy (e.g. v2026.2.3-beta.1)"
+        required: true
 
 permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Deploy versioned docs
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0        # needed for git-revision-date plugins
+          fetch-depth: 0        # mike needs full gh-pages history
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -34,13 +42,32 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Build docs
-        run: uv run mkdocs build --strict
+      - name: Resolve version
+        id: ver
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            # Triggered by a tag push
+            VERSION="${GITHUB_REF_NAME#v}"
+          elif [[ -n "${{ inputs.tag }}" ]]; then
+            # Triggered via workflow_dispatch with explicit tag
+            VERSION="${{ inputs.tag }}"
+            VERSION="${VERSION#v}"
+          else
+            # Triggered by branch push — read from pyproject.toml
+            VERSION=$(grep '^version' pyproject.toml | sed 's/.*= *"\(.*\)"/\1/')
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          publish_branch: gh-pages
-          commit_message: "docs: deploy ${{ github.ref_name }} [skip ci]"
+      - name: Deploy versioned docs
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+
+          if [[ "$VERSION" == *"-beta."* || "$VERSION" == *"-alpha."* || "$VERSION" == *"-rc."* || "$VERSION" == *b[0-9]* ]]; then
+            uv run mike deploy --push --update-aliases "$VERSION" beta
+            if ! uv run mike list 2>/dev/null | grep -q '\blatest\b'; then
+              uv run mike set-default --push beta
+            fi
+          else
+            uv run mike deploy --push --update-aliases "$VERSION" latest
+            uv run mike set-default --push latest
+          fi

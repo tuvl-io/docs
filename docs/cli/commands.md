@@ -23,8 +23,10 @@ tuvl init [NAME] [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `--project-dir`, `-d` | Alias for NAME argument |
+| `--sample` | Write recruitment sample files covering every step kind, plus telemetry config and test templates |
+| `--multi-tenant` | Bootstrap a multi-tenant project — writes `.tuvl/system.yaml` with `mode: multi_tenant` and includes a sample tenant config |
 
-### Interactive Prompts
+### Examples
 
 The command prompts for:
 
@@ -35,13 +37,6 @@ The command prompts for:
    - Provider: ollama, openai, anthropic, other
    - API key or base URL
    - Default model
-
-### Options
-
-| Option | Description |
-|--------|-------------|
-| `--project-dir`, `-d` | Alias for NAME argument |
-| `--sample` | Write recruitment sample files covering every step kind, plus telemetry config and test templates |
 
 ### Interactive Prompts
 
@@ -67,7 +62,8 @@ my-project/
 │   └── default.yaml  # If LLM configured
 ├── nodes/            # Python node implementations
 ├── .tuvl/
-│   └── telemetry.yaml  # OTel config (written with --sample)
+│   ├── telemetry.yaml  # OTel config (written with --sample)
+│   └── system.yaml     # Multi-tenancy config (written with --multi-tenant)
 ├── tests/
 │   └── workflows/    # Workflow test cases (written with --sample)
 ├── .env              # Secrets (git-ignored)
@@ -89,6 +85,9 @@ tuvl init --project-dir /path/to/project
 
 # Include sample files (workflow, nodes, tests, telemetry config)
 tuvl init my-app --sample
+
+# Bootstrap a multi-tenant project
+tuvl init my-app --multi-tenant
 ```
 
 ---
@@ -112,6 +111,8 @@ tuvl dev [OPTIONS]
 | `--project-dir`, `-d` | `.` | Project directory |
 | `--host` | `127.0.0.1` | Bind address |
 | `--port` | `8000` | Port number |
+| `--show-key` | `false` | Print the dev session API key to the console |
+| `--auto-login` | `false` | Automatically bypass the Tuvl Insight security screen |
 
 ### Examples
 
@@ -128,17 +129,21 @@ tuvl dev --project-dir ./services/api
 
 ### Dev Session Key
 
-On each startup tuvl prints a session API key:
+On each startup tuvl generates a secure session API key. By default, this key is written to `.tuvl/.dev-session` and the UI will prompt you to enter it on the login screen.
 
 ```
 🚀  tuvl dev server starting...
-🔑  Dev API key: <randomly-generated-key>
+🔑  Dev API key saved to .tuvl/.dev-session
 🌐  UI: http://localhost:8000/ui
 ```
 
-The UI reads this key from a `<meta name="tuvl-dev-key">` tag injected into the
-placeholder `index.html`. It is automatically used for all API calls — you don't
-need to log in during development.
+If you prefer to bypass the login screen automatically during development, use the `--auto-login` flag:
+
+```bash
+tuvl dev --auto-login
+```
+
+When `--auto-login` is enabled, the UI reads the key from a `<meta name="tuvl-dev-key">` tag injected into the `index.html` placeholder and authenticates automatically.
 
 The dev key also grants `iam:admin` scope on all `/auth/admin/*` endpoints, so you
 can manage users and roles without bootstrapping the IAM system.

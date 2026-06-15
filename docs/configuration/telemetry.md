@@ -1,31 +1,139 @@
-# Observability (OpenTelemetry)
+# Observability
 
-tuvl emits OpenTelemetry (OTel) spans for every workflow step, giving you distributed
-traces across your entire workflow graph in any OTLP-compatible collector.
+tuvl ships a two-pillar observability stack: **structured JSON logging** (structlog) and
+**distributed tracing** (OpenTelemetry). Both pillars are correlated — every log line
+automatically carries the current `trace_id` and `span_id` so you can jump from a log
+event straight to the trace in Jaeger or Grafana Tempo.
 
 !!! note "Production only"
-    Span export is disabled in `tuvl dev` mode regardless of configuration. Spans
-    are only emitted when the engine is started with `tuvl run`.
+    Span export and HTTP-level tracing are disabled in `tuvl dev` mode. Use `tuvl run`
+    to activate the full telemetry pipeline.
 
 ---
 
-## What is traced
+## Structured Logging
 
-A span is created for each workflow step execution with the following attributes:
+tuvl uses **structlog 25.5.0** for all internal logging. In production every log line
+is a single JSON object written to stdout; in development a human-friendly coloured
+renderer is used instead.
+
+### Log format
+
+Production (`TUVL_ENV` ≠ `development`):
+
+```json
+{
+  "event": "Agent LLM response",
+  "level": "info",
+  "timestamp": "2025-08-01T12:00:00.123456Z",
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "span_id":  "00f067aa0ba902b7",
+  "step_id": "classify",
+  "model": "ollama/llama3",
+  "input_tokens": 312,
+  "output_tokens": 47
+}
+```
+
+Development (`TUVL_ENV=development`): human-readable coloured output via structlog's
+`ConsoleRenderer`.
+
+### Controlling the renderer
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TUVL_ENV` | `""` | Set to `development` for the coloured console renderer |
+
+### OTel correlation
+
+The `inject_otel_context` structlog processor injects `trace_id` and `span_id` from
+the active OpenTelemetry span into every log record. Any log line emitted inside a
+`workflow.execute` or `node.<kind>` span automatically carries both identifiers — no
+extra instrumentation needed.
+
+### Standard library bridge
+
+Python's `logging` module is bridged via `structlog.stdlib.ProcessorFormatter` so that
+third-party libraries that use `logging.getLogger(...)` also produce correlated JSON
+log lines.
+
+### Emitting structured logs from custom nodes
+
+```python
+import structlog
+
+log = structlog.get_logger(__name__)
+
+class MyRunner:
+    async def run(self, context):
+        log.info("processing request", step_id=self.cfg["id"], items=len(context["items"]))
+        ...
+```
+
+---
+
+## Distributed Tracing (OpenTelemetry)
+
+tuvl emits OTel spans for every workflow execution and every node step. Spans are
+exported over gRPC (OTLP) to any compatible collector.
+
+### Span hierarchy
+
+Each workflow invocation produces a **parent span** containing one **child span per
+node**:
+
+```
+workflow.execute          (parent)
+├── node.agent            (child — agent step)
+├── node.functional       (child — functional step)
+├── node.router           (child — router step)
+└── node.HumanInTheLoop   (child — HITL step)
+```
+
+Valid node kinds: `functional`, `agent`, `api_call`, `mcp`, `router`, `model-op`,
+`response`, `HumanInTheLoop`.
+
+### Span attributes
+
+**Parent span** (`workflow.execute`):
 
 | Attribute | Value |
 |-----------|-------|
-| Span name | `workflow.<workflow_name>.<step_id>` |
-| `workflow.name` | Workflow `metadata.name` |
-| `workflow.step_id` | Step `id` field |
-| `workflow.step_kind` | Step kind (e.g. `agent`, `functional`, `router`) |
-| `workflow.signal` | Routing signal emitted by the step |
-| `workflow.duration_ms` | Wall-clock duration in milliseconds |
-| `service.name` | Configured service name (default: `tuvl`) |
+| `tuvl.workflow.name` | `metadata.name` from the workflow YAML |
 
-Sensitive context values are **automatically masked** before they reach the span. Any
-field registered in `SECURE_FIELDS` (e.g. `password`, `token`, `api_key`) is replaced
-with `***REDACTED***`.
+**Child spans** (`node.<kind>`):
+
+| Attribute | Value |
+|-----------|-------|
+| `tuvl.node.id` | Step `id` field |
+| `tuvl.node.kind` | Step kind |
+| `tuvl.step.signal` | Routing signal emitted by the step |
+| `tuvl.step.duration_ms` | Wall-clock duration in milliseconds |
+| `tuvl.context.snapshot` | JSON-serialised workflow context (secure fields masked) |
+
+Secure field values appear as `"*****"` in the context snapshot. The set of secure
+fields is populated from every model field with `secure: true` in its
+[ModelDefinition YAML](../concepts/models.md#field-options). See
+[Data Masking](#data-masking) for details.
+
+### HTTP / W3C traceparent
+
+FastAPI is instrumented with `FastAPIInstrumentor` (production mode only). Incoming
+requests that carry a `traceparent` header (W3C Trace Context) are automatically
+linked as children of the upstream trace — enabling end-to-end context propagation
+from your gateway or frontend to the workflow engine.
+
+### LiteLLM GenAI telemetry
+
+tuvl registers LiteLLM's built-in OpenTelemetry callback at startup:
+
+```python
+litellm.callbacks = ["opentelemetry"]
+```
+
+This emits `gen_ai.*` semantic-convention spans for every LLM call, giving you
+per-model latency, token usage, and error rates in the same trace as the workflow
+spans.
 
 ---
 
@@ -71,8 +179,10 @@ temporary changes:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `TUVL_ENV` | `""` | `development` enables console log renderer; any other value uses JSON |
 | `TUVL_TELEMETRY_ENABLED` | `true` | Set to `false` to disable span export |
-| `TUVL_OTLP_ENDPOINT` | `http://localhost:4317` | gRPC OTLP collector endpoint |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | — | Standard OTel env var; takes precedence over `TUVL_OTLP_ENDPOINT` |
+| `TUVL_OTLP_ENDPOINT` | `http://localhost:4317` | gRPC OTLP collector endpoint (fallback) |
 | `TUVL_SERVICE_NAME` | `tuvl` | `service.name` resource attribute on every span |
 
 ### Dev UI
@@ -145,15 +255,15 @@ exporters:
 
 ## Data Masking
 
-tuvl's masking layer runs before any context data is attached to a span. Fields are
-identified by name (case-insensitive substring match against a built-in deny-list that
-includes `password`, `token`, `secret`, `api_key`, `private_key`, and others).
+tuvl's masking layer runs before any context data is attached to a span. Secure fields
+are identified by the `secure: true` flag on model fields defined in your project's
+[ModelDefinition YAMLs](../concepts/models.md#field-options). At startup tuvl collects
+every field name marked `secure: true` into the `SECURE_FIELDS` set.
 
-Masked values appear as `***REDACTED***` in traces. The mask is applied recursively
-through nested dicts and lists.
+Masked values appear as `"*****"` in the `tuvl.context.snapshot` span attribute. The
+mask is applied recursively through nested dicts and lists.
 
-To add a project-specific field to the deny-list, extend `SECURE_FIELDS` in your
-custom node code:
+To add a project-specific field to the secure set at runtime:
 
 ```python
 from tuvl.core.core.loader import SECURE_FIELDS
@@ -172,4 +282,5 @@ TUVL_TELEMETRY_ENABLED=false tuvl run
 ```
 
 The engine logs `OTel: telemetry disabled` at startup and the `TracerProvider` is not
-configured. All spans are no-ops (`NonRecordingSpan`).
+configured. All spans are no-ops (`NonRecordingSpan`). Structured logging continues to
+work normally.

@@ -14,25 +14,27 @@ tuvl is a modular workflow engine that bridges the gap between deterministic cod
 
 ```yaml title="workflows/onboarding.yaml"
 kind: "Workflow"
+version: "v1"
 metadata:
   name: "candidate_onboarding"
   description: "AI-powered candidate vetting workflow"
 
-steps:
-  - id: "save_draft"
-    kind: "functional"
-    runner: "db_save"
+spec:
+  steps:
+    - id: "save_draft"
+      kind: "functional"
+      runner: "db_save"
 
-  - id: "ai_vetting"
-    kind: "agent"
-    agent:
-      model: "ollama/llama3"
-      prompt: |
-        Evaluate this candidate: {{ full_name }}
-        Experience: {{ experience_years }} years
-    routes:
-      senior: "fast_track"
-      needs_review: "manual_review"
+    - id: "ai_vetting"
+      kind: "agent"
+      agent:
+        model: "ollama/llama3"
+        prompt: |
+          Evaluate this candidate: {{ full_name }}
+          Experience: {{ experience_years }} years
+      routes:
+        senior: "fast_track"
+        needs_review: "manual_review"
 ```
 
 ## Key Features
@@ -75,6 +77,14 @@ steps:
 
     Every workflow becomes an HTTP endpoint. Every model gets CRUD operations.
 
+-   :material-monitor-dashboard:{ .lg .middle } **Insight Developer Portal**
+
+    ---
+
+    Browser-based UI for editing workflows, managing models, testing with Spectrum, and configuring IAM — all in dev mode.
+
+    [:octicons-arrow-right-24: Explore the portal](insight/overview.md)
+
 </div>
 
 ## Quick Example
@@ -100,21 +110,50 @@ async def db_save(ctx: dict[str, Any]) -> dict[str, Any]:
     return ctx
 ```
 
-## Architecture Overview
+## Architecture & Data Flow
 
 ```mermaid
-graph LR
-    A[HTTP Request] --> B[FastAPI]
-    B --> C[Workflow Engine]
-    C --> D{Step Kind?}
-    D -->|functional| E[Python Node]
-    D -->|agent| F[LLM via LiteLLM]
-    D -->|api_call| G[External API]
-    D -->|mcp| H[MCP Server]
-    E --> I[Repository]
-    I --> J[(PostgreSQL)]
-    F --> K[Ollama/OpenAI/Anthropic]
+flowchart TD
+    subgraph Configuration
+        YAML[YAML Definitions] -->|load_all_configs| Reg[In-Memory Registries]
+    end
+
+    subgraph Transport Layer
+        Reg -->|Mount Endpoints| REST[FastAPI REST Server]
+        Reg -->|Mount Services| GRPC[gRPC Server]
+    end
+
+    Client([Clients]) -->|HTTP/JSON| REST
+    Client -->|HTTP/2 Protobuf| GRPC
+
+    subgraph Security: Authentication & Authorization
+        REST --> Auth[Biscuit Token Auth<br>Verify Crypto Signature]
+        GRPC --> Auth
+        Auth -->|Extract Identity| AuthZ[IAM Scope Guard<br>Enforce Model/Route Scopes]
+    end
+
+    AuthZ -->|Workflow Route| Engine{WorkflowEngine.run}
+    AuthZ -->|Auto-Generated CRUD| UoW[Workflow Unit of Work<br>Pydantic-Validated CRUD]
+
+    subgraph Execution & Integrations
+        Engine -->|model-op| UoW
+        UoW -->|SQLModel Object Mapper| PG[(PostgreSQL)]
+        Engine -->|agent| LLM[LiteLLM Any Provider]
+        Engine -->|DataSearch| RAG[(pgvector RAG)]
+        Engine -->|functional| Nodes[Custom Python Nodes]
+        Engine -->|mcp| MCP[MCP Tools]
+        Engine -->|api_call| ExtAPI[External APIs]
+    end
 ```
+
+## AI Agent Instructions
+
+TUVL is fully compatible with AI coding agents. To empower your AI agent with complete knowledge of the TUVL declarative schema, YAML logic, and custom python nodes, provide it with our official agent instructions:
+
+- <a href="assets/AGENTS.txt" download="AGENTS.md">⬇️ Download <code>AGENTS.md</code></a> — Core framework rules and architectural invariants
+- <a href="assets/skills.zip" download="skills.zip">⬇️ Download <code>skills.zip</code></a> — Procedural skillset definitions (unzip to `.agents/skills/`)
+
+Place these files directly in the root of your project workspace to align your AI assistant with the TUVL framework.
 
 ## Getting Started
 
