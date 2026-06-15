@@ -120,47 +120,49 @@ Create a workflow that saves a contact and uses AI to prioritize them:
 
 ```yaml title="workflows/contact_intake.yaml"
 kind: "Workflow"
+version: "v1"
 metadata:
   name: "contact_intake"
   description: "Capture and prioritize new contacts"
 
-context: "Contact"
+spec:
+  context: "Contact"
 
-trigger:
-  path: "/api/contacts"
-  method: "POST"
-  input_schema: "context"
-  response_schema: "context"
+  trigger:
+    path: "/api/contacts"
+    method: "POST"
+    input_schema: "context"
+    response_schema: "context"
 
-steps:
-  - id: "save"
-    kind: "functional"
-    runner: "save_contact"
+  steps:
+    - id: "save"
+      kind: "functional"
+      runner: "save_contact"
 
-  - id: "prioritize"
-    kind: "agent"
-    agent:
-      model: "ollama/llama3"
-      system: |
-        You are a lead scoring assistant. Analyze the contact
-        and assign a priority level.
-      prompt: |
-        Contact: {{ name }}
-        Email: {{ email }}
-        Company: {{ company }}
-        
-        Respond with JSON: {"priority": "high" | "medium" | "low"}
-      output:
-        format: json
-        map:
-          priority: priority
-    routes:
-      default: "enrich"
-      error: "enrich"
+    - id: "prioritize"
+      kind: "agent"
+      agent:
+        model: "ollama/llama3"
+        system: |
+          You are a lead scoring assistant. Analyze the contact
+          and assign a priority level.
+        prompt: |
+          Contact: {{ name }}
+          Email: {{ email }}
+          Company: {{ company }}
+          
+          Respond with JSON: {"priority": "high" | "medium" | "low"}
+        output:
+          format: json
+          map:
+            priority: priority
+      routes:
+        default: "enrich"
+        error: "enrich"
 
-  - id: "enrich"
-    kind: "functional"
-    runner: "enrich_contact"
+    - id: "enrich"
+      kind: "functional"
+      runner: "enrich_contact"
 ```
 
 ## Configure the Database
@@ -186,18 +188,19 @@ tuvl dev --port 3000
 tuvl dev --project-dir ./services/api
 ```
 
-The dev server starts on `http://localhost:8000` with the built-in tuvl insight UI at `http://localhost:8000/ui/`. A one-time security key is printed on startup — paste it into the UI to authenticate.
+The dev server starts on `http://localhost:8000` with the built-in tuvl insight UI at `http://localhost:8000/insight/`. A one-time security key is generated and saved to `.tuvl/.dev-session` — paste it into the UI to authenticate.
 
 ```
 ╭─────────────────────────────── tuvl dev ───────────────────────────────╮
 │ Starting tuvl engine in dev mode on port 8000.                         │
 │                                                                        │
-│ Security key                                                           │
-│  XXXX-XXXX-XXXX-XXXX                                                   │
-│                                                                        │
-│ Open http://127.0.0.1:8000/ui/ and paste the key above.               │
+│ Open http://127.0.0.1:8000/insight/ and the security key is stored    │
+│ in .tuvl/.dev-session (run tuvl dev --show-key to print it).           │
 ╰────────────────────────────────────────────────────────────────────────╯
 ```
+
+!!! tip
+    Use `tuvl dev --auto-login` to automatically authenticate the UI and bypass the security key prompt.
 
 ## Test Your Workflow
 

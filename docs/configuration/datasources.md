@@ -9,6 +9,7 @@ kind: "DataSource"
 version: "v1"
 metadata:
   name: "main_postgres"
+  primary: true
 spec:
   type: "postgresql"
   driver: "asyncpg"
@@ -22,6 +23,13 @@ spec:
     min_size: 5
     max_size: 20
 ```
+
+## Metadata Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | string | Yes | Unique identifier for this datasource |
+| `primary` | boolean | No | Mark this as the primary datasource. System tables (IAM, HITL, vector store) and the bootstrap ledger are created here. Only one datasource should be marked primary; if none is marked, the first Postgres datasource loaded is used automatically. |
 
 ## Connection Properties
 

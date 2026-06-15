@@ -8,23 +8,25 @@ A workflow is defined in YAML with four main sections:
 
 ```yaml
 kind: "Workflow"
+version: "v1"
 
 metadata:
   name: "my_workflow"
   description: "What this workflow does"
 
-trigger:
-  path: "/api/my-endpoint"
-  method: "POST"
-  input_schema: "context"
-  response_schema: "context"
+spec:
+  trigger:
+    path: "/api/my-endpoint"
+    method: "POST"
+    input_schema: "context"
+    response_schema: "context"
 
-context: "MyModel"
+  context: "MyModel"
 
-steps:
-  - id: "step_1"
-    kind: "functional"
-    runner: "my_node"
+  steps:
+    - id: "step_1"
+      kind: "functional"
+      runner: "my_node"
 ```
 
 ## Metadata
@@ -35,6 +37,7 @@ Every workflow needs a unique name and optional description:
 metadata:
   name: "order_processing"
   description: "Process incoming orders with fraud detection"
+  schema_version: "v1"       # optional — defaults to "v1" when omitted
 ```
 
 The name is used for:
@@ -42,6 +45,40 @@ The name is used for:
 - Logging and debugging
 - API route generation
 - Workflow identification in the UI
+
+### `schema_version`
+
+Tag a workflow definition with a version string. Multiple versions of the same
+workflow (same `metadata.name`) can coexist in one file using `---` document
+separators or in separate files:
+
+```yaml title="workflows/onboard.yaml"
+kind: "Workflow"
+metadata:
+  name: "onboard"
+  schema_version: "v1"
+steps: [...]
+
+---
+
+kind: "Workflow"
+metadata:
+  name: "onboard"
+  schema_version: "v2"
+enabled: false          # staged — activate via admin API
+steps: [...]            # revised step set
+```
+
+`schema_version` defaults to `"v1"` when omitted.
+
+### `enabled`
+
+| Value | Behaviour |
+|-------|-----------|
+| `true` (default) | Workflow is mounted and accepts requests |
+| `false` | Tracked in `WORKFLOW_VERSION_REGISTRY` for admin purposes but **not** mounted; requests return 400 |
+
+Disabled versions are visible in the admin panel and can be toggled without a server restart.
 
 ## Trigger Configuration
 
@@ -79,13 +116,39 @@ trigger:
 
 ## Context Model
 
-The `context` field links the workflow to a data model:
+The `context` field links the workflow to one or more data models.
+
+### Simple form — single model
 
 ```yaml
 context: "Contact"
 ```
 
-This enables:
+### List form — multiple models
+
+```yaml
+context:
+  - "Candidate"
+  - "Job"
+```
+
+### Dict form — explicit model version pinning
+
+Use the dict form to target a specific `schema_version` of a model at execution
+time. This is the recommended form when using model versioning:
+
+```yaml
+context:
+  models:
+    - name: "Candidate"
+      version: "v2"     # use Candidate v2 for this workflow
+    - name: "Job"       # no version — uses the active version
+```
+
+The `version` key is optional per entry. When omitted, the currently enabled
+version in `MODEL_REGISTRY` is used.
+
+All forms enable:
 
 - Auto-generated schemas for input/output validation
 - Type hints in the UI workflow builder
@@ -197,6 +260,7 @@ Execute an LLM call with structured output:
 | `retry.on` | `[]` | Error types to retry on |
 | `retry.backoff` | `1` | Backoff multiplier between retries |
 | `timeout` | `60` | Timeout in seconds |
+| `context_injection` | `[]` | List of context keys whose values are appended as a system message (RAG / search-result grounding) |
 
 ### Router Steps
 
@@ -611,6 +675,55 @@ agent:
     on: [parse_error, timeout, rate_limit]
     backoff: 2    # Exponential backoff multiplier
 ```
+
+## Workflow Versioning
+
+tuvl tracks every `(name, schema_version)` pair in `WORKFLOW_VERSION_REGISTRY` (in
+memory) and in the `workflow_versions` database table (on the primary datasource).
+This lets you manage the lifecycle of workflow changes without YAML edits or server
+restarts.
+
+### Listing all versions
+
+```bash
+GET /admin/workflows
+```
+
+Returns a dict keyed by workflow name, each value being a list of version objects:
+
+```json
+{
+  "onboard": [
+    { "schema_version": "v1", "enabled": true,  "trigger_path": "/api/onboard", "trigger_method": "POST" },
+    { "schema_version": "v2", "enabled": false, "trigger_path": "/api/onboard", "trigger_method": "POST" }
+  ]
+}
+```
+
+### Toggling a version on/off
+
+```bash
+PATCH /admin/workflows/{name}/{version}/toggle
+```
+
+Flips `enabled` in the database without touching YAML. Changes take effect
+immediately for new requests.
+
+### Forking a version
+
+The fork endpoint deep-copies an existing version's config, stamps it with a new
+`schema_version`, writes it to `workflows/`, and returns the filename:
+
+```bash
+POST /admin/workflows/onboard/v1/fork
+{ "new_version": "v2" }
+```
+
+```json
+{ "name": "onboard", "source_version": "v1", "new_version": "v2", "file": "onboard_v2.yaml" }
+```
+
+See [Admin Version Management API](../api/endpoints.md#version-management-admin-api) for full endpoint reference.
 
 ## Best Practices
 

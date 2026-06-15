@@ -130,7 +130,48 @@ export function ScreeningButton({ candidateId }: { candidateId: number }) {
 
 ---
 
-## 6. Force a transport
+## 6. Read model data (CRUD)
+
+Every tuvl model gets auto-generated REST endpoints. Access them with `client.crud()`:
+
+```ts
+import { TuvlClient } from "@tuvl/client";
+
+const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+
+// List all candidates
+const candidates = await client.crud("candidate").list();
+
+// Filter + embed related records
+const screened = await client.crud("candidate").list({
+  filters: { stage: "screening" },
+  include: ["posting"],
+  limit: 25,
+});
+
+// Get one record
+const candidate = await client.crud("candidate").get("uuid-here");
+
+// Create
+const created = await client.crud("candidate").create({
+  name: "Alice",
+  email: "alice@example.com",
+  stage: "applied",
+});
+
+// Partial update (only the fields you pass are changed)
+await client.crud("candidate").update(created.id, { stage: "interview" });
+
+// Delete
+await client.crud("candidate").delete(created.id);
+```
+
+!!! info "Scopes"
+    CRUD endpoints enforce `{modelname}:read`, `:write`, and `:delete` Biscuit scopes. Check `me.scopes` from `auth.getMe(token)` before calling CRUD methods if you need to gate UI features.
+
+---
+
+## 8. Force a transport
 
 ```ts
 // Always SSE regardless of workflow hints
@@ -149,7 +190,7 @@ await client.execute("screen-candidate", {
 
 ---
 
-## 7. Cancellation
+## 9. Cancellation
 
 ```ts
 const controller = new AbortController();

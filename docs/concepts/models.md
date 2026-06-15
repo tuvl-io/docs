@@ -71,8 +71,30 @@ spec:
 | `index` | bool | `false` | Create an index? |
 | `default` | any | `null` | Default value |
 | `input` | bool | `true` | Include in Create schema? |
-| `secure` | bool | `false` | Mark as PII — masked in OTel spans |
+| `secure` | bool | `false` | Mark as PII — value replaced with `"*****"` in OTel span context snapshots |
 | `description` | string | `""` | Field description |
+
+## Controlling CRUD Generation (`spec.schema`)
+
+`spec.schema` controls whether tuvl generates Pydantic schemas and mounts CRUD API routes for the model.
+
+| Value | Behaviour |
+|-------|-----------|
+| `true` (default) | Schemas and CRUD routes (`POST / GET / PATCH / DELETE`) are generated automatically |
+| `false` | Table is created in the database, but **no Pydantic schemas and no CRUD endpoints** are exposed. Use this for internal / join tables that are only accessed via workflow steps. |
+
+```yaml
+spec:
+  tablename: "audit_logs"
+  schema: false   # table exists in DB, no REST endpoints generated
+  fields:
+    ...
+```
+
+!!! tip
+    The `tuvl init --sample` scaffold sets `schema: false` on the sample model intentionally.
+    When you create your own model from the template, change this to `schema: true` (or remove the
+    line entirely — `true` is the default) to have CRUD endpoints generated automatically.
 
 At the model level, `spec.datasource` routes the model to a named datasource (defaults to `"main_postgres"`):
 
@@ -269,17 +291,112 @@ Reference models in workflow context:
 
 ```yaml
 kind: "Workflow"
+version: "v1"
 metadata:
   name: "create_contact"
 
-context: "Contact"           # Links to Contact model
+spec:
+  context: "Contact"           # Links to Contact model
 
-trigger:
-  path: "/api/contacts/intake"
-  method: "POST"
-  input_schema: "context"    # Uses ContactCreate
-  response_schema: "context" # Uses ContactRead
+  trigger:
+    path: "/api/contacts/intake"
+    method: "POST"
+    input_schema: "context"    # Uses ContactCreate
+    response_schema: "context" # Uses ContactRead
 ```
+
+## Model Versioning
+
+Multiple versions of the same model can coexist inside a single YAML file (using `---`
+multi-document separation) or across separate files.
+
+### Declaring a version
+
+Add `metadata.schema_version` to tag a model definition:
+
+```yaml title="models/candidate.yaml"
+kind: "ModelDefinition"
+metadata:
+  name: "Candidate"
+  schema_version: "v1"        # default when omitted
+spec:
+  tablename: "candidates"
+  fields:
+    - name: "id"
+      type: "uuid"
+      primary_key: true
+      default: "uuid4"
+      input: false
+    - name: "name"
+      type: "string"
+      required: true
+
+---
+
+kind: "ModelDefinition"
+metadata:
+  name: "Candidate"
+  schema_version: "v2"        # new version in same file
+enabled: false                 # inactive until explicitly enabled
+spec:
+  tablename: "candidates"
+  fields:
+    - name: "id"
+      type: "uuid"
+      primary_key: true
+      default: "uuid4"
+      input: false
+    - name: "name"
+      type: "string"
+      required: true
+    - name: "tags"             # field added in v2
+      type: "jsonb"
+      input: true
+```
+
+`schema_version` defaults to `"v1"` when not specified.
+
+### The `enabled` flag
+
+| Value | Behaviour |
+|-------|-----------|
+| `true` (default) | Model is registered and active |
+| `false` | Model is tracked in `MODEL_VERSION_REGISTRY` for admin purposes but excluded from `MODEL_REGISTRY`; no CRUD endpoints are mounted |
+
+Disabled versions are still visible in the admin panel and can be activated without a
+server restart via the admin API.
+
+### Admin API
+
+The admin endpoints let you list, enable/disable, and fork model versions at runtime
+without editing YAML or restarting the server.
+
+See [Admin Version Management API](../api/endpoints.md#version-management-admin-api) for the full endpoint reference.
+
+### Forking a version
+
+The fork endpoint creates a new YAML file in `models/` pre-stamped with the new
+`schema_version`. Use it to branch off a released version for iterative changes:
+
+```bash
+# Create models/candidate_v3.yaml from v2
+POST /admin/models/Candidate/v2/fork
+{ "new_version": "v3" }
+```
+
+### Pinning a model version in a workflow
+
+To use a specific model version inside a workflow step, declare the version target in
+the `context.models` list:
+
+```yaml
+context:
+  models:
+    - name: "Candidate"
+      version: "v2"     # pin to v2 at execution time
+```
+
+See [Workflow context format](workflows.md#context-model) for details.
 
 ## Model Registry
 
@@ -293,6 +410,15 @@ ContactModel = MODEL_REGISTRY["Contact"]
 
 # Create an instance
 contact = ContactModel(email="test@example.com", name="Test")
+```
+
+The `MODEL_VERSION_REGISTRY` contains **all** versions regardless of `enabled` state:
+
+```python
+from tuvl.core.models.loader import MODEL_VERSION_REGISTRY
+
+# {name → {schema_version → raw config dict}}
+candidate_v2_config = MODEL_VERSION_REGISTRY["Candidate"]["v2"]
 ```
 
 ## Schema Registry

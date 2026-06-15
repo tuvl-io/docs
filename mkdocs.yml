@@ -94,6 +94,9 @@ markdown_extensions:
   - pymdownx.tilde
 
 extra:
+  version:
+    provider: mike
+    default: latest
   analytics:
     provider: google
     property: G-7NBSPKBZSP
@@ -109,6 +112,9 @@ extra:
           data: 0
           note: Thanks — we'll work on improving this page.
   social:
+    - icon: fontawesome/solid/globe
+      link: https://tuvl.io
+      name: tuvl.io
     - icon: fontawesome/brands/github
       link: https://github.com/tuvl-io/tuvl
     - icon: fontawesome/brands/discord
@@ -123,6 +129,7 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - Main Website: https://tuvl.io
   - Getting Started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
@@ -140,12 +147,26 @@ nav:
       - Redis: configuration/redis.md
       - Agents: configuration/agents.md
       - Telemetry: configuration/telemetry.md
+      - LLM Judge: configuration/llm-judge.md
   - Security:
       - IAM: security/iam.md
       - Federation: security/federation.md
       - Tokens: security/tokens.md
+  - Insight Portal:
+      - Overview: insight/overview.md
+      - Workflows: insight/workflows.md
+      - Models: insight/models.md
+      - Datasources: insight/datasources.md
+      - AI Models: insight/ai-models.md
+      - Embeddings & Collections: insight/embeddings-collections.md
+      - IAM: insight/iam.md
+      - Federation: insight/federation.md
+      - API Docs: insight/api-docs.md
+      - Spectrum: insight/spectrum.md
+      - Settings: insight/settings.md
   - Tools:
       - Spectrum: tools/spectrum.md
+      - Workflow Canvas Test Mode: tools/workflow-testing.md
       - Human-in-the-Loop: tools/hitl.md
       - Testing Workflows: tools/testing.md
   - TypeScript SDK:

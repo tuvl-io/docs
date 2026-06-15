@@ -1,6 +1,6 @@
 [project]
 name = "tuvl-docs"
-version = "0.1.0"
+version = "2026.2.3-beta.1"
 description = "tuvl documentation"
 requires-python = ">=3.12"
 dependencies = [
@@ -8,6 +8,7 @@ dependencies = [
     "mkdocs-material>=9.5.0,<10.0",
     "mkdocstrings[python]>=0.24.0",
     "pymdown-extensions>=10.0",
+    "mike>=2.0.0",
 ]
 
 [tool.uv]
