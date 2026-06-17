@@ -1,6 +1,6 @@
 [project]
 name = "tuvl-docs"
-version = "2026.2.3-beta.2"
+version = "2026.2.3-beta.3"
 description = "tuvl documentation"
 requires-python = ">=3.12"
 dependencies = [
