@@ -136,6 +136,7 @@ nav:
       - Project Structure: getting-started/project-structure.md
   - Concepts:
       - Architecture: concepts/architecture.md
+      - The Agentic Contract: concepts/agentic-contract.md
       - Workflows: concepts/workflows.md
       - Nodes: concepts/nodes.md
       - Models: concepts/models.md
