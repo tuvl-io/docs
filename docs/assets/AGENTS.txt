@@ -34,6 +34,12 @@ When YAML isn't enough, you can create a custom `functional` Python node.
 - You **MUST** define explicit mapping for every non-default signal the step might emit in the step's `routes:` map.
 - If a signal is emitted that is not in `routes:` (and is not `default`), a `RuntimeError` is raised.
 
+## 5.1 Step Kinds (closed set)
+Use only these `kind:` values in workflow steps — never invent others:
+`functional`, `agent`, `AutonomousAgent`, `router`, `api_call`, `mcp`, `model-op`, `response`, `HumanInTheLoop`.
+- `agent` is a single LLM call. **`AutonomousAgent`** is a bounded tool-calling loop: the model autonomously picks tools (each `tools[].ref` names another step in the workflow), observes results, and re-decides until done. Map every `outcome.enum` value plus the reserved exits `max_iterations` / `budget_exceeded` / `error` in `routes:`.
+- `router` supports a multi-way `match:` switch (`match: { field: user.country }`) for data-driven branching — keep deterministic routing logic here, never push it into an agent.
+
 ## 6. PostgreSQL & Multi-tenancy
 - Every `ModelDefinition` creates a Postgres table and auto-generates CRUD endpoints.
 - Do not emit `tenant_id` fields or RLS (Row Level Security) clauses. The project is single-tenant only.
