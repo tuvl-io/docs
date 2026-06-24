@@ -12,7 +12,7 @@ tuvl removes the unbounded surface. Instead of generating arbitrary code, the ag
 
 Three things are finite and fixed in tuvl. An agent (or a human) never invents new ones:
 
-- **Step kinds** — a workflow step is exactly one of: `functional`, `agent`, `router`, `api_call`, `mcp`, `model-op`, `response`, `HumanInTheLoop`.
+- **Step kinds** — a workflow step is exactly one of: `functional`, `agent`, `AutonomousAgent`, `router`, `api_call`, `mcp`, `model-op`, `response`, `HumanInTheLoop`.
 - **Document kinds** — every YAML file declares a `kind:` from a fixed set (`Workflow`, `ModelDefinition`, `DataSource`, `AgentModel`, `RedisConfig`, `FederationProvider`, `TelemetryConfig`, and the embedding/collection/project/system configs). See the [agentic manual](https://github.com/tuvl-io/tuvl/blob/main/docs/TUVL_AGENTIC_MANUAL.md) for the authoritative list.
 - **Reserved context keys** — engine-owned keys (`_session`, `_db`, `_response`, `_last_error`, …) that workflows read but must never mutate.
 
@@ -43,3 +43,6 @@ A closed set is only practical if there is a way out when the fixed kinds aren't
 | Review every line | Review a declarative config |
 
 The closed set is the contract. The agent generates the configuration; the [stateless ASGI router](architecture.md) executes it.
+
+!!! tip "Hand it to your coding agent"
+    `tuvl init` scaffolds an `AGENTS.md` and a set of `.agents/skills/` so Claude Code, Cursor, or any coding agent generates valid config against this contract out of the box. See [Build with Coding Agents](../getting-started/coding-agents.md).

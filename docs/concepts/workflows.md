@@ -183,7 +183,7 @@ steps:
 | Property | Required | Description |
 |----------|----------|-------------|
 | `id` | Yes | Unique identifier within the workflow |
-| `kind` | Yes | Step type: `functional`, `agent`, `router`, `api_call`, `mcp`, `model-op`, `response`, `HumanInTheLoop` |
+| `kind` | Yes | Step type: `functional`, `agent`, `AutonomousAgent`, `router`, `api_call`, `mcp`, `model-op`, `response`, `HumanInTheLoop` |
 | `runner` | For functional | Node name from `NODE_REGISTRY` |
 | `agent` | For agent | LLM configuration |
 | `routes` | No | Signal-to-step mapping |
@@ -262,6 +262,52 @@ Execute an LLM call with structured output:
 | `timeout` | `60` | Timeout in seconds |
 | `context_injection` | `[]` | List of context keys whose values are appended as a system message (RAG / search-result grounding) |
 
+### Autonomous Agent Steps
+
+Where an `agent` step is a single LLM call, an `AutonomousAgent` step runs a **bounded tool-calling loop**: the model is given a goal and a set of declared tools, autonomously chooses which to call, observes the results, and re-decides until it emits one of a declared `outcome.enum`. Autonomy stays inside the contract — the tools are a closed author-declared set, the exits are a closed set, and the loop is capped.
+
+```yaml
+- id: "triage"
+  kind: "AutonomousAgent"
+  agent:
+    model: "default"
+    goal: "Resolve the support ticket using the available tools."
+    max_iterations: 8                  # hard cap (default 8)
+    token_budget: 50000                # optional cap on cumulative tokens
+    tools:
+      - ref: "lookup_order"            # names ANOTHER step in this workflow
+        description: "Fetch order details by order id."
+        parameters:
+          type: object
+          properties: { order_id: { type: string } }
+          required: [order_id]
+      - ref: "issue_refund"
+        description: "Issue a refund for an order id and amount."
+    outcome:
+      enum: ["resolved", "escalate", "needs_human"]   # the closed set of exits
+      output_key: "agent_result"                      # single data output
+  routes:
+    resolved: "format_reply"
+    escalate: "notify_manager"
+    needs_human: "hitl_review"
+    max_iterations: "fallback_summary"   # reserved abnormal exits
+    error: "alert_ops"
+    budget_exceeded: "fallback_summary"
+```
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `model` | Required | Preset name or LiteLLM model string (same as `agent`) |
+| `goal` | Required | The task the agent must accomplish |
+| `tools` | `[]` | Tools the agent may call; each `ref` names another step (`api_call` / `mcp` / `model-op` / `functional`), with a `description` and JSON-Schema `parameters` |
+| `tools[].writes_context` | `false` | When `true`, the tool's public output is merged back into the shared context (default: result returns to the agent only) |
+| `outcome.enum` | `[]` | Closed set of exit signals; **every value must be mapped in `routes:`** |
+| `outcome.output_key` | `<id>_result` | Context key that receives the agent's final output |
+| `max_iterations` | `8` | Hard cap on loop turns |
+| `token_budget` | `null` | Optional hard cap on cumulative tokens |
+
+The reserved abnormal exits `max_iterations`, `budget_exceeded`, and `error` should also be mapped in `routes:`. For data-driven branching after an outcome, route into a deterministic [`router` with `match:`](#router-steps) — never push that logic into the agent.
+
 ### Router Steps
 
 Evaluate a condition on the context and branch to different steps:
@@ -278,7 +324,25 @@ Evaluate a condition on the context and branch to different steps:
     "false": "auto_approve"
 ```
 
-The router emits `"true"` or `"false"` as the route signal. Chain multiple routers for more complex branching:
+The router emits `"true"` or `"false"` as the route signal.
+
+For multi-way value branching (e.g. by country or tier), use the `match:` switch instead of `condition:`. It emits the stringified value of a field as the route signal, falling back to `default` when the value isn't mapped:
+
+```yaml
+- id: "route_by_country"
+  kind: "router"
+  match:
+    field: "user.country"     # dot-path supported
+  routes:
+    US: "resolve_us"
+    DE: "resolve_eu"
+    FR: "resolve_eu"
+    default: "resolve_other"  # any unmapped value lands here
+```
+
+This is the idiomatic way to add data-driven branching after an `AutonomousAgent` outcome — keep the deterministic logic in the router, not in the model.
+
+Chain multiple routers for more complex conditional branching:
 
 ```yaml
 steps:

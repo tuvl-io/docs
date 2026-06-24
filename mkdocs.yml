@@ -134,6 +134,7 @@ nav:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
       - Project Structure: getting-started/project-structure.md
+      - Build with Coding Agents: getting-started/coding-agents.md
   - Concepts:
       - Architecture: concepts/architecture.md
       - The Agentic Contract: concepts/agentic-contract.md

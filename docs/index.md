@@ -153,7 +153,7 @@ TUVL is fully compatible with AI coding agents. To empower your AI agent with co
 - <a href="assets/AGENTS.txt" download="AGENTS.md">⬇️ Download <code>AGENTS.md</code></a> — Core framework rules and architectural invariants
 - <a href="assets/skills.zip" download="skills.zip">⬇️ Download <code>skills.zip</code></a> — Procedural skillset definitions (unzip to `.agents/skills/`)
 
-Place these files directly in the root of your project workspace to align your AI assistant with the TUVL framework.
+Place these files directly in the root of your project workspace to align your AI assistant with the TUVL framework. New projects created with `tuvl init` already include them. For the full workflow — scaffolding, prompting, validating, and testing generated config — see [Build with Coding Agents](getting-started/coding-agents.md).
 
 ## Getting Started
 
