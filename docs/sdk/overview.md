@@ -34,11 +34,11 @@ The client uses the `/api/_system/workflows/{name}` manifest endpoint to discove
 
 Used when no `onProgress` callback is provided, or when `mode: "rest"` is forced. The server runs the full workflow synchronously and returns a single JSON response.
 
-Best for: fast workflows (functional, router, model-op steps only), simple CRUD-like calls, server-side Node.js where streaming UI is not needed.
+Best for: fast workflows (Functional, Router, ModelOp steps only), simple CRUD-like calls, server-side Node.js where streaming UI is not needed.
 
 ### SSE (Server-Sent Events)
 
-Activated automatically when `onProgress` is provided **and** the workflow manifest reports `has_slow_steps: true` (meaning it contains `agent`, `mcp`, or `api_call` steps). Can also be forced with `mode: "sse"`.
+Activated automatically when `onProgress` is provided **and** the workflow manifest reports `has_slow_steps: true` (meaning it contains `Agent`, `MCP`, or `APICall` steps). Can also be forced with `mode: "sse"`.
 
 The server streams one event per step as it completes, then a final `done` event with the result. Uses standard fetch + `ReadableStream` — works in browsers (Chrome 78+, Firefox 100+, Safari 15+) and Node.js 18+.
 

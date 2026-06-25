@@ -1,6 +1,6 @@
 # AI Models
 
-The AI Models section configures your `AgentModel` definitions — the LLM connections that power `agent` steps in your workflows. tuvl uses [LiteLLM](https://docs.litellm.ai/) under the hood, which means you can connect to any major LLM provider with a single config file.
+The AI Models section configures your `AgentModel` definitions — the LLM connections that power `Agent` steps in your workflows. tuvl uses [LiteLLM](https://docs.litellm.ai/) under the hood, which means you can connect to any major LLM provider with a single config file.
 
 ![AI Models page](../assets/screenshots/insight-ai-models.png)
 
@@ -110,11 +110,11 @@ spec:
 
 ## Using an AI model in a workflow
 
-Reference the model by its `metadata.name` value in an `agent` step:
+Reference the model by its `metadata.name` value in an `Agent` step:
 
 ```yaml
 - id: score_cv
-  kind: agent
+  kind: Agent
   agent:
     model: default          # matches AgentModel metadata.name
     prompt: |

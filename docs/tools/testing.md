@@ -117,10 +117,10 @@ stubs:
 
 | Step kind | Reason to stub |
 |-----------|---------------|
-| `agent` | Avoid LLM API calls in CI; get deterministic output |
-| `api_call` | Avoid external HTTP traffic |
-| `mcp` | Avoid external MCP server dependency |
-| `model-op` | Avoid database writes/reads |
+| `Agent` | Avoid LLM API calls in CI; get deterministic output |
+| `APICall` | Avoid external HTTP traffic |
+| `MCP` | Avoid external MCP server dependency |
+| `ModelOp` | Avoid database writes/reads |
 | `HumanInTheLoop` | No reviewer available in CI |
 
 Functional steps (pure Python `@node` functions) generally do _not_ need stubs unless

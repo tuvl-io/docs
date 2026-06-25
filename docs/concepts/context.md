@@ -65,8 +65,8 @@ Keys starting with underscore (`_`) are reserved for internal use and are **stri
 | `_user_id` | Auth middleware | Authenticated user ID from the Biscuit token |
 | `_last_error` | Engine | String description of the last step error |
 | `_last_error_type` | Engine | Error category for the last agent failure: `"error"`, `"timeout"`, or `"parse_error"` |
-| `_api_status_code` | `api_call` step | HTTP status code of the last outbound HTTP call |
-| `_response` | `response` step | Shaped payload that will be returned as the HTTP response body |
+| `_api_status_code` | `APICall` step | HTTP status code of the last outbound HTTP call |
+| `_response` | `Response` step | Shaped payload that will be returned as the HTTP response body |
 | `_context_model_versions` | Engine | `{ModelName: schema_version}` dict tracking which model version each model-aware step should use; populated from the workflow `context.models[].version` declarations |
 
 !!! warning "Private Keys"
@@ -78,7 +78,7 @@ Agent prompts access context via Jinja2 templates:
 
 ```yaml
 - id: "classify"
-  kind: "agent"
+  kind: "Agent"
   agent:
     prompt: |
       Customer: {{ name }}
@@ -102,12 +102,12 @@ steps:
     # Output: {email, name, company, id, created_at}
 
   - id: "classify"
-    kind: "agent"
+    kind: "Agent"
     # Input: {email, name, company, id, created_at, _session}
     # Output: {email, name, company, id, created_at, lead_score, _session}
 
   - id: "route"
-    kind: "router"
+    kind: "Router"
     # Input: {email, name, company, id, created_at, lead_score, _session}
     # Returns signal based on lead_score
 ```
@@ -136,7 +136,7 @@ async def process(ctx: dict[str, Any]) -> dict[str, Any]:
 
 ```yaml
 - id: "check_priority"
-  kind: "router"
+  kind: "Router"
   router:
     conditions:
       - if: "priority == 'urgent'"

@@ -77,7 +77,7 @@ console.log("Final output:", result);
 ```
 
 !!! info "Auto-detection"
-    You do not need to set `mode: "sse"` explicitly. The SDK fetches the workflow manifest and switches to SSE automatically when `onProgress` is provided and the workflow contains slow steps (`agent`, `mcp`, `api_call`). For fast workflows it falls back to REST silently.
+    You do not need to set `mode: "sse"` explicitly. The SDK fetches the workflow manifest and switches to SSE automatically when `onProgress` is provided and the workflow contains slow steps (`Agent`, `MCP`, `APICall`). For fast workflows it falls back to REST silently.
 
 ---
 

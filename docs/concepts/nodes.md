@@ -1,6 +1,6 @@
 # Nodes
 
-Nodes are Python functions that execute `functional` workflow steps. Every step in a workflow has a **kind** — this page covers all available step kinds, their UI colours, and how to write custom `functional` nodes.
+Nodes are Python functions that execute `Functional` workflow steps. Every step in a workflow has a **kind** — this page covers all available step kinds, their UI colours, and how to write custom `Functional` nodes.
 
 ---
 
@@ -12,20 +12,20 @@ tuvl has 8 built-in step kinds. The table below maps each kind to its icon and c
 
 | Kind | UI colour | Icon | Purpose | Emits |
 |------|-----------|------|---------|-------|
-| `functional` | :material-circle:{ style="color:#3b82f6" } **Blue** | :material-code-braces: | Run a custom Python `@node()` function | Any string / tuple |
-| `agent` | :material-circle:{ style="color:#a855f7" } **Purple** | :material-star-four-points: | Call an LLM via LiteLLM or an `llms/` preset | `default` · `error` · `timeout` · `parse_error` · custom from `signal_from` |
-| `router` | :material-circle:{ style="color:#f59e0b" } **Amber** | :material-rhombus: | Evaluate a condition on context, branch true/false | `"true"` · `"false"` · `"error"` |
-| `api_call` | :material-circle:{ style="color:#14b8a6" } **Teal** | :material-web: | Make an outbound HTTP request | `default` · `error` |
-| `mcp` | :material-circle:{ style="color:#ec4899" } **Pink** | :material-connection: | Call a tool on an MCP server (SSE or stdio) | `default` · `error` |
-| `model-op` | :material-circle:{ style="color:#10b981" } **Emerald** | :material-database: | CRUD operation on a registered model (no Python needed) | `default` · `error` |
-| `response` | :material-circle:{ style="color:#ef4444" } **Red** | :material-send: | Shape the HTTP response body | `default` · `error` |
+| `Functional` | :material-circle:{ style="color:#3b82f6" } **Blue** | :material-code-braces: | Run a custom Python `@node()` function | Any string / tuple |
+| `Agent` | :material-circle:{ style="color:#a855f7" } **Purple** | :material-star-four-points: | Call an LLM via LiteLLM or an `llms/` preset | `default` · `error` · `timeout` · `parse_error` · custom from `signal_from` |
+| `Router` | :material-circle:{ style="color:#f59e0b" } **Amber** | :material-rhombus: | Evaluate a condition on context, branch true/false | `"true"` · `"false"` · `"error"` |
+| `APICall` | :material-circle:{ style="color:#14b8a6" } **Teal** | :material-web: | Make an outbound HTTP request | `default` · `error` |
+| `MCP` | :material-circle:{ style="color:#ec4899" } **Pink** | :material-connection: | Call a tool on an MCP server (SSE or stdio) | `default` · `error` |
+| `ModelOp` | :material-circle:{ style="color:#10b981" } **Emerald** | :material-database: | CRUD operation on a registered model (no Python needed) | `default` · `error` |
+| `Response` | :material-circle:{ style="color:#ef4444" } **Red** | :material-send: | Shape the HTTP response body | `default` · `error` |
 | `HumanInTheLoop` | :material-circle:{ style="color:#f97316" } **Orange** | :material-account-clock: | Pause execution for a human reviewer | *(suspends — never routes)* |
 
 </div>
 
 ---
 
-## functional
+## Functional
 
 **UI colour:** :material-circle:{ style="color:#3b82f6" } Blue — `border-blue-600 bg-blue-950`
 
@@ -33,7 +33,7 @@ Run any custom Python async function registered with `@node("name")`.
 
 ```yaml
 - id: "normalize"
-  kind: "functional"
+  kind: "Functional"
   runner: "normalize_email"    # must exist in NODE_REGISTRY
   routes:
     default: "save"
@@ -53,7 +53,7 @@ async def normalize_email(ctx: dict) -> dict:
 
 ---
 
-## agent
+## Agent
 
 **UI colour:** :material-circle:{ style="color:#a855f7" } Purple — `border-purple-600 bg-purple-950`
 
@@ -61,7 +61,7 @@ Call an LLM. Supports any LiteLLM model string or a named preset from `llms/<nam
 
 ```yaml
 - id: "evaluate"
-  kind: "agent"
+  kind: "Agent"
   agent:
     model: "default"              # llms/default.yaml — or "gpt-4o-mini", "ollama/llama3" etc.
     system: "You are an HR evaluator."
@@ -90,7 +90,7 @@ Call an LLM. Supports any LiteLLM model string or a named preset from `llms/<nam
 
 ---
 
-## router
+## Router
 
 **UI colour:** :material-circle:{ style="color:#f59e0b" } Amber — `border-amber-600 bg-amber-950`
 
@@ -98,7 +98,7 @@ Evaluate a condition on the context dictionary and branch `"true"` / `"false"`. 
 
 ```yaml
 - id: "check_score"
-  kind: "router"
+  kind: "Router"
   condition:
     field: "score"          # context key (dot-path supported: "candidate.score")
     operator: "gte"         # eq | neq | gt | gte | lt | lte | in | contains | is_empty | is_not_empty
@@ -112,7 +112,7 @@ Evaluate a condition on the context dictionary and branch `"true"` / `"false"`. 
 
 ---
 
-## api_call
+## APICall
 
 **UI colour:** :material-circle:{ style="color:#14b8a6" } Teal — `border-teal-600 bg-teal-950`
 
@@ -120,7 +120,7 @@ Make an outbound HTTP request. Supports `{{ context }}` templating in URL, heade
 
 ```yaml
 - id: "enrich_company"
-  kind: "api_call"
+  kind: "APICall"
   http:
     url: "https://api.clearbit.com/v2/companies/find?domain={{ email_domain }}"
     method: "GET"
@@ -145,7 +145,7 @@ On HTTP errors: sets `_last_error` and `_api_status_code` in context, emits `"er
 
 ---
 
-## mcp
+## MCP
 
 **UI colour:** :material-circle:{ style="color:#ec4899" } Pink — `border-pink-600 bg-pink-950`
 
@@ -155,7 +155,7 @@ Call a tool on any [Model Context Protocol](https://modelcontextprotocol.io) ser
 
     ```yaml
     - id: "search_kb"
-      kind: "mcp"
+      kind: "MCP"
       mcp:
         transport: "sse"                         # default
         url: "http://localhost:3001/sse"
@@ -173,7 +173,7 @@ Call a tool on any [Model Context Protocol](https://modelcontextprotocol.io) ser
 
     ```yaml
     - id: "list_prs"
-      kind: "mcp"
+      kind: "MCP"
       mcp:
         transport: "stdio"
         command: "npx"
@@ -192,7 +192,7 @@ Call a tool on any [Model Context Protocol](https://modelcontextprotocol.io) ser
 
 ---
 
-## model-op
+## ModelOp
 
 **UI colour:** :material-circle:{ style="color:#10b981" } Emerald — `border-emerald-600 bg-emerald-950`
 
@@ -200,14 +200,14 @@ Direct CRUD on any registered model — no Python node required. The model must 
 
 ```yaml
 - id: "save_candidate"
-  kind: "model-op"
+  kind: "ModelOp"
   model: "Candidate"
   operation: "create"              # create | read | list | update | delete
   payload: "{{ candidate }}"       # dict or {{template}} — used by create / update
   output: "saved_candidate"        # context key for the result
 
 - id: "fetch_with_relations"
-  kind: "model-op"
+  kind: "ModelOp"
   model: "Application"
   operation: "read"
   record_id: "{{ application_id }}"
@@ -215,7 +215,7 @@ Direct CRUD on any registered model — no Python node required. The model must 
   output: "application"
 
 - id: "list_pending"
-  kind: "model-op"
+  kind: "ModelOp"
   model: "Application"
   operation: "list"
   filters:
@@ -228,7 +228,7 @@ Direct CRUD on any registered model — no Python node required. The model must 
 
 ---
 
-## response
+## Response
 
 **UI colour:** :material-circle:{ style="color:#ef4444" } Red — `border-red-500 bg-red-950`
 
@@ -238,7 +238,7 @@ Shape the HTTP response body. Usually placed as the last step. The payload is st
 
     ```yaml
     - id: "respond"
-      kind: "response"
+      kind: "Response"
       source: "saved_candidate"   # expose an existing context key as-is
     ```
 
@@ -246,7 +246,7 @@ Shape the HTTP response body. Usually placed as the last step. The payload is st
 
     ```yaml
     - id: "respond"
-      kind: "response"
+      kind: "Response"
       mapping:
         id:         "saved_candidate.id"
         name:       "saved_candidate.name"
@@ -302,7 +302,7 @@ Content-Type: application/json
 
 ---
 
-## Writing a `functional` Node
+## Writing a `Functional` Node
 
 
 
@@ -360,7 +360,7 @@ Use with routes:
 
 ```yaml
 - id: "validate"
-  kind: "functional"
+  kind: "Functional"
   runner: "validate"
   routes:
     valid: "save"

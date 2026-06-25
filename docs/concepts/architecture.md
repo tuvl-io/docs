@@ -37,13 +37,13 @@ flowchart TD
     AuthZ -->|Auto-Generated CRUD| UoW[Workflow Unit of Work<br>Pydantic-Validated CRUD]
 
     subgraph Execution & Integrations
-        Engine -->|model-op| UoW
+        Engine -->|ModelOp| UoW
         UoW -->|SQLModel Object Mapper| PG[(PostgreSQL)]
-        Engine -->|agent| LLM[LiteLLM Any Provider]
+        Engine -->|Agent| LLM[LiteLLM Any Provider]
         Engine -->|DataSearch| RAG[(pgvector RAG)]
-        Engine -->|functional| Nodes[Custom Python Nodes]
-        Engine -->|mcp| MCP[MCP Tools]
-        Engine -->|api_call| ExtAPI[External APIs]
+        Engine -->|Functional| Nodes[Custom Python Nodes]
+        Engine -->|MCP| MCP[MCP Tools]
+        Engine -->|APICall| ExtAPI[External APIs]
     end
 ```
 
@@ -72,7 +72,7 @@ Clients use `@protobuf-ts/grpcweb-transport` (browser and Node.js). Both the tuv
 1. Deserialises the workflow YAML into step configs
 2. Maintains the mutable context dictionary throughout execution
 3. Resolves the next step via signal-based routing after every step
-4. Delegates to the appropriate step runner (functional / agent / api_call / mcp / HumanInTheLoop / model-op / response)
+4. Delegates to the appropriate step runner (Functional / Agent / APICall / MCP / HumanInTheLoop / ModelOp / Response)
 5. Emits an OTel span per step when a tracer is configured
 
 ### Node Registry
@@ -155,14 +155,14 @@ sequenceDiagram
 
 | Kind | Description |
 |------|-------------|
-| `functional` | Call a registered Python node from `NODE_REGISTRY` |
-| `agent` | LLM call via LiteLLM; structured JSON output maps to context keys |
-| `api_call` | Outbound HTTP request; response mapped into context |
-| `mcp` | Invoke a tool on an MCP server (stdio or SSE) |
+| `Functional` | Call a registered Python node from `NODE_REGISTRY` |
+| `Agent` | LLM call via LiteLLM; structured JSON output maps to context keys |
+| `APICall` | Outbound HTTP request; response mapped into context |
+| `MCP` | Invoke a tool on an MCP server (stdio or SSE) |
 | `HumanInTheLoop` | Pause execution; await a human approve/reject decision |
-| `model-op` | Direct CRUD operation on a registered data model |
-| `router` | Evaluate a condition expression; branch via signal |
-| `response` | Shape and emit the final HTTP response from context keys |
+| `ModelOp` | Direct CRUD operation on a registered data model |
+| `Router` | Evaluate a condition expression; branch via signal |
+| `Response` | Shape and emit the final HTTP response from context keys |
 
 ## Context Keys
 
@@ -174,8 +174,8 @@ All engine-injected keys begin with `_` and are stripped from HTTP responses:
 | `_db` | Engine | Unit-of-work repository accessor |
 | `_user_id` | Auth middleware | Authenticated user ID |
 | `_last_error` | Engine | Last step error string |
-| `_api_status_code` | `api_call` step | HTTP status of last outbound call |
-| `_response` | `response` step | Shaped payload returned to client |
+| `_api_status_code` | `APICall` step | HTTP status of last outbound call |
+| `_response` | `Response` step | Shaped payload returned to client |
 
 ## Next Steps
 
