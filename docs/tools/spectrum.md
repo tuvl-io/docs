@@ -105,7 +105,7 @@ The response includes a full trace with per-step snapshots:
   "steps": [
     {
       "step_id": "save_draft",
-      "kind": "functional",
+      "kind": "Functional",
       "runner": "save_contact",
       "input_context": {
         "email": "jane@example.com",
@@ -122,7 +122,7 @@ The response includes a full trace with per-step snapshots:
     },
     {
       "step_id": "ai_vetting",
-      "kind": "agent",
+      "kind": "Agent",
       "runner": null,
       "input_context": { "...": "..." },
       "output_context": {
@@ -149,11 +149,11 @@ The response includes a full trace with per-step snapshots:
 | Field | Type | Description |
 |-------|------|-------------|
 | `step_id` | string | The step's `id` from the workflow YAML |
-| `kind` | string | `functional`, `agent`, `router`, `api_call`, `mcp` |
-| `runner` | string or null | Node name for `functional` steps |
+| `kind` | string | `Functional`, `Agent`, `Router`, `APICall`, `MCP` |
+| `runner` | string or null | Node name for `Functional` steps |
 | `input_context` | object | Context snapshot **before** the step ran |
 | `output_context` | object | Context snapshot **after** the step ran |
-| `route_taken` | string or null | Which route key was followed (for `router`/`agent` steps) |
+| `route_taken` | string or null | Which route key was followed (for `Router`/`Agent` steps) |
 | `duration_ms` | number | Wall-clock time in milliseconds |
 | `error` | string or null | Exception message if the step failed |
 

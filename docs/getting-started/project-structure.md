@@ -81,12 +81,12 @@ spec:
     method: "POST"
   steps:
     - id: "save"
-      kind: "functional"
+      kind: "Functional"
       runner: "save_contact"
       routes:
         default: "prioritize"
     - id: "prioritize"
-      kind: "agent"
+      kind: "Agent"
       agent:
         model: "default"
         prompt: "Classify {{ name }} as high | medium | low priority. Return JSON: {\"priority\": \"...\"}"

@@ -25,7 +25,7 @@ spec:
 
   steps:
     - id: "step_1"
-      kind: "functional"
+      kind: "Functional"
       runner: "my_node"
 ```
 
@@ -161,20 +161,20 @@ Steps are executed sequentially (with routing for branching):
 ```yaml
 steps:
   - id: "validate"
-    kind: "functional"
+    kind: "Functional"
     runner: "validate_input"
     routes:
       valid: "process"
       invalid: "reject"
       
   - id: "process"
-    kind: "agent"
+    kind: "Agent"
     agent:
       model: "ollama/llama3"
       prompt: "..."
       
   - id: "reject"
-    kind: "functional"
+    kind: "Functional"
     runner: "send_rejection"
 ```
 
@@ -183,7 +183,7 @@ steps:
 | Property | Required | Description |
 |----------|----------|-------------|
 | `id` | Yes | Unique identifier within the workflow |
-| `kind` | Yes | Step type: `functional`, `agent`, `AutonomousAgent`, `router`, `api_call`, `mcp`, `model-op`, `response`, `HumanInTheLoop` |
+| `kind` | Yes | Step type: `Functional`, `Agent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop` |
 | `runner` | For functional | Node name from `NODE_REGISTRY` |
 | `agent` | For agent | LLM configuration |
 | `routes` | No | Signal-to-step mapping |
@@ -196,7 +196,7 @@ Execute a registered Python node:
 
 ```yaml
 - id: "save_order"
-  kind: "functional"
+  kind: "Functional"
   runner: "db_save"        # Must exist in NODE_REGISTRY
 ```
 
@@ -218,7 +218,7 @@ Execute an LLM call with structured output:
 
 ```yaml
 - id: "classify"
-  kind: "agent"
+  kind: "Agent"
   agent:
     model: "default"                # preset name from llms/default.yaml
     # or use a LiteLLM model string directly:
@@ -314,7 +314,7 @@ Evaluate a condition on the context and branch to different steps:
 
 ```yaml
 - id: "check_amount"
-  kind: "router"
+  kind: "Router"
   condition:
     field: "amount"          # context key (dot-path supported: "order.amount")
     operator: "gte"          # eq | neq | gt | gte | lt | lte | in | contains | is_empty | is_not_empty
@@ -347,7 +347,7 @@ Chain multiple routers for more complex conditional branching:
 ```yaml
 steps:
   - id: "check_high"
-    kind: "router"
+    kind: "Router"
     condition:
       field: "amount"
       operator: "gte"
@@ -357,7 +357,7 @@ steps:
       "false": "check_medium"
 
   - id: "check_medium"
-    kind: "router"
+    kind: "Router"
     condition:
       field: "amount"
       operator: "gte"
@@ -388,7 +388,7 @@ Make HTTP requests to external services:
 
 ```yaml
 - id: "fetch_weather"
-  kind: "api_call"
+  kind: "APICall"
   http:
     url: "https://api.weather.com/v1/current"
     method: "GET"
@@ -417,7 +417,7 @@ Call tools from MCP (Model Context Protocol) servers. Two transports are support
 
 ```yaml
 - id: "search_docs"
-  kind: "mcp"
+  kind: "MCP"
   mcp:
     transport: "sse"                          # default
     url: "http://localhost:3001/sse"
@@ -435,7 +435,7 @@ Call tools from MCP (Model Context Protocol) servers. Two transports are support
 
 ```yaml
 - id: "list_issues"
-  kind: "mcp"
+  kind: "MCP"
   mcp:
     transport: "stdio"
     command: "npx"
@@ -456,7 +456,7 @@ Perform a CRUD operation on a registered model without writing a Python node. Th
 
 ```yaml
 - id: "create_candidate"
-  kind: "model-op"
+  kind: "ModelOp"
   model: "Candidate"            # PascalCase model name from MODEL_REGISTRY
   operation: "create"           # create | read | list | update | delete
   payload: "{{ candidate }}"    # dict or {{template}} — used by create / update
@@ -470,7 +470,7 @@ Perform a CRUD operation on a registered model without writing a Python node. Th
 
 ```yaml
 - id: "fetch_candidate"
-  kind: "model-op"
+  kind: "ModelOp"
   model: "Candidate"
   operation: "read"
   record_id: "{{ candidate_id }}"
@@ -482,7 +482,7 @@ Perform a CRUD operation on a registered model without writing a Python node. Th
 
 ```yaml
 - id: "list_pending"
-  kind: "model-op"
+  kind: "ModelOp"
   model: "Application"
   operation: "list"
   filters:
@@ -511,12 +511,12 @@ Shape the HTTP response without ending the workflow (useful as the last step in 
 ```yaml
 # Source mode — expose an existing context key as-is
 - id: "respond"
-  kind: "response"
+  kind: "Response"
   source: "candidate"
 
 # Mapping mode — project specific fields from nested context
 - id: "respond"
-  kind: "response"
+  kind: "Response"
   mapping:
     id: "candidate.id"
     full_name: "candidate.name"
@@ -638,7 +638,7 @@ Routes determine the next step based on signals:
 
 ```yaml
 - id: "process"
-  kind: "functional"
+  kind: "Functional"
   runner: "process_data"
   routes:
     success: "notify"           # On "success" signal → go to "notify"
@@ -709,14 +709,14 @@ Use the `error` route to handle step failures:
 
 ```yaml
 - id: "risky_step"
-  kind: "functional"
+  kind: "Functional"
   runner: "external_api_call"
   routes:
     default: "next"
     error: "fallback"
 
 - id: "fallback"
-  kind: "functional"
+  kind: "Functional"
   runner: "log_and_continue"
 ```
 

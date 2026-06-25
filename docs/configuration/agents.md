@@ -122,7 +122,7 @@ Reference the agent model or specify inline:
 
 ```yaml
 - id: "classify"
-  kind: "agent"
+  kind: "Agent"
   agent:
     model: "default"    # Uses agents/default.yaml
     prompt: "..."
@@ -132,7 +132,7 @@ Reference the agent model or specify inline:
 
 ```yaml
 - id: "classify"
-  kind: "agent"
+  kind: "Agent"
   agent:
     model: "ollama/llama3"    # LiteLLM format
     prompt: "..."
@@ -155,7 +155,7 @@ Full agent step specification:
 
 ```yaml
 - id: "analyze"
-  kind: "agent"
+  kind: "Agent"
   agent:
     model: "ollama/llama3"
     
