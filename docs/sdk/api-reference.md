@@ -183,7 +183,7 @@ onProgress provided AND has_slow_steps=true  → SSE (auto)
 everything else                               → REST
 ```
 
-`has_slow_steps` is read from the cached workflow manifest. A workflow has slow steps when it contains at least one `agent`, `mcp`, or `api_call` step.
+`has_slow_steps` is read from the cached workflow manifest. A workflow has slow steps when it contains at least one `Agent`, `MCP`, or `APICall` step.
 
 ---
 
@@ -445,7 +445,7 @@ interface StepEvent {
 |---|---|
 | `event_type` | `"step"` during execution, `"done"` on success, `"error"` on failure |
 | `step_id` | The step's `id` field from the workflow YAML |
-| `kind` | Step kind: `functional`, `agent`, `mcp`, `api_call`, `router`, `response`, `model-op` |
+| `kind` | Step kind: `Functional`, `Agent`, `MCP`, `APICall`, `Router`, `Response`, `ModelOp` |
 | `signal` | Routing signal emitted by the step (e.g. `"default"`, `"true"`, `"false"`, custom) |
 | `snapshot` | All public context keys (no `_` prefix) after this step completed |
 | `duration_ms` | Wall time for this step in milliseconds |
@@ -503,8 +503,8 @@ interface WorkflowManifest {
 |---|---|
 | `trigger_path` | The HTTP path the workflow is mounted at (e.g. `/api/hello`) |
 | `trigger_method` | HTTP verb (`POST`, `GET`, etc.) |
-| `has_slow_steps` | `true` if the workflow has `agent`, `mcp`, or `api_call` steps |
-| `slow_kinds_present` | List of slow step kinds found (e.g. `["agent", "mcp"]`) |
+| `has_slow_steps` | `true` if the workflow has `Agent`, `MCP`, or `APICall` steps |
+| `slow_kinds_present` | List of slow step kinds found (e.g. `["Agent", "MCP"]`) |
 | `required_scope` | Biscuit scope required to call this workflow, or `null` |
 | `required_group` | IAM group required to call this workflow, or `null` |
 | `steps` | Ordered list of `{id, kind}` for each step |

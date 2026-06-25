@@ -136,11 +136,11 @@ spec:
 
   steps:
     - id: "save"
-      kind: "functional"
+      kind: "Functional"
       runner: "save_contact"
 
     - id: "prioritize"
-      kind: "agent"
+      kind: "Agent"
       agent:
         model: "ollama/llama3"
         system: |
@@ -161,7 +161,7 @@ spec:
         error: "enrich"
 
     - id: "enrich"
-      kind: "functional"
+      kind: "Functional"
       runner: "enrich_contact"
 ```
 

@@ -111,14 +111,14 @@ spec:
 
   steps:
     - id: "save_draft"
-      kind: "functional"
+      kind: "Functional"
       runner: "save_candidate"
       routes:
         default: "ai_vetting"
         error: "END"
 
     - id: "ai_vetting"
-      kind: "agent"
+      kind: "Agent"
       agent:
         model: "ollama/llama3"
         system: |
@@ -156,13 +156,13 @@ spec:
         error: "manual_review"
 
     - id: "fast_track"
-      kind: "functional"
+      kind: "Functional"
       runner: "fast_track_candidate"
       routes:
         default: "END"
 
     - id: "manual_review"
-      kind: "functional"
+      kind: "Functional"
       runner: "flag_for_review"
       routes:
       default: "END"
@@ -340,7 +340,7 @@ async def send_welcome_email(ctx: dict[str, Any]) -> dict[str, Any]:
 
 ```yaml
 - id: "verify_email"
-  kind: "api_call"
+  kind: "APICall"
   api:
     url: "https://api.emailverifier.com/verify"
     method: "POST"
@@ -361,7 +361,7 @@ async def send_welcome_email(ctx: dict[str, Any]) -> dict[str, Any]:
 
 ```yaml
 - id: "check_experience"
-  kind: "router"
+  kind: "Router"
   router:
     conditions:
       - if: "experience_years >= 10"
