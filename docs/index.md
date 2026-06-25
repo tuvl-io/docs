@@ -22,11 +22,11 @@ metadata:
 spec:
   steps:
     - id: "save_draft"
-      kind: "functional"
+      kind: "Functional"
       runner: "db_save"
 
     - id: "ai_vetting"
-      kind: "agent"
+      kind: "Agent"
       agent:
         model: "ollama/llama3"
         prompt: |
@@ -136,13 +136,13 @@ flowchart TD
     AuthZ -->|Auto-Generated CRUD| UoW[Workflow Unit of Work<br>Pydantic-Validated CRUD]
 
     subgraph Execution & Integrations
-        Engine -->|model-op| UoW
+        Engine -->|ModelOp| UoW
         UoW -->|SQLModel Object Mapper| PG[(PostgreSQL)]
-        Engine -->|agent| LLM[LiteLLM Any Provider]
+        Engine -->|Agent| LLM[LiteLLM Any Provider]
         Engine -->|DataSearch| RAG[(pgvector RAG)]
-        Engine -->|functional| Nodes[Custom Python Nodes]
-        Engine -->|mcp| MCP[MCP Tools]
-        Engine -->|api_call| ExtAPI[External APIs]
+        Engine -->|Functional| Nodes[Custom Python Nodes]
+        Engine -->|MCP| MCP[MCP Tools]
+        Engine -->|APICall| ExtAPI[External APIs]
     end
 ```
 

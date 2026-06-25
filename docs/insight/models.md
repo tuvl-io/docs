@@ -88,11 +88,11 @@ When a model is loaded, tuvl mounts CRUD routes at `/api/<table-name>/`:
 
 ## Using a model in a workflow
 
-Reference the model by its `metadata.name` value in a `model-op` step:
+Reference the model by its `metadata.name` value in a `ModelOp` step:
 
 ```yaml
 - id: save_candidate
-  kind: model-op
+  kind: ModelOp
   op: add
   model: Candidate
 ```

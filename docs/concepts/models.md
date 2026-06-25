@@ -205,7 +205,7 @@ fields:
 
 ## Relationships
 
-Declare relations in `spec.relations` to enable expanded read responses and `model-op` steps with `include:`.
+Declare relations in `spec.relations` to enable expanded read responses and `ModelOp` steps with `include:`.
 
 ```yaml title="models/application.yaml"
 kind: "ModelDefinition"
@@ -238,7 +238,7 @@ spec:
 | `many_to_one` | This model | `application.candidate_id → candidates.id` |
 | `one_to_many` | Related model | `assessments.application_id → applications.id` |
 
-Expanded reads (via `GET /api/application/{id}?include=candidate` or a `model-op` step with `include: candidate`) return nested objects:
+Expanded reads (via `GET /api/application/{id}?include=candidate` or a `ModelOp` step with `include: candidate`) return nested objects:
 
 ```json
 {

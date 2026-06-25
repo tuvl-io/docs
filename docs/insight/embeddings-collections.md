@@ -94,11 +94,11 @@ spec:
 
 ## Using RAG in a workflow
 
-Once an `EmbeddingModel` and `VectorCollection` are configured and enabled, tuvl registers automatic RAG nodes that you can call from `functional` steps:
+Once an `EmbeddingModel` and `VectorCollection` are configured and enabled, tuvl registers automatic RAG nodes that you can call from `Functional` steps:
 
 ```yaml
 - id: retrieve_policy
-  kind: functional
+  kind: Functional
   runner: rag_search          # auto-registered by tuvl
   input:
     collection: hr_knowledge_base
@@ -106,7 +106,7 @@ Once an `EmbeddingModel` and `VectorCollection` are configured and enabled, tuvl
     top_k: 5
 ```
 
-The RAG node returns the top-k chunks as a list in `ctx["rag_results"]`, which you can pass to a subsequent `agent` step as context.
+The RAG node returns the top-k chunks as a list in `ctx["rag_results"]`, which you can pass to a subsequent `Agent` step as context.
 
 ---
 

@@ -43,7 +43,7 @@ Use in workflow:
 
 ```yaml
 - id: "validate"
-  kind: "functional"
+  kind: "Functional"
   runner: "validate_email"
   routes:
     valid: "create_user"

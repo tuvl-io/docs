@@ -36,14 +36,14 @@ Switch to the **Graph** tab to see a node-by-node canvas of the workflow executi
 
 | Node colour | Step kind |
 |-------------|-----------|
-| Blue | `agent` — LLM call |
-| Green | `functional` — Python node |
-| Purple | `api_call` — external HTTP call |
-| Orange | `mcp` — MCP tool call |
-| Teal | `model-op` — repository operation |
+| Blue | `Agent` — LLM call |
+| Green | `Functional` — Python node |
+| Purple | `APICall` — external HTTP call |
+| Orange | `MCP` — MCP tool call |
+| Teal | `ModelOp` — repository operation |
 | Yellow | `hitl` — human-in-the-loop pause |
-| Red | `router` — conditional branching |
-| Grey | `response` — terminal response step |
+| Red | `Router` — conditional branching |
+| Grey | `Response` — terminal response step |
 
 Arrows between nodes show the routes declared in the YAML. Click **Fit view** to auto-zoom the canvas to the full graph.
 
@@ -90,12 +90,12 @@ enabled: true
 spec:
   steps:
     - id: save_draft
-      kind: model-op
+      kind: ModelOp
       op: add
       model: Candidate
 
     - id: score_cv
-      kind: agent
+      kind: Agent
       agent:
         model: default
         prompt: |
@@ -110,15 +110,15 @@ spec:
         weak: reject
 
     - id: fast_track
-      kind: functional
+      kind: Functional
       runner: notify_hr_fast_track
 
     - id: standard_review
-      kind: functional
+      kind: Functional
       runner: notify_hr_standard
 
     - id: reject
-      kind: response
+      kind: Response
       response:
         status: 200
         body: '{"message": "Thank you for applying. We will be in touch."}'
