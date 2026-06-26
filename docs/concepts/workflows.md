@@ -183,7 +183,7 @@ steps:
 | Property | Required | Description |
 |----------|----------|-------------|
 | `id` | Yes | Unique identifier within the workflow |
-| `kind` | Yes | Step type: `Functional`, `Agent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop` |
+| `kind` | Yes | Step type: `Functional`, `Agent`, `AutonomousAgent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop` |
 | `runner` | For functional | Node name from `NODE_REGISTRY` |
 | `agent` | For agent | LLM configuration |
 | `routes` | No | Signal-to-step mapping |
