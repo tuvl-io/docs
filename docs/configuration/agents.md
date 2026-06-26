@@ -188,6 +188,53 @@ Full agent step specification:
     timeout: 30
 ```
 
+## Autonomous Agent Step Configuration
+
+An `AutonomousAgent` step reuses the same `agent:` model configuration but runs a **bounded tool-calling loop** instead of a single completion. The model is given a `goal` and a closed set of `tools` (each referencing another step in the workflow), and keeps calling them until it emits one of `outcome.enum`. The loop is capped by `max_iterations` and an optional `token_budget`.
+
+```yaml
+- id: "triage"
+  kind: "AutonomousAgent"
+  agent:
+    model: "default"                 # same presets / LiteLLM strings as Agent
+    goal: "Resolve the support ticket using the available tools."
+    max_iterations: 8                # hard cap on loop turns (default 8)
+    token_budget: 50000              # optional cap on cumulative tokens
+    tools:
+      - ref: "lookup_order"          # the id of another step in this workflow
+        description: "Fetch order details by order id."   # required — guides tool choice
+        parameters:                  # JSON Schema for the tool's arguments
+          type: object
+          properties: { order_id: { type: string } }
+          required: [order_id]
+        writes_context: false        # default: tool result returns to the agent only
+      - ref: "issue_refund"
+        description: "Issue a refund for an order id and amount."
+    outcome:
+      enum: ["resolved", "escalate", "needs_human"]   # closed set of exits
+      output_key: "agent_result"     # context key receiving the final output
+  routes:
+    resolved:        "format_reply"
+    escalate:        "notify_manager"
+    needs_human:     "hitl_review"
+    max_iterations:  "fallback_summary"   # reserved abnormal exits — map these too
+    budget_exceeded: "fallback_summary"
+    error:           "alert_ops"
+```
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `goal` | Required | The task the agent must accomplish |
+| `tools` | `[]` | Tools the agent may call; each `ref` names another step (`APICall` / `MCP` / `ModelOp` / `Functional`) with a `description` and JSON-Schema `parameters` |
+| `tools[].writes_context` | `false` | When `true`, the tool's public output merges back into the shared context |
+| `outcome.enum` | `[]` | Closed set of exit signals — **every value must be mapped in `routes:`** |
+| `outcome.output_key` | `<id>_result` | Context key that receives the agent's final output |
+| `max_iterations` | `8` | Hard cap on loop turns |
+| `token_budget` | `null` | Optional hard cap on cumulative tokens |
+
+!!! warning "Bound the loop and route every exit"
+    Map every `outcome.enum` value **and** the reserved abnormal exits `max_iterations`, `budget_exceeded`, and `error` in `routes:`. For data-driven branching after an outcome (by country, tier, region…), route into a [`Router` with `match:`](../concepts/workflows.md#router-steps) — never push deterministic logic into the model. See [Workflows → Autonomous Agent Steps](../concepts/workflows.md#autonomous-agent-steps) for the complete reference.
+
 ## Output Formats
 
 ### JSON Format

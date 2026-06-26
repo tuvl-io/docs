@@ -157,6 +157,7 @@ sequenceDiagram
 |------|-------------|
 | `Functional` | Call a registered Python node from `NODE_REGISTRY` |
 | `Agent` | LLM call via LiteLLM; structured JSON output maps to context keys |
+| `AutonomousAgent` | Bounded tool-calling loop; the model calls declared tools (other steps) until it emits an `outcome.enum` |
 | `APICall` | Outbound HTTP request; response mapped into context |
 | `MCP` | Invoke a tool on an MCP server (stdio or SSE) |
 | `HumanInTheLoop` | Pause execution; await a human approve/reject decision |

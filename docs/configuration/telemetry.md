@@ -90,8 +90,8 @@ workflow.execute          (parent)
 └── node.HumanInTheLoop   (child — HITL step)
 ```
 
-Valid node kinds: `Functional`, `Agent`, `APICall`, `MCP`, `Router`, `ModelOp`,
-`Response`, `HumanInTheLoop`.
+Valid node kinds: `Functional`, `Agent`, `AutonomousAgent`, `APICall`, `MCP`,
+`Router`, `ModelOp`, `Response`, `HumanInTheLoop`.
 
 ### Span attributes
 
