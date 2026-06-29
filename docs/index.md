@@ -2,6 +2,11 @@
 
 **A lightweight, local-first workflow orchestration engine for AI-powered business automation.**
 
+!!! warning "Beta release"
+    tuvl **2026.2.4** is a beta: ready for building and evaluation, but **not yet
+    recommended for production**. Interfaces may change before the stable release,
+    which is coming soon.
+
 <p align="center">
   <em>Pronounced "Thoo-val" (തൂവൽ) in Malayalam means a feather. It refers specifically to the soft feathers or plumage of a bird. </em>
 </p>
