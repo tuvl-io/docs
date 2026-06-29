@@ -1,5 +1,12 @@
 [
   {
+    "version": "2026.2.4",
+    "title": "2026.2.4",
+    "aliases": [
+      "latest"
+    ]
+  },
+  {
     "version": "2026.2.3-beta.3",
     "title": "2026.2.3-beta.3",
     "aliases": [
