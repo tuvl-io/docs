@@ -445,7 +445,7 @@ interface StepEvent {
 |---|---|
 | `event_type` | `"step"` during execution, `"done"` on success, `"error"` on failure |
 | `step_id` | The step's `id` field from the workflow YAML |
-| `kind` | Step kind: `Functional`, `Agent`, `MCP`, `APICall`, `Router`, `Response`, `ModelOp` |
+| `kind` | Step kind: `Functional`, `Agent`, `AutonomousAgent`, `MCP`, `APICall`, `Router`, `Response`, `ModelOp`, `HumanInTheLoop` |
 | `signal` | Routing signal emitted by the step (e.g. `"default"`, `"true"`, `"false"`, custom) |
 | `snapshot` | All public context keys (no `_` prefix) after this step completed |
 | `duration_ms` | Wall time for this step in milliseconds |

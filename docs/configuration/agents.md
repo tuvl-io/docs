@@ -200,16 +200,17 @@ An `AutonomousAgent` step reuses the same `agent:` model configuration but runs 
     goal: "Resolve the support ticket using the available tools."
     max_iterations: 8                # hard cap on loop turns (default 8)
     token_budget: 50000              # optional cap on cumulative tokens
+    skills:                          # project-relative .md files injected into the system prompt
+      - ".agents/skills/support-policy.md"
     tools:
       - ref: "lookup_order"          # the id of another step in this workflow
-        description: "Fetch order details by order id."   # required — guides tool choice
+        description: "Fetch order details by order id."   # optional — overrides lookup_order's own description:
         parameters:                  # JSON Schema for the tool's arguments
           type: object
           properties: { order_id: { type: string } }
           required: [order_id]
         writes_context: false        # default: tool result returns to the agent only
-      - ref: "issue_refund"
-        description: "Issue a refund for an order id and amount."
+      - ref: "issue_refund"          # description defaults to issue_refund's top-level description:
     outcome:
       enum: ["resolved", "escalate", "needs_human"]   # closed set of exits
       output_key: "agent_result"     # context key receiving the final output
@@ -225,7 +226,8 @@ An `AutonomousAgent` step reuses the same `agent:` model configuration but runs 
 | Property | Default | Description |
 |----------|---------|-------------|
 | `goal` | Required | The task the agent must accomplish |
-| `tools` | `[]` | Tools the agent may call; each `ref` names another step (`APICall` / `MCP` / `ModelOp` / `Functional`) with a `description` and JSON-Schema `parameters` |
+| `skills` | `[]` | Optional list of project-relative `.md` files injected into the agent's system prompt |
+| `tools` | `[]` | Tools the agent may call; each `ref` names another step (`APICall` / `MCP` / `ModelOp` / `Functional`) with JSON-Schema `parameters`. The tool description defaults to the referenced step's top-level `description:`; `description` here is an optional override |
 | `tools[].writes_context` | `false` | When `true`, the tool's public output merges back into the shared context |
 | `outcome.enum` | `[]` | Closed set of exit signals — **every value must be mapped in `routes:`** |
 | `outcome.output_key` | `<id>_result` | Context key that receives the agent's final output |

@@ -105,15 +105,16 @@ Where `Agent` is a single LLM call, `AutonomousAgent` runs a **bounded tool-call
     goal: "Resolve the support ticket using the available tools."
     max_iterations: 8                # hard cap (default 8)
     token_budget: 50000              # optional cap on cumulative tokens
+    skills:                          # project-relative .md files injected into the system prompt
+      - ".agents/skills/support-policy.md"
     tools:
       - ref: "lookup_order"          # names another step in this workflow
-        description: "Fetch order details by order id."
+        description: "Fetch order details by order id."  # optional — overrides lookup_order's own description:
         parameters:
           type: object
           properties: { order_id: { type: string } }
           required: [order_id]
-      - ref: "issue_refund"
-        description: "Issue a refund for an order id and amount."
+      - ref: "issue_refund"          # description defaults to issue_refund's top-level description:
     outcome:
       enum: ["resolved", "escalate", "needs_human"]   # closed set of exits
       output_key: "agent_result"
