@@ -69,6 +69,58 @@ This catches an invalid `kind:`, an unmapped signal in `routes:`, a tool `ref` t
 - **[Spectrum](../tools/spectrum.md)** — step through the generated workflow in the Insight portal and watch each node (including every autonomous-agent iteration and tool call) execute live.
 - **[`tuvl test`](../tools/testing.md)** — run LLM-as-a-Judge test cases. Stub an agent step's output to make a nondeterministic agent deterministic for assertions.
 
+## Set up your coding agent
+
+`AGENTS.md` follows the open [AGENTS.md](https://agents.md) standard, so most agents
+pick it up automatically the moment you open the project; the procedural skills
+live in `.agents/skills/` and are referenced from it. The setup differs slightly
+per tool, but the **prompt is the same everywhere** — for example:
+
+> *"Read `AGENTS.md` and the relevant skill in `.agents/skills/`, then add a
+> `Customer` model and a `POST /api/tickets` workflow where an autonomous agent
+> looks up the customer's orders and resolves or escalates. Run `tuvl validate`
+> when you're done."*
+
+### Claude Code
+
+1. Run `claude` from the project root — Claude Code reads the root `AGENTS.md`
+   (and `CLAUDE.md`) automatically, and can open any
+   `.agents/skills/<name>/SKILL.md` on demand.
+2. *(Optional)* surface the recipes as first-class Claude Code skills:
+   ```bash
+   mkdir -p .claude && ln -s ../.agents/skills .claude/skills
+   ```
+3. Prompt it with the request above (or *"use the **build-autonomous-agent**
+   skill to add a triage agent"*), review the diff, then `tuvl validate`.
+
+### Google Antigravity
+
+1. Open the project folder in Antigravity — it reads the root `AGENTS.md` as
+   workspace rules/context for its agent.
+2. *(Optional)* add `.agents/skills/` to the workspace context so the agent can
+   pull a specific recipe (e.g. `build-autonomous-agent`).
+3. Give the agent panel the request above; it plans and edits the YAML directly.
+   Validate with `tuvl validate`.
+
+### Cursor
+
+Cursor reads a root `AGENTS.md` automatically. If you prefer, add a one-line
+`.cursor/rules` entry — *"Follow `AGENTS.md` and `.agents/skills/` for all tuvl
+config."* — then prompt in chat / Composer.
+
+### GitHub Copilot
+
+Copilot reads `AGENTS.md`. If you also keep `.github/copilot-instructions.md`,
+add a line pointing it at `AGENTS.md` and `.agents/skills/`, then prompt in chat
+or agent mode.
+
+### Codex CLI & other AGENTS.md-aware agents
+
+Any agent that follows the AGENTS.md standard (OpenAI Codex CLI, Aider, Jules,
+…) reads the file with no setup — open the repo and prompt. If yours doesn't,
+say it once: *"Read `AGENTS.md` and `.agents/skills/` before generating any tuvl
+config."*
+
 ## The rules your agent follows
 
 `AGENTS.md` encodes the [agentic contract](../concepts/agentic-contract.md) as hard rules. The ones that matter most:
