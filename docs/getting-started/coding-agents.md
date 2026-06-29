@@ -18,11 +18,11 @@ Each skill is a short, imperative recipe the agent follows. `tuvl init` writes t
 | `create-database-model` | Define a `ModelDefinition` (table + auto-generated CRUD). |
 | `implement-api-endpoint` | Create a `Workflow` with an HTTP trigger and routed steps. |
 | `create-custom-python-node` | Add a one-per-file `@node()` `functional` runner. |
-| `perform-database-operations` | Use `model-op` for CRUD inside a workflow. |
+| `perform-database-operations` | Use `ModelOp` for CRUD inside a workflow. |
 | `implement-llm-agent-step` | Add a single-call `agent` step with structured output. |
 | `build-autonomous-agent` | Add an **`AutonomousAgent`** — a bounded tool-calling loop. |
-| `invoke-external-api` | Call an external HTTP API with `api_call`. |
-| `execute-mcp-tool` | Call an MCP server tool with `mcp`. |
+| `invoke-external-api` | Call an external HTTP API with `APICall`. |
+| `execute-mcp-tool` | Call an MCP server tool with `MCP`. |
 
 ## Step-by-step
 
@@ -73,7 +73,7 @@ This catches an invalid `kind:`, an unmapped signal in `routes:`, a tool `ref` t
 
 `AGENTS.md` encodes the [agentic contract](../concepts/agentic-contract.md) as hard rules. The ones that matter most:
 
-- **Closed sets only.** Step kinds are exactly: `functional`, `agent`, `AutonomousAgent`, `router`, `api_call`, `mcp`, `model-op`, `response`, `HumanInTheLoop`. Document kinds and reserved context keys are likewise fixed. The agent never invents new ones.
+- **Closed sets only.** Step kinds are exactly: `Functional`, `Agent`, `AutonomousAgent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop`. Document kinds and reserved context keys are likewise fixed. The agent never invents new ones.
 - **Route every signal.** Every non-`default` signal a step can emit must be mapped in `routes:`. For an `AutonomousAgent`, that means every `outcome.enum` value plus the reserved exits `max_iterations` / `budget_exceeded` / `error`.
 - **Allowlist every model.** Any model a workflow touches must be listed in `spec.context.models`.
 - **One node per file.** A `@node("name")` runner must live in `nodes/name.py`.
@@ -91,9 +91,11 @@ A prompt like *"triage the ticket: look up the order, then resolve or escalate"*
     model: default
     goal: "Resolve the support ticket using the available tools."
     max_iterations: 8
+    skills:                              # project-relative .md files injected into the system prompt
+      - .agents/skills/support-policy.md
     tools:
       - ref: lookup_order
-        description: "Fetch order details by order id."
+        description: "Fetch order details by order id."  # optional — overrides lookup_order's own description:
         parameters:
           type: object
           properties: { order_id: { type: string } }
@@ -105,10 +107,11 @@ A prompt like *"triage the ticket: look up the order, then resolve or escalate"*
     resolved:        route_by_region    # deterministic switch, NOT the agent
     escalate:        notify_manager
     max_iterations:  fallback_summary
+    budget_exceeded: fallback_summary
     error:           alert_ops
 
 - id: route_by_region
-  kind: router
+  kind: Router
   match: { field: customer.region }
   routes: { US: reply_us, EU: reply_eu, default: reply_other }
 ```

@@ -274,15 +274,16 @@ Where an `agent` step is a single LLM call, an `AutonomousAgent` step runs a **b
     goal: "Resolve the support ticket using the available tools."
     max_iterations: 8                  # hard cap (default 8)
     token_budget: 50000                # optional cap on cumulative tokens
+    skills:                            # project-relative .md files injected into the system prompt
+      - ".agents/skills/support-policy.md"
     tools:
       - ref: "lookup_order"            # names ANOTHER step in this workflow
-        description: "Fetch order details by order id."
+        description: "Fetch order details by order id."  # optional — overrides lookup_order's own description:
         parameters:
           type: object
           properties: { order_id: { type: string } }
           required: [order_id]
-      - ref: "issue_refund"
-        description: "Issue a refund for an order id and amount."
+      - ref: "issue_refund"            # description defaults to issue_refund's top-level description:
     outcome:
       enum: ["resolved", "escalate", "needs_human"]   # the closed set of exits
       output_key: "agent_result"                      # single data output
@@ -299,7 +300,8 @@ Where an `agent` step is a single LLM call, an `AutonomousAgent` step runs a **b
 |----------|---------|-------------|
 | `model` | Required | Preset name or LiteLLM model string (same as `agent`) |
 | `goal` | Required | The task the agent must accomplish |
-| `tools` | `[]` | Tools the agent may call; each `ref` names another step (`api_call` / `mcp` / `model-op` / `functional`), with a `description` and JSON-Schema `parameters` |
+| `skills` | `[]` | Optional list of project-relative `.md` files injected into the agent's system prompt |
+| `tools` | `[]` | Tools the agent may call; each `ref` names another step (`APICall` / `MCP` / `ModelOp` / `Functional`) with JSON-Schema `parameters`. The tool description defaults to the referenced step's top-level `description:`; `description` here is an optional override |
 | `tools[].writes_context` | `false` | When `true`, the tool's public output is merged back into the shared context (default: result returns to the agent only) |
 | `outcome.enum` | `[]` | Closed set of exit signals; **every value must be mapped in `routes:`** |
 | `outcome.output_key` | `<id>_result` | Context key that receives the agent's final output |
@@ -330,7 +332,7 @@ For multi-way value branching (e.g. by country or tier), use the `match:` switch
 
 ```yaml
 - id: "route_by_country"
-  kind: "router"
+  kind: "Router"
   match:
     field: "user.country"     # dot-path supported
   routes:
