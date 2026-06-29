@@ -10,7 +10,7 @@ serve-versioned:
 	@VERSION=$$(grep '^version' pyproject.toml | sed 's/.*= *"\(.*\)"/\1/') && \
 	ALIAS=$$(echo "$$VERSION" | grep -qE 'b[0-9]+$$|a[0-9]+$$|rc[0-9]+$$' && echo beta || echo latest) && \
 	echo "Deploying $$VERSION (alias: $$ALIAS) to local gh-pages..." && \
-	uv run mike deploy --update-aliases --alias-type=copy "$$VERSION" "$$ALIAS" && \
-	uv run mike set-default "$$ALIAS" && \
+	uv run mike deploy --ignore-remote-status --update-aliases --alias-type=copy "$$VERSION" "$$ALIAS" && \
+	uv run mike set-default --ignore-remote-status "$$ALIAS" && \
 	echo "Serving at http://127.0.0.1:8000" && \
 	uv run mike serve
