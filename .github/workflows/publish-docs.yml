@@ -62,12 +62,14 @@ jobs:
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
 
+          # --alias-type=copy so deep links under the alias (e.g. /latest/getting-started/quickstart)
+          # resolve on GitHub Pages, which does not follow symlink-style aliases.
           if [[ "$VERSION" == *"-beta."* || "$VERSION" == *"-alpha."* || "$VERSION" == *"-rc."* || "$VERSION" == *b[0-9]* ]]; then
-            uv run mike deploy --push --update-aliases "$VERSION" beta
+            uv run mike deploy --push --update-aliases --alias-type=copy "$VERSION" beta
             if ! uv run mike list 2>/dev/null | grep -q '\blatest\b'; then
               uv run mike set-default --push beta
             fi
           else
-            uv run mike deploy --push --update-aliases "$VERSION" latest
+            uv run mike deploy --push --update-aliases --alias-type=copy "$VERSION" latest
             uv run mike set-default --push latest
           fi
