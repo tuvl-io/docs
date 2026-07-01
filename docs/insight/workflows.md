@@ -47,6 +47,17 @@ Switch to the **Graph** tab to see a node-by-node canvas of the workflow executi
 
 Arrows between nodes show the routes declared in the YAML. Click **Fit view** to auto-zoom the canvas to the full graph.
 
+### Supervisor node (off-spine)
+
+The **Supervisor** is an amber, dashed **off-spine node** — add it from the palette
+(one per workflow) and it attaches as a watcher over the workflow's
+`AutonomousAgent` runs, with no flow edges since it observes rather than runs in the
+sequence. Double-click it to configure the judge model (a dropdown of your
+configured models), the criteria (inline or a criteria `.md` file you edit in
+place), `on_violation`, `every_n_iterations`, and the deterministic rules — all
+written straight into `spec.supervisor`. See
+[Agents → Supervising an Autonomous Agent](../configuration/agents.md#supervising-an-autonomous-agent).
+
 ---
 
 ## Versions tab

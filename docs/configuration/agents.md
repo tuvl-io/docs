@@ -255,8 +255,12 @@ spec:
     criteria: |                 # natural-language policy for the LLM path
       Abort if the agent calls the same tool 3× with no new information,
       or drifts away from the user's actual request.
+    # criteria_file: agents/my-workflow__supervisor/steering/policy.md
+    #                            ↑ alternative to inline `criteria` — a scoped .md file
     on_violation: pause         # abort | pause | steer   (default action)
     every_n_iterations: 2       # LLM cost gate (rules below run every turn)
+    steer_message: |            # sent when the action is `steer` (rules path)
+      Refocus on the task; stop repeating actions that add no new information.
     rules:                      # cheap deterministic pre-filters (no LLM)
       - { when: tool_repeated,    count: 3, then: pause }
       - { when: budget_fraction,  gt: 0.8,  then: steer }
@@ -266,13 +270,31 @@ spec:
 | Field | Description |
 |-------|-------------|
 | `model` + `criteria` | Enable the LLM supervisor — judged every `every_n_iterations` turns; a fail verdict applies `on_violation` with the reason surfaced (and used as the steer message) |
+| `criteria_file` | Load the LLM policy from a scoped `.md` file instead of inline `criteria`. The path **must** live under `agents/<workflow>__supervisor/steering/` (out-of-scope paths are ignored). If both are set, the file wins. Edit it from the node's criteria `.md` editor in Insight |
 | `rules` | Deterministic checks run **every** turn: `tool_repeated {tool?, count}`, `budget_fraction {gt}`, `iteration_reached {gte}`. Each rule's `then` overrides `on_violation` |
 | `on_violation` | Default action when a check fails: `abort` \| `pause` \| `steer` |
 | `every_n_iterations` | Cost gate for the LLM path (default 1) |
+| `steer_message` | Message injected on a `steer` action from a **rule** (the LLM path uses the verdict's reason instead) |
 | `watches` | `[agents]` (default) monitors AutonomousAgent iterations |
 
 `abort` exits the agent via the reserved **`aborted`** signal — map it in the
 step's `routes:` for a specific downstream path (otherwise it routes as `error`).
+
+### Authoring it visually in Insight
+
+You don't have to hand-write the block. In the Insight workflow canvas the
+supervisor is a first-class **off-spine node**: add **Supervisor** from the node
+palette (one per workflow) and it attaches as a watcher — no flow edges, since it
+observes rather than runs in the sequence. Double-click it to configure inline:
+
+- **Judge model** — a dropdown of your configured models (blank = rule-only)
+- **Criteria** — inline natural-language policy, or a **criteria `.md` file** you
+  add/upload/edit in-place (scoped to `agents/<workflow>__supervisor/steering/`)
+- **On violation** (pause / steer / abort), **Judge every N iterations**, and the
+  **Rules** JSON
+
+Every field is written straight into `spec.supervisor` in the workflow YAML, and
+the block round-trips back onto the node when you reopen the workflow.
 
 Operators can also observe and control runs live from the Insight **Agents**
 dashboard or the API — `GET /api/agents/runs`, `POST /api/agents/runs/{id}/{abort,pause,resume,steer}`
