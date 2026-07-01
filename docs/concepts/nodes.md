@@ -14,7 +14,7 @@ tuvl has 9 built-in step kinds. The table below maps each kind to its icon and c
 |------|-----------|------|---------|-------|
 | `Functional` | :material-circle:{ style="color:#3b82f6" } **Blue** | :material-code-braces: | Run a custom Python `@node()` function | Any string / tuple |
 | `Agent` | :material-circle:{ style="color:#a855f7" } **Purple** | :material-star-four-points: | Call an LLM via LiteLLM or an `llms/` preset | `default` · `error` · `timeout` · `parse_error` · custom from `signal_from` |
-| `AutonomousAgent` | :material-circle:{ style="color:#6366f1" } **Indigo** | :material-robot: | Run a bounded tool-calling loop (the model picks declared tools until it emits an outcome) | custom from `outcome.enum` · `max_iterations` · `budget_exceeded` · `error` |
+| `AutonomousAgent` | :material-circle:{ style="color:#6366f1" } **Indigo** | :material-robot: | Run a bounded tool-calling loop (the model picks declared tools until it emits an outcome) | custom from `outcome.enum` · `max_iterations` · `budget_exceeded` · `error` · `aborted` |
 | `Router` | :material-circle:{ style="color:#f59e0b" } **Amber** | :material-rhombus: | Evaluate a condition on context, branch true/false | `"true"` · `"false"` · `"error"` |
 | `APICall` | :material-circle:{ style="color:#14b8a6" } **Teal** | :material-web: | Make an outbound HTTP request | `default` · `error` |
 | `MCP` | :material-circle:{ style="color:#ec4899" } **Pink** | :material-connection: | Call a tool on an MCP server (SSE or stdio) | `default` · `error` |
@@ -95,14 +95,14 @@ Call an LLM. Supports any LiteLLM model string or a named preset from `llms/<nam
 
 **UI colour:** :material-circle:{ style="color:#6366f1" } Indigo — `border-indigo-600 bg-indigo-950`
 
-Where `Agent` is a single LLM call, `AutonomousAgent` runs a **bounded tool-calling loop**: the model is given a goal and a closed set of declared tools, picks which to call, observes results, and re-decides until it emits one of `outcome.enum`. Each tool's `ref` names **another step** in the same workflow. The loop is capped by `max_iterations` / `token_budget`.
+Where `Agent` is a single LLM call, `AutonomousAgent` runs a **bounded tool-calling loop**: the model is given its steering and a closed set of declared tools, picks which to call, observes results, and re-decides until it emits one of `outcome.enum`. Each tool's `ref` names **another step** in the same workflow. The loop is capped by `max_iterations` / `token_budget`.
 
 ```yaml
 - id: "triage"
   kind: "AutonomousAgent"
   agent:
     model: "default"
-    goal: "Resolve the support ticket using the available tools."
+    steering: "Resolve the support ticket using the available tools."
     max_iterations: 8                # hard cap (default 8)
     token_budget: 50000              # optional cap on cumulative tokens
     skills:                          # project-relative .md files injected into the system prompt

@@ -264,14 +264,14 @@ Execute an LLM call with structured output:
 
 ### Autonomous Agent Steps
 
-Where an `agent` step is a single LLM call, an `AutonomousAgent` step runs a **bounded tool-calling loop**: the model is given a goal and a set of declared tools, autonomously chooses which to call, observes the results, and re-decides until it emits one of a declared `outcome.enum`. Autonomy stays inside the contract — the tools are a closed author-declared set, the exits are a closed set, and the loop is capped.
+Where an `agent` step is a single LLM call, an `AutonomousAgent` step runs a **bounded tool-calling loop**: the model is given its steering and a set of declared tools, autonomously chooses which to call, observes the results, and re-decides until it emits one of a declared `outcome.enum`. Autonomy stays inside the contract — the tools are a closed author-declared set, the exits are a closed set, and the loop is capped.
 
 ```yaml
 - id: "triage"
   kind: "AutonomousAgent"
   agent:
     model: "default"
-    goal: "Resolve the support ticket using the available tools."
+    steering: "Resolve the support ticket using the available tools."
     max_iterations: 8                  # hard cap (default 8)
     token_budget: 50000                # optional cap on cumulative tokens
     skills:                            # project-relative .md files injected into the system prompt
@@ -299,7 +299,7 @@ Where an `agent` step is a single LLM call, an `AutonomousAgent` step runs a **b
 | Property | Default | Description |
 |----------|---------|-------------|
 | `model` | Required | Preset name or LiteLLM model string (same as `agent`) |
-| `goal` | Required | The task the agent must accomplish |
+| `steering` | Required | The agent's persistent instruction, always injected |
 | `skills` | `[]` | Optional list of project-relative `.md` files injected into the agent's system prompt |
 | `tools` | `[]` | Tools the agent may call; each `ref` names another step (`APICall` / `MCP` / `ModelOp` / `Functional`) with JSON-Schema `parameters`. The tool description defaults to the referenced step's top-level `description:`; `description` here is an optional override |
 | `tools[].writes_context` | `false` | When `true`, the tool's public output is merged back into the shared context (default: result returns to the agent only) |
