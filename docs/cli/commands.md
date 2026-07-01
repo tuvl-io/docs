@@ -193,6 +193,53 @@ tuvl run --host 127.0.0.1 --port 8000 --workers 4
 POSTGRES_HOST=prod-db tuvl run --workers 4
 ```
 
+!!! warning "Signing key required"
+    `tuvl run` fails to start unless a persistent `TUVL_BISCUIT_PRIVATE_KEY` is set — it
+    will **not** fall back to an ephemeral key the way `tuvl dev` does. Generate one with
+    [`tuvl keys generate`](#tuvl-keys) and add it to your `.env`. See
+    [Tokens → Signing Keys](../security/tokens.md#signing-keys).
+
+---
+
+## `tuvl keys`
+
+Manage the **Ed25519** key used to sign Biscuit authentication tokens.
+
+### `tuvl keys generate`
+
+Generate a persistent private key for `TUVL_BISCUIT_PRIVATE_KEY`. Production mode
+(`tuvl run`) requires this key; `tuvl dev` generates an ephemeral one automatically.
+
+#### Usage
+
+```bash
+tuvl keys generate [OPTIONS]
+```
+
+#### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--write`, `-w` | off | Write the key into the project `.env` instead of only printing it |
+| `--force`, `-f` | off | Overwrite an existing `TUVL_BISCUIT_PRIVATE_KEY` (with `--write`) |
+| `--project-dir`, `-d` | `.` | Project directory whose `.env` to update (with `--write`) |
+
+#### Examples
+
+```bash
+# Print a fresh key + the .env line to paste
+tuvl keys generate
+
+# Write it straight into the project .env (owner-only perms)
+tuvl keys generate --write
+
+# Rotate an existing key
+tuvl keys generate --write --force
+```
+
+!!! danger
+    Keep the key secret and stable. Changing it invalidates every previously issued token.
+
 ---
 
 ## `tuvl test`

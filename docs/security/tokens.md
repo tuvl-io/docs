@@ -126,16 +126,22 @@ tuvl tokens are signed with an **Ed25519** private key. The key lifecycle is han
 TUVL_BISCUIT_PRIVATE_KEY=<hex-encoded-ed25519-private-key>
 ```
 
-Generate a key:
+Generate a key with the CLI:
 
 ```bash
-python3 -c "
-from biscuit_auth import PrivateKey
-import secrets
-key = PrivateKey.from_bytes(secrets.token_bytes(32))
-print(key.to_bytes().hex())
-"
+tuvl keys generate            # prints the key and the .env line to paste
+tuvl keys generate --write    # writes TUVL_BISCUIT_PRIVATE_KEY into the project .env
 ```
+
+!!! warning "Required for `tuvl run`"
+    Production mode fails closed if `TUVL_BISCUIT_PRIVATE_KEY` is not set — it will
+    **not** fall back to an ephemeral key the way `tuvl dev` does. Generate and set the
+    key before deploying. Keep it stable: rotating it invalidates every existing token.
+
+??? note "Generate without the CLI"
+    ```bash
+    python3 -c "from biscuit_auth import KeyPair; print(KeyPair().private_key.to_bytes().hex())"
+    ```
 
 Store the hex string in your `.env` file or secrets manager.
 
