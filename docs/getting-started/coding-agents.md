@@ -126,7 +126,7 @@ config."*
 `AGENTS.md` encodes the [agentic contract](../concepts/agentic-contract.md) as hard rules. The ones that matter most:
 
 - **Closed sets only.** Step kinds are exactly: `Functional`, `Agent`, `AutonomousAgent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop`. Document kinds and reserved context keys are likewise fixed. The agent never invents new ones.
-- **Route every signal.** Every non-`default` signal a step can emit must be mapped in `routes:`. For an `AutonomousAgent`, that means every `outcome.enum` value plus the reserved exits `max_iterations` / `budget_exceeded` / `error`.
+- **Route every signal.** Every non-`default` signal a step can emit must be mapped in `routes:`. For an `AutonomousAgent`, that means every `outcome.enum` value plus the reserved exits `max_iterations` / `budget_exceeded` / `error` / `aborted`.
 - **Allowlist every model.** Any model a workflow touches must be listed in `spec.context.models`.
 - **One node per file.** A `@node("name")` runner must live in `nodes/name.py`.
 
@@ -141,7 +141,7 @@ A prompt like *"triage the ticket: look up the order, then resolve or escalate"*
   kind: AutonomousAgent
   agent:
     model: default
-    goal: "Resolve the support ticket using the available tools."
+    steering: "Resolve the support ticket using the available tools."
     max_iterations: 8
     skills:                              # project-relative .md files injected into the system prompt
       - .agents/skills/support-policy.md
