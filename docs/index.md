@@ -3,7 +3,7 @@
 **A lightweight, local-first workflow orchestration engine for AI-powered business automation.**
 
 !!! warning "Beta release"
-    tuvl **2026.2.4** is a beta: ready for building and evaluation, but **not yet
+    tuvl **2026.2.5** is a beta: ready for building and evaluation, but **not yet
     recommended for production**. Interfaces may change before the stable release,
     which is coming soon.
 
@@ -63,6 +63,22 @@ spec:
     ---
 
     Use LLMs as interchangeable logic units with structured JSON outputs and automatic routing.
+
+-   :material-robot-outline:{ .lg .middle } **Autonomous Agents**
+
+    ---
+
+    Beyond a single call: an `AutonomousAgent` step runs a bounded tool-calling loop — the model picks from your declared tools until it emits a declared outcome, capped by `max_iterations` and `token_budget`.
+
+    [:octicons-arrow-right-24: Autonomous agents](concepts/workflows.md#autonomous-agent-steps)
+
+-   :material-eye-check:{ .lg .middle } **Agent Supervisor**
+
+    ---
+
+    An optional per-workflow watcher observes each autonomous run live and can **pause, steer, or abort** it mid-loop — deterministic rules or an LLM judge — with an operator API and a live Insight dashboard.
+
+    [:octicons-arrow-right-24: Supervise agents](configuration/agents.md#supervising-an-autonomous-agent)
 
 -   :material-database:{ .lg .middle } **Dynamic Models**
 
@@ -144,6 +160,9 @@ flowchart TD
         Engine -->|ModelOp| UoW
         UoW -->|SQLModel Object Mapper| PG[(PostgreSQL)]
         Engine -->|Agent| LLM[LiteLLM Any Provider]
+        Engine -->|AutonomousAgent| Loop[Bounded Tool-Calling Loop]
+        Loop -->|LLM + declared tools| LLM
+        Sup[Agent Supervisor<br>pause · steer · abort] -.watches.-> Loop
         Engine -->|DataSearch| RAG[(pgvector RAG)]
         Engine -->|Functional| Nodes[Custom Python Nodes]
         Engine -->|MCP| MCP[MCP Tools]
