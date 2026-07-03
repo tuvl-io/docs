@@ -575,7 +575,7 @@ When the engine reaches a `HumanInTheLoop` step it:
 | `ui.display_context` | No | Allowlist of context keys sent to the reviewer. If omitted, **no** context data is forwarded. |
 | `human_feedback` | No | List of form field definitions (see below). If empty the reviewer can only approve/dismiss. |
 | `output_key` | No | Context key under which the reviewer's answers are stored. Defaults to `hitl_<id>`. |
-| `auth.required_group` | No | UI routing hint echoed in `hitl_request.auth` — not enforced by the resume endpoint. |
+| `auth.required_group` | No | IAM group whose members may resume this instance (enforced with 403; `iam:admin` bypasses). |
 | `auth.assignee_user` | No | Reviewer assignment hint for the UI. Supports `{{ var }}` interpolation. |
 
 #### `human_feedback` Field Definition
@@ -634,7 +634,8 @@ Content-Type: application/json
 }
 ```
 
-Only the user who triggered the workflow (or an `iam:admin`) may resume it; the
+When the step declares `auth.required_group`, only members of that group (or an
+`iam:admin`) may resume it; otherwise only the user who triggered the workflow. The
 instance is deleted before the engine re-runs, so resume is one-shot.
 
 The engine resumes execution with `context["approval_result"]` set to that dict.
