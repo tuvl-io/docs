@@ -560,7 +560,7 @@ Pause workflow execution and hand off control to a human reviewer before continu
 When the engine reaches a `HumanInTheLoop` step it:
 
 1. Persists a **HITL instance** (a `SystemWorkflowInstance` row in the database) containing the current context snapshot and the step definition.
-2. Raises a suspension signal — the workflow API responds with HTTP **202 Accepted** (or a `SUSPENDED` gRPC status) and returns a `hitl_request` payload.
+2. Raises a suspension signal — the workflow API responds with HTTP **202 Accepted** (REST), a `suspended` SSE frame, or a `suspended` gRPC step event, carrying a `hitl_request` payload.
 3. The frontend displays the review form to the designated user.
 4. Once the reviewer submits their response the workflow resumes from the next step, with the human's answers merged into the context under `output_key`.
 
@@ -575,8 +575,8 @@ When the engine reaches a `HumanInTheLoop` step it:
 | `ui.display_context` | No | Allowlist of context keys sent to the reviewer. If omitted, **no** context data is forwarded. |
 | `human_feedback` | No | List of form field definitions (see below). If empty the reviewer can only approve/dismiss. |
 | `output_key` | No | Context key under which the reviewer's answers are stored. Defaults to `hitl_<id>`. |
-| `auth.required_group` | No | IAM group required to act on this review. |
-| `auth.assignee_user` | No | Specific user assigned as reviewer. Supports `{{ var }}` interpolation. |
+| `auth.required_group` | No | UI routing hint echoed in `hitl_request.auth` — not enforced by the resume endpoint. |
+| `auth.assignee_user` | No | Reviewer assignment hint for the UI. Supports `{{ var }}` interpolation. |
 
 #### `human_feedback` Field Definition
 
@@ -618,17 +618,24 @@ The payload delivered to the frontend when a workflow suspends:
 
 #### Resuming a Suspended Workflow
 
-POST the reviewer's answers to the HITL resume endpoint:
+POST the reviewer's answers to the resume endpoint, wrapped in `human_input`:
 
 ```http
-POST /hitl/{instance_id}/respond
+POST /api/workflows/resume
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "approved": true,
-  "notes": "Strong candidate, approved."
+  "instance_id": "550e8400-e29b-41d4-a716-446655440000",
+  "human_input": {
+    "approved": true,
+    "notes": "Strong candidate, approved."
+  }
 }
 ```
+
+Only the user who triggered the workflow (or an `iam:admin`) may resume it; the
+instance is deleted before the engine re-runs, so resume is one-shot.
 
 The engine resumes execution with `context["approval_result"]` set to that dict.
 

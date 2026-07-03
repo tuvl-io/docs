@@ -110,7 +110,7 @@ See [Repositories](repositories.md) for the full API.
 
 ### Human-in-the-Loop (HITL)
 
-The `HumanInTheLoop` step kind pauses execution and stores state in Redis. A reviewer approves or rejects via the API (or the tuvl insight UI), after which the engine resumes exactly where it stopped. Timeouts are configurable per step.
+The `HumanInTheLoop` step kind pauses execution and freezes the public context as a `tuvl_system_workflow_instances` row in Postgres. A reviewer responds via `POST /api/workflows/resume` (or the tuvl insight UI), after which the engine resumes from the step after the pause; the instance row is deleted before re-running, so a resume can never replay.
 
 ### OpenTelemetry
 
@@ -140,7 +140,7 @@ sequenceDiagram
             W->>N: LiteLLM call + prompt
             N-->>W: JSON → context keys + signal
         else HumanInTheLoop
-            W->>W: Pause, store state in Redis
+            W->>W: Pause, persist instance row (Postgres)
             Note over W: Resumed by reviewer
         end
         W->>W: Follow signal → next step
