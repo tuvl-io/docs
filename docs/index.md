@@ -3,7 +3,7 @@
 **A lightweight, local-first workflow orchestration engine for AI-powered business automation.**
 
 !!! warning "Beta release"
-    tuvl **2026.2.5** is a beta: ready for building and evaluation, but **not yet
+    tuvl **2026.2.6** is a beta: ready for building and evaluation, but **not yet
     recommended for production**. Interfaces may change before the stable release,
     which is coming soon.
 
