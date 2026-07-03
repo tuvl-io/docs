@@ -55,8 +55,8 @@ Add a `HumanInTheLoop` step anywhere in a workflow YAML:
 | `ui.display_context` | No | Allowlist of context keys forwarded to the reviewer. Keys not in this list are never sent to the frontend. If the list is empty no context data is forwarded. |
 | `human_feedback` | No | Ordered list of form field definitions (see below). If omitted the reviewer sees text only. |
 | `output_key` | No | Context key that will hold the reviewer's answers dict after resumption. Defaults to `hitl_<id>`. |
-| `auth.required_group` | No | Routing hint for the review UI — echoed verbatim in `hitl_request.auth` so a frontend can route the task to the right group. **Not enforced by the resume endpoint** (see Security Model below). |
-| `auth.assignee_user` | No | Reviewer assignment hint for the UI. Supports `{{ var }}` interpolation. Also not enforced server-side. |
+| `auth.required_group` | No | IAM group whose members may resume this instance — **enforced by the resume endpoint** (403 otherwise; see Security Model below). Also echoed in `hitl_request.auth` for UI task routing. |
+| `auth.assignee_user` | No | Reviewer assignment hint for the UI. Supports `{{ var }}` interpolation. Not enforced server-side. |
 | `routes` | No | Accepted in YAML but not consulted — a resumed run continues at the **next step in document order**. Branch on the reviewer's answers with a `Router` step reading `output_key`. |
 
 ### `human_feedback` Field Definition
@@ -172,7 +172,7 @@ Execution then continues from the step after `approve_application` (or the step 
 | Status | Reason |
 |--------|--------|
 | `404 Not Found` | `instance_id` does not exist or has already been consumed (resume is one-shot) |
-| `403 Forbidden` | Caller is neither the user who triggered the workflow nor an `iam:admin` |
+| `403 Forbidden` | Caller is not in the step's `auth.required_group` — or, when no group is declared, is neither the triggering user nor an `iam:admin` |
 | `400 Bad Request` | The workflow (or the paused step) was removed/renamed after suspension |
 
 ---
@@ -256,15 +256,15 @@ The Suspended tab renders the full `hitl_request` in five sections:
 
 ## Security Model
 
-- **Resume authorization is owner-or-admin.** Only the user who triggered the workflow
-  (matched against the token on `POST /api/workflows/resume`) or a caller with
-  `iam:admin` may submit the response. If the workflow was triggered without
-  authentication, only admins can resume it.
-- **`auth.required_group` / `auth.assignee_user` are UI routing hints, not server-side
-  guards.** They are echoed in `hitl_request.auth` so a frontend can show the task to
-  the right people, but the resume endpoint does not check them. If you need
-  group-based sign-off enforced by the engine, put `required_group` on the workflow
-  trigger (or gate the resume caller's role via IAM) rather than relying on this block.
+- **Resume authorization is group-or-owner.** When the paused step declares
+  `auth.required_group`, only members of that group may submit the response — the
+  reviewer is deliberately *not* the requester, and the requester cannot approve
+  their own request. Without it, only the user who triggered the workflow may
+  resume; a run triggered without authentication is admin-resumable only.
+  `iam:admin` bypasses either rule.
+- **`auth.assignee_user` is a UI routing hint, not a server-side guard.** It is
+  echoed in `hitl_request.auth` so a frontend can assign the task, but the resume
+  endpoint does not check it — any member of `required_group` may respond.
 - **Resume is exactly-once.** The instance row is loaded under a row lock and deleted
   (committed) *before* the engine re-runs, so concurrent or replayed resume calls get
   404 — even if the engine crashes mid-resume, the instance cannot be replayed.
