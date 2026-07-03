@@ -5,9 +5,10 @@ reviewer before execution continues. It is ideal for approval flows, content mod
 exception handling, and any scenario where automated logic alone is not sufficient.
 
 !!! note "Persistence required"
-    HITL requires Redis. The suspended workflow state is stored in Redis under a generated
-    `instance_id` until the reviewer responds or the instance expires. Configure Redis in
-    your project's `tuvl.yaml` — see [Redis configuration](../configuration/redis.md).
+    HITL requires the engine's Postgres datasource. The suspended workflow is frozen as a
+    row in the system table `tuvl_system_workflow_instances` (public context snapshot,
+    paused step id, form schema) under a generated `instance_id` until the reviewer
+    responds. Redis is not involved.
 
 ---
 
@@ -54,9 +55,9 @@ Add a `HumanInTheLoop` step anywhere in a workflow YAML:
 | `ui.display_context` | No | Allowlist of context keys forwarded to the reviewer. Keys not in this list are never sent to the frontend. If the list is empty no context data is forwarded. |
 | `human_feedback` | No | Ordered list of form field definitions (see below). If omitted the reviewer sees text only. |
 | `output_key` | No | Context key that will hold the reviewer's answers dict after resumption. Defaults to `hitl_<id>`. |
-| `auth.required_group` | No | IAM group that must be present in the reviewer's token. Requests from other groups receive 403. |
-| `auth.assignee_user` | No | Specific user ID assigned as the reviewer. Supports `{{ var }}` interpolation. |
-| `routes` | No | Signal-to-step routing table applied after the step resumes. |
+| `auth.required_group` | No | Routing hint for the review UI — echoed verbatim in `hitl_request.auth` so a frontend can route the task to the right group. **Not enforced by the resume endpoint** (see Security Model below). |
+| `auth.assignee_user` | No | Reviewer assignment hint for the UI. Supports `{{ var }}` interpolation. Also not enforced server-side. |
+| `routes` | No | Accepted in YAML but not consulted — a resumed run continues at the **next step in document order**. Branch on the reviewer's answers with a `Router` step reading `output_key`. |
 
 ### `human_feedback` Field Definition
 
@@ -81,7 +82,7 @@ Workflow Engine
       │
       ├─ Interpolate ui.title / ui.instruction / auth.assignee_user
       ├─ Build context_data from display_context allowlist
-      ├─ Persist HITL instance in Redis  (instance_id + context snapshot)
+      ├─ Persist instance row in Postgres  (instance_id + context snapshot)
       └─ Raise SuspendWorkflowException(hitl_request=…)
              │
              ▼
@@ -128,17 +129,25 @@ The payload returned to the caller on suspension:
 ### REST
 
 ```http
-POST /hitl/{instance_id}/respond
+POST /api/workflows/resume
 Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "approved": true,
-  "notes": "Strong candidate, fast-track to onboarding."
+  "instance_id": "550e8400-e29b-41d4-a716-446655440000",
+  "human_input": {
+    "approved": true,
+    "notes": "Strong candidate, fast-track to onboarding."
+  }
 }
 ```
 
-**Success response** — `200 OK` with the final workflow output:
+The reviewer's answers go under `human_input`; the `instance_id` comes from the
+`hitl_request` payload. Send `Accept: text/event-stream` to resume as an SSE stream
+instead (same frames as `/stream` triggers).
+
+**Success response** — `200 OK` with the final workflow output (or `202 Accepted`
+with a new `hitl_request` if the workflow suspends again at a later HITL step):
 
 ```json
 {
@@ -162,9 +171,9 @@ Execution then continues from the step after `approve_application` (or the step 
 
 | Status | Reason |
 |--------|--------|
-| `404 Not Found` | `instance_id` does not exist or has already been consumed |
-| `403 Forbidden` | Caller is not in `auth.required_group` or is not the `assignee_user` |
-| `410 Gone` | Instance expired (default TTL: 7 days) |
+| `404 Not Found` | `instance_id` does not exist or has already been consumed (resume is one-shot) |
+| `403 Forbidden` | Caller is neither the user who triggered the workflow nor an `iam:admin` |
+| `400 Bad Request` | The workflow (or the paused step) was removed/renamed after suspension |
 
 ---
 
@@ -210,7 +219,7 @@ add a row. Each row has:
 ## Testing HITL Nodes with Lens
 
 Use **Lens** to inspect the `hitl_request` payload a HITL step would produce without
-actually storing a Redis instance or blocking on reviewer input.
+actually persisting an instance row or blocking on reviewer input.
 
 1. Open Lens on the HITL node from the node config sidebar.
 2. Provide a **Mock Input** JSON containing all keys referenced in `display_context` and
@@ -238,23 +247,33 @@ The Suspended tab renders the full `hitl_request` in five sections:
 | **Instance Info** | `instance_id`, `paused_step_id`, `output_key` |
 
 !!! tip "Lens limitations for HITL"
-    Lens shows the outbound payload only. It does not persist a Redis instance or allow
+    Lens shows the outbound payload only. It does not persist an instance row or allow
     you to simulate the reviewer response. To test the full suspend → respond → resume
     cycle, trigger the workflow normally via its REST endpoint and call
-    `POST /hitl/{instance_id}/respond` with mock reviewer data.
+    `POST /api/workflows/resume` with mock reviewer data.
 
 ---
 
-## Security Considerations
+## Security Model
 
+- **Resume authorization is owner-or-admin.** Only the user who triggered the workflow
+  (matched against the token on `POST /api/workflows/resume`) or a caller with
+  `iam:admin` may submit the response. If the workflow was triggered without
+  authentication, only admins can resume it.
+- **`auth.required_group` / `auth.assignee_user` are UI routing hints, not server-side
+  guards.** They are echoed in `hitl_request.auth` so a frontend can show the task to
+  the right people, but the resume endpoint does not check them. If you need
+  group-based sign-off enforced by the engine, put `required_group` on the workflow
+  trigger (or gate the resume caller's role via IAM) rather than relying on this block.
+- **Resume is exactly-once.** The instance row is loaded under a row lock and deleted
+  (committed) *before* the engine re-runs, so concurrent or replayed resume calls get
+  404 — even if the engine crashes mid-resume, the instance cannot be replayed.
 - `display_context` is an **explicit allowlist** — omitting it means *no* context data
-  reaches the reviewer's browser, which is the safest default.
-- `auth.required_group` is verified by the IAM layer at the `/hitl/respond` endpoint
-  before the workflow resumes. A missing or mismatched group returns 403.
-- HITL instance data in Redis is scoped to the `instance_id` UUID. Keys are not
-  guessable and are deleted after the instance is consumed or expires.
-- All `{{ var }}` interpolations in `ui` and `auth` fields are evaluated server-side
-  — the frontend never receives the raw template strings.
+  reaches the reviewer's browser, which is the safest default. Private (`_`-prefixed)
+  context keys are always stripped from the persisted snapshot.
+- Instances do not currently expire; `created_at` is stored for audit/expiry policies.
+- All `{{ var }}` interpolations in `ui` fields are evaluated server-side — the
+  frontend never receives the raw template strings.
 
 ---
 

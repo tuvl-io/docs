@@ -333,10 +333,10 @@ Suspend the workflow and hand off to a human reviewer. The engine persists a `Sy
 Resume endpoint:
 
 ```http
-POST /hitl/{instance_id}/respond
+POST /api/workflows/resume
 Content-Type: application/json
 
-{ "approved": true, "notes": "Strong candidate." }
+{ "instance_id": "<from hitl_request>", "human_input": { "approved": true, "notes": "Strong candidate." } }
 ```
 
 **Signals:** *(suspends — does not pass through routes)*
