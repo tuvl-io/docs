@@ -84,14 +84,16 @@ node**:
 
 ```
 workflow.execute          (parent)
-├── node.agent            (child — agent step)
-├── node.functional       (child — functional step)
-├── node.router           (child — router step)
+├── node.Agent            (child — agent step)
+├── node.Functional       (child — functional step)
+├── node.Router           (child — router step)
 └── node.HumanInTheLoop   (child — HITL step)
 ```
 
-Valid node kinds: `Functional`, `Agent`, `AutonomousAgent`, `APICall`, `MCP`,
-`Router`, `ModelOp`, `Response`, `HumanInTheLoop`.
+Span names use the step kind verbatim (`node.{kind}`, PascalCase). Valid node
+kinds: `Functional`, `Agent`, `AutonomousAgent`, `APICall`, `MCP`, `Router`,
+`ModelOp`, `Response`, `HumanInTheLoop`. The full span, attribute, and metric
+reference lives in [Engine Internals → Observability](../internals/observability.md).
 
 ### Span attributes
 

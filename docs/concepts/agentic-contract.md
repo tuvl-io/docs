@@ -13,7 +13,7 @@ tuvl removes the unbounded surface. Instead of generating arbitrary code, the ag
 Three things are finite and fixed in tuvl. An agent (or a human) never invents new ones:
 
 - **Step kinds** — a workflow step is exactly one of: `Functional`, `Agent`, `AutonomousAgent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop`.
-- **Document kinds** — every YAML file declares a `kind:` from a fixed set (`Workflow`, `ModelDefinition`, `DataSource`, `AgentModel`, `RedisConfig`, `FederationProvider`, `TelemetryConfig`, and the embedding/collection/project/system configs). See the [agentic manual](https://github.com/tuvl-io/tuvl/blob/main/docs/TUVL_AGENTIC_MANUAL.md) for the authoritative list.
+- **Document kinds** — every YAML file declares a `kind:` from a fixed set (`Workflow`, `ModelDefinition`, `DataSource`, `AgentModel`, `RedisConfig`, `FederationProvider`, `TelemetryConfig`, and the embedding/collection/project/system configs). See the [agentic manual](../internals/tuvl-agentic-manual.md) for the authoritative list.
 - **Reserved context keys** — engine-owned keys (`_session`, `_db`, `_response`, `_last_error`, …) that workflows read but must never mutate.
 
 Because the grammar is bounded, a coding agent has a small, well-defined target. It cannot reach for "any function, any class, any decorator" — only the kinds that exist. That is the entire reason an agent can generate a valid tuvl backend on the first try.
