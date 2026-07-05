@@ -7,7 +7,7 @@ To make that reliable, `tuvl init` scaffolds two things specifically for coding 
 - **`AGENTS.md`** — the framework rules and architectural invariants (the closed sets, routing rules, the model allowlist, the one-node-per-file rule). Most agents read this file automatically.
 - **`.agents/skills/`** — a set of procedural **skills**, one folder per task (each a `SKILL.md`), that walk the agent through *how* to perform a specific job correctly.
 
-Together with the authoritative [TUVL Agentic Manual](https://github.com/tuvl-io/tuvl/blob/main/docs/TUVL_AGENTIC_MANUAL.md), these give an agent everything it needs to emit valid models, workflows, nodes, and agents.
+Together with the authoritative [TUVL Agentic Manual](../internals/tuvl-agentic-manual.md), these give an agent everything it needs to emit valid models, workflows, nodes, and agents.
 
 ## The bundled skills
 
