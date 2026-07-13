@@ -340,6 +340,78 @@ With errors:
 
 ---
 
+## `tuvl ship`
+
+Package a project for production. `ship` validates the project, generates a
+production `Dockerfile` + `.dockerignore` and a Helm chart, then builds the
+container image.
+
+Run from the project root (it reads the project's `pyproject.toml` for the image
+name and version).
+
+### Usage
+
+```bash
+tuvl ship [OPTIONS]
+```
+
+### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--project-dir`, `-d` | `.` | Project directory |
+| `--tag`, `-t` | `<name>:<version>` | Image reference to build |
+| `--no-build` | `false` | Write the Dockerfile and Helm chart but skip the build |
+| `--push` | `false` | Push the image after a successful build |
+| `--force` | `false` | Overwrite existing generated files (`deploy/`, `.dockerignore`) |
+| `--strict` | `false` | Treat validation warnings as errors |
+
+### What it does
+
+1. **Validate** — runs the full `tuvl validate` pass. Any error aborts the ship
+   before anything is written; `--strict` also aborts on warnings.
+2. **Generate artifacts** — writes `deploy/Dockerfile`, a root `.dockerignore`,
+   and a Helm chart under `deploy/chart/<name>/` (`Chart.yaml`, `values.yaml`,
+   and templates for the Deployment, Service, and helpers). Existing files are
+   left untouched unless you pass `--force`, so you can hand-edit them and
+   re-run `ship` safely.
+3. **Build the image** — runs `docker build` (skip with `--no-build`, publish
+   with `--push`).
+
+The generated image runs `tuvl run` as a non-root user with
+`TUVL_ENV=production` — no dev routes, no Insight UI, JSON logs, telemetry on —
+and a `/health` HEALTHCHECK.
+
+### Examples
+
+```bash
+# Validate, containerize, and emit a Helm chart
+tuvl ship
+
+# Build and push a tagged image to a registry
+tuvl ship --tag ghcr.io/acme/my-app:1.0.0 --push
+
+# Generate deploy artifacts only (no docker build)
+tuvl ship --no-build
+```
+
+### Deploying the chart
+
+```bash
+# Secrets the engine needs at runtime (Biscuit key, DB password, LLM keys)
+kubectl create secret generic my-app-env --from-env-file=.env
+
+helm install my-app deploy/chart/my-app \
+  --set image.repository=ghcr.io/acme/my-app
+```
+
+!!! note
+    `tuvl run` (and therefore the container) requires a persistent
+    `TUVL_BISCUIT_PRIVATE_KEY` — generate one with `tuvl keys generate` and
+    include it in the referenced Secret.
+
+---
+
 ## `tuvl stream-watch`
 
 Trigger a workflow and stream step events to the terminal over SSE. Useful for debugging long-running workflows without writing any code.
