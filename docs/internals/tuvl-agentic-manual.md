@@ -11,7 +11,7 @@
 
 TUVL is a **stateless ASGI router** that loads declarative YAML configurations at startup and mounts them as live FastAPI routes.
 
-> **Current version:** `2026.3.1.0`  
+> **Current version:** `2026.3.2.0`  
 > Run `tuvl --version` (alias `-v`) to confirm the active version at any time.
 
 ```mermaid
@@ -1268,6 +1268,7 @@ Business requirement
 
 | Date | Change |
 |---|---|
+| 2026-07-18 | §1 — version badge `2026.3.2.0`. Security release: gRPC transports now enforce token **revocation** (both servicers verify through a shared helper delegating to the REST chain — signature, blacklist, expiry in lockstep), and `tuvl init` emits `${POSTGRES_PASSWORD}` / `${POSTGRES_HOST:<default>}`-style env references in `datasources/postgres.yaml` instead of literal credentials, so scaffolded YAML and `tuvl ship` images carry no secrets. Portal (`tuvl.io`), docs (`tuvl.dev`) and the TypeScript SDK (`@tuvl/client` `2026.3.2`) align in lockstep. |
 | 2026-07-13 | §1 — version badge `2026.3.1.0`. New CLI command **`tuvl ship`**: packages a project for production — runs the full `tuvl validate` pass (errors abort; `--strict` also blocks on warnings), generates a production `Dockerfile` + `.dockerignore` and a Helm chart under `deploy/chart/<name>/`, then builds the container image (`--tag`, `--no-build`, `--push`, `--force`). The image runs `tuvl run` as a non-root user with `TUVL_ENV=production` (no dev routes, no Insight UI, JSON logs, telemetry on) and a `/health` HEALTHCHECK. Positioning moves from beta to **early stable** — the API and YAML schemas are stable and versioned (PyPI `Development Status :: 5 - Production/Stable`). Marketing portal (`tuvl.io`), docs site (`tuvl.dev`) and the TypeScript SDK (`@tuvl/client` `2026.3.1`) align in lockstep. |
 | 2026-07-05 | §1 — patch `2026.2.6.1`, the first real-world shakedown release (every fix found by building the public examples). HITL resume now honours the dict context form (`context: {models: [{name, version}]}`) and restores the version-pin map — previously resume built an empty allowlist and every repository call after it raised `PermissionError` (§4.10). ModelOp `create`/`update` coerce ISO-string payload values to date/datetime/UUID/Decimal column types (§4.8), response envelopes and HITL snapshots serialize those types instead of crashing, `tuvl test` loads project configs + custom nodes before running, and client-facing error text strips SQL statements/parameters. Embedding calls pass the declared `dimensions` to the provider (Matryoshka truncation). |
 | 2026-07-03 | §1 — version badge `2026.2.6`. Hardening release from the full-codebase review. New: `spec.supervisor.on_judge_error: ignore\|pause\|abort` (§4.14) for opt-in fail-closed LLM supervision, and configurable agent ceilings `TUVL_AGENT_PAUSE_MAX_S` / `TUVL_AGENT_TOOL_TIMEOUT_S` / `TUVL_AGENT_JUDGE_TIMEOUT_S`. The reserved `AutonomousAgent` exit `aborted` (raised by a supervisor/operator abort) is now documented (§4.13, §4.14) and required by **Golden Rule 26**; `tuvl validate` warns when it is unmapped and the runtime ends the run cleanly instead of raising. HITL `auth.required_group` is now enforced on resume (§4.10). Marketing portal (`tuvl.io`) and docs site (`tuvl.dev`) align to `v2026.2.6`. |
