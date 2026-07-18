@@ -3,7 +3,7 @@
 **A lightweight, local-first workflow orchestration engine for AI-powered business automation.**
 
 !!! note "Early stable release"
-    tuvl **2026.3.1.0** is production-ready: the API and YAML schemas are stable and
+    tuvl **2026.3.2.0** is production-ready: the API and YAML schemas are stable and
     versioned. As an early release in the stable line it is still maturing quickly,
     so expect additive improvements between versions.
 
