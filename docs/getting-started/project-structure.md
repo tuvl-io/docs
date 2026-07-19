@@ -25,6 +25,8 @@ my-project/
 │   └── postgres.yaml
 ├── llms/                 # AgentModel / LLM preset YAMLs
 │   └── default.yaml
+├── artifacts/            # Named, versioned assets (prompts, steering, skills,
+│   └── ...               # guardrails, hooks, MCP servers) — artifact:// refs
 ├── nodes/                # Python node implementations
 │   ├── contact_nodes.py
 │   └── order_nodes.py
@@ -87,10 +89,11 @@ spec:
         default: "prioritize"
     - id: "prioritize"
       kind: "Agent"
+      mode: "completion"
       agent:
         model: "default"
         prompt: "Classify {{ name }} as high | medium | low priority. Return JSON: {\"priority\": \"...\"}"
-        output:
+        outcome:
           format: json
           map:
             priority: priority
@@ -132,6 +135,22 @@ spec:
   temperature: 0.7
   max_tokens: 1024
 ```
+
+### `artifacts/`
+
+Named, versioned, typed assets referenced from workflow YAML via `artifact://name[@version]`. Prose types (`prompt`, `steering`, `skill`) are `.md` files with YAML front-matter; structured types (`guardrail`, `hook`, `mcp`) use the standard `kind: Artifact` envelope.
+
+```markdown title="artifacts/support_policy.md"
+---
+name: support-policy
+type: steering
+version: 1
+description: Persistent instruction for the support triage agent.
+---
+Resolve the ticket using the available tools. Never promise refunds above $500.
+```
+
+See [Artifacts](../internals/tuvl-agentic-manual.md#211-artifacts-artifacts-kind-artifact) in the agentic manual for the full contract (sources, versioning, type compatibility).
 
 ### `nodes/`
 

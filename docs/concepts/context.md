@@ -79,6 +79,7 @@ Agent prompts access context via Jinja2 templates:
 ```yaml
 - id: "classify"
   kind: "Agent"
+  mode: "completion"
   agent:
     prompt: |
       Customer: {{ name }}
@@ -86,7 +87,7 @@ Agent prompts access context via Jinja2 templates:
       Email domain: {{ domain }}
       
       Classify this lead's potential.
-    output:
+    outcome:
       map:
         potential: lead_potential  # Write back to context
 ```

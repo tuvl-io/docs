@@ -153,7 +153,7 @@ nav:
   - Engine Internals:
       - Agentic Manual: internals/tuvl-agentic-manual.md
       - Authentication & Authorization: internals/auth.md
-      - AutonomousAgent: internals/autonomous-agent.md
+      - Autonomous Agent Mode: internals/autonomous-agent.md
       - Supervisor & Orchestrator: internals/supervisor.md
       - Human-in-the-Loop: internals/human-in-the-loop.md
       - Functional Nodes: internals/functional-node.md

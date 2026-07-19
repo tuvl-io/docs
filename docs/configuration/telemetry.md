@@ -91,8 +91,10 @@ workflow.execute          (parent)
 ```
 
 Span names use the step kind verbatim (`node.{kind}`, PascalCase). Valid node
-kinds: `Functional`, `Agent`, `AutonomousAgent`, `APICall`, `MCP`, `Router`,
-`ModelOp`, `Response`, `HumanInTheLoop`. The full span, attribute, and metric
+kinds: `Functional`, `Agent`, `APICall`, `MCP`, `Router`,
+`ModelOp`, `Response`, `HumanInTheLoop`. For an autonomous-mode `Agent` step,
+`agent.iteration` and `agent.tool_call` spans nest under `node.Agent` — one per
+loop turn and per tool the model invokes. The full span, attribute, and metric
 reference lives in [Engine Internals → Observability](../internals/observability.md).
 
 ### Span attributes

@@ -83,16 +83,18 @@ tuvl uses **structlog** for all log output. In production, every line is a singl
 | `Agent LLM timeout` | warning | `step_id`, `timeout_s` |
 | `Agent LLM error` | warning | `step_id`, `exc_type`, `error` |
 | `Agent run complete` | info | `step_id`, `signal` |
-| `autonomous_agent.turn` | info | `step_id`, `iteration`, `max_iterations`, `tool_calls`, `tokens_used` |
-| `autonomous_agent.tool_call` | info | `step_id`, `iteration`, `tool`, `signal` |
-| `autonomous_agent.llm_error` | warning | `step_id`, `iteration`, `exc_type`, `error` |
-| `autonomous_agent.budget_exceeded` | warning | `step_id`, `tokens_used`, `token_budget` |
-| `autonomous_agent.max_iterations` | warning | `step_id`, `max_iterations` |
+| `agent.turn` | info | `step_id`, `iteration`, `max_iterations`, `tool_calls`, `tokens_used` |
+| `agent.tool_call` | info | `step_id`, `iteration`, `tool`, `signal` |
+| `agent.llm_error` | warning | `step_id`, `iteration`, `exc_type`, `error` |
+| `agent.budget_exceeded` | warning | `step_id`, `tokens_used`, `token_budget` |
+| `agent.max_iterations` | warning | `step_id`, `max_iterations` |
+| `agent.guardrail_violation` | warning | `step_id`, `artifact`, `check`, `detail` |
+| `workflow.hook` | info | `hook`, `event`, `workflow`, `step_id` (an `action: log` hook firing) |
 | `OTel TracerProvider initialised` | info | `service`, `endpoint` |
 | `FastAPI OpenTelemetry instrumentation active` | info | — |
 | `LiteLLM OpenTelemetry callback registered` | info | — |
 
-During an `AutonomousAgent` step, `run_streaming` also emits live **progress frames** over SSE/gRPC: `StepEvent`s with `signal="running"` and an `agent_progress` snapshot payload (`{type: iteration|tool_call|outcome, ...}`) — loop metadata only (no context values), so they add no PII surface beyond the masked final frame. The terminating frame carries the real outcome signal and the masked context snapshot as usual.
+During an autonomous-mode `Agent` step, `run_streaming` also emits live **progress frames** over SSE/gRPC: `StepEvent`s with `signal="running"` and an `agent_progress` snapshot payload (`{type: iteration|tool_call|outcome, ...}`) — loop metadata only (no context values), so they add no PII surface beyond the masked final frame. The terminating frame carries the real outcome signal and the masked context snapshot as usual.
 
 ### Using the logger in custom nodes
 
@@ -134,11 +136,11 @@ traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
 | `tuvl.step.signal` | `node.*` | Route signal returned by the step |
 | `tuvl.step.duration_ms` | `node.*` | Wall-clock execution time in milliseconds |
 | `tuvl.context.snapshot` | `node.*` | JSON snapshot of public context fields (PII masked) |
-| `tuvl.agent.iteration` | `autonomous_agent.iteration` | Loop iteration index (1-based) for an `AutonomousAgent` step |
-| `tuvl.agent.tokens_used` | `autonomous_agent.iteration` | Cumulative tokens consumed by the agent loop so far |
-| `tuvl.agent.tool_calls` | `autonomous_agent.iteration` | Number of tool calls the model requested this turn |
-| `tuvl.agent.tool` | `autonomous_agent.tool_call` | Name of the tool (component ref) invoked |
-| `tuvl.agent.tool_signal` | `autonomous_agent.tool_call` | Signal returned by the dispatched tool component |
+| `tuvl.agent.iteration` | `agent.iteration` | Loop iteration index (1-based) for an autonomous-mode `Agent` step |
+| `tuvl.agent.tokens_used` | `agent.iteration` | Cumulative tokens consumed by the agent loop so far |
+| `tuvl.agent.tool_calls` | `agent.iteration` | Number of tool calls the model requested this turn |
+| `tuvl.agent.tool` | `agent.tool_call` | Name of the tool (component ref) invoked |
+| `tuvl.agent.tool_signal` | `agent.tool_call` | Signal returned by the dispatched tool component |
 
 ---
 
@@ -149,22 +151,24 @@ Every workflow execution produces a consistent span tree:
 ```
 workflow.execute                               (1 span per workflow run)
 ├── node.Functional                            (1 per functional step)
-├── node.Agent                                 (1 per agent step)
+├── node.Agent                                 (1 per Agent step — either mode)
+│   │                                          mode: completion
 │   ├── litellm.completion  [gen_ai.*]         (1+ per LLM call / retry)
-│   └── ...
-├── node.AutonomousAgent                       (1 per AutonomousAgent step)
-│   ├── autonomous_agent.iteration             (1 per loop turn)
+│   │                                          mode: autonomous
+│   ├── agent.iteration                        (1 per loop turn)
 │   │   ├── litellm.completion  [gen_ai.*]     (the turn's LLM call)
-│   │   └── autonomous_agent.tool_call         (1 per tool the model invoked this turn)
+│   │   └── agent.tool_call                    (1 per tool the model invoked this turn)
 │   └── ...                                    (further iterations)
 ├── node.APICall
 ├── node.MCP
 └── ...
 ```
 
-The `node.{kind}` span is opened **before** the step executes and closed **after**, so that all LiteLLM calls made during an `Agent` step are automatically nested as children. This gives accurate per-step attribution of token usage and latency.
+The `node.{kind}` span is opened **before** the step executes and closed **after**, so that all LiteLLM calls made during an `Agent` step are automatically nested as children. This gives accurate per-step attribution of token usage and latency. The step span name is `node.<Kind>`, so autonomous agents appear as `node.Agent` — the mode is visible from the child spans.
 
-For an `AutonomousAgent` step, each loop turn opens an `autonomous_agent.iteration` span (carrying the iteration index and cumulative `tuvl.agent.tokens_used`), under which the turn's `litellm.completion` and any `autonomous_agent.tool_call` spans nest — giving per-iteration cost and per-tool attribution across the whole agent loop.
+For an autonomous-mode `Agent` step, each loop turn opens an `agent.iteration` span (carrying the iteration index and cumulative `tuvl.agent.tokens_used`), under which the turn's `litellm.completion` and any `agent.tool_call` spans nest — giving per-iteration cost and per-tool attribution across the whole agent loop. (These spans were named `autonomous_agent.*` before the agent unification.)
+
+Every execution surface — engine run and streaming, Spectrum, and the test runner — funnels through one per-kind dispatch (`WorkflowEngine._run_kind`), so the span tree (and cross-cutting concerns like hooks) is identical regardless of how a workflow is executed; there are no per-surface dispatch forks to drift.
 
 ---
 
@@ -186,7 +190,7 @@ LiteLLM (≥ 1.50) automatically picks up the globally registered `TracerProvide
 | `gen_ai.usage.output_tokens` | Completion token count |
 | `gen_ai.response.finish_reason` | Stop reason |
 
-These spans appear as children of the `node.Agent` (or `node.AutonomousAgent`) span in your tracing backend, giving you per-call token usage, latency, and cost attribution without any additional instrumentation code.
+These spans appear as children of the `node.Agent` span (nested under `agent.iteration` in autonomous mode) in your tracing backend, giving you per-call token usage, latency, and cost attribution without any additional instrumentation code.
 
 ---
 
@@ -200,15 +204,24 @@ endpoint as traces via a `PeriodicExportingMetricReader`.
 
 | Counter | Incremented when | Attributes |
 |---|---|---|
-| `tuvl.agent.iterations` | An `AutonomousAgent` loop completes a turn | `tuvl.agent.step_id` |
+| `tuvl.agent.iterations` | An autonomous agent loop completes a turn | `tuvl.agent.step_id` |
 | `tuvl.agent.tool_calls` | The model invokes a declared tool | `tuvl.agent.step_id`, `tuvl.agent.tool` |
 | `tuvl.agent.aborts` | A run is aborted by a supervisor or operator | `tuvl.agent.step_id` |
 | `tuvl.agent.budget_exceeded` | A run hits its `token_budget` | `tuvl.agent.step_id` |
 | `tuvl.agent.supervisor_actions` | A supervisor intervenes (abort / pause / steer) | `action`, `source` (rule kind or `judge`) |
 | `tuvl.agent.judge_failures` | A supervisor LLM-judge call errors or times out | `workflow` |
 
+The `tuvl.agent.*` counter names are unchanged by the agent unification (only
+the span names moved from `autonomous_agent.*` to `agent.*`).
+
+One additional counter lives on the `tuvl.hooks` meter:
+
+| Counter | Incremented when | Attributes |
+|---|---|---|
+| `tuvl.hook.events` | A `type: hook` artifact with `action: metric` fires | `tuvl.hook.name`, `tuvl.hook.event`, `tuvl.workflow.name` |
+
 A sustained rise in `tuvl.agent.aborts` or `tuvl.agent.judge_failures` is the
-signal to inspect the run traces (`autonomous_agent.iteration` spans) or the
+signal to inspect the run traces (`agent.iteration` spans) or the
 Insight Agents dashboard.
 
 ---
