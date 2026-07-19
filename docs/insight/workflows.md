@@ -51,10 +51,10 @@ Arrows between nodes show the routes declared in the YAML. Click **Fit view** to
 
 The **Supervisor** is an amber, dashed **off-spine node** — add it from the palette
 (one per workflow) and it attaches as a watcher over the workflow's
-`AutonomousAgent` runs, with no flow edges since it observes rather than runs in the
+autonomous-mode `Agent` runs, with no flow edges since it observes rather than runs in the
 sequence. Double-click it to configure the judge model (a dropdown of your
-configured models), the criteria (inline or a criteria `.md` file you edit in
-place), `on_violation`, `every_n_iterations`, and the deterministic rules — all
+configured models), the criteria (inline text or an `artifact://` reference to a
+`type: steering` artifact), `on_violation`, `every_n_iterations`, and the deterministic rules — all
 written straight into `spec.supervisor`. See
 [Agents → Supervising an Autonomous Agent](../configuration/agents.md#supervising-an-autonomous-agent).
 
@@ -107,6 +107,7 @@ spec:
 
     - id: score_cv
       kind: Agent
+      mode: completion
       agent:
         model: default
         prompt: |
@@ -114,7 +115,10 @@ spec:
           Name: {{ full_name }}
           Experience: {{ experience_years }} years
           Skills: {{ skills }}
-          Return JSON: {"score": <int>, "summary": "<str>", "route": "strong|average|weak"}
+          Return JSON: {"score": <int>, "summary": "<str>"}
+        outcome:
+          format: json
+          enum: [strong, average, weak]
       routes:
         strong: fast_track
         average: standard_review

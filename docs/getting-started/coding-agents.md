@@ -17,10 +17,11 @@ Each skill is a short, imperative recipe the agent follows. `tuvl init` writes t
 |---|---|
 | `create-database-model` | Define a `ModelDefinition` (table + auto-generated CRUD). |
 | `implement-api-endpoint` | Create a `Workflow` with an HTTP trigger and routed steps. |
-| `create-custom-python-node` | Add a one-per-file `@node()` `functional` runner. |
+| `create-custom-python-node` | Add a one-per-file `@node()` `Functional` runner. |
 | `perform-database-operations` | Use `ModelOp` for CRUD inside a workflow. |
-| `implement-llm-agent-step` | Add a single-call `agent` step with structured output. |
-| `build-autonomous-agent` | Add an **`AutonomousAgent`** — a bounded tool-calling loop. |
+| `implement-llm-agent-step` | Add a single-call `Agent` step (`mode: completion`) with structured output. |
+| `build-autonomous-agent` | Add an `Agent` step with **`mode: autonomous`** — a bounded tool-calling loop. |
+| `supervise-autonomous-agent` | Attach a `spec.supervisor` block that watches autonomous runs live. |
 | `invoke-external-api` | Call an external HTTP API with `APICall`. |
 | `execute-mcp-tool` | Call an MCP server tool with `MCP`. |
 
@@ -125,8 +126,9 @@ config."*
 
 `AGENTS.md` encodes the [agentic contract](../concepts/agentic-contract.md) as hard rules. The ones that matter most:
 
-- **Closed sets only.** Step kinds are exactly: `Functional`, `Agent`, `AutonomousAgent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop`. Document kinds and reserved context keys are likewise fixed. The agent never invents new ones.
-- **Route every signal.** Every non-`default` signal a step can emit must be mapped in `routes:`. For an `AutonomousAgent`, that means every `outcome.enum` value plus the reserved exits `max_iterations` / `budget_exceeded` / `error` / `aborted`.
+- **Closed sets only.** Step kinds are exactly: `Functional`, `Agent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop`. Document kinds and reserved context keys are likewise fixed. The agent never invents new ones.
+- **Declare the mode.** Every `Agent` step requires `mode: completion | autonomous` — there is no default, so a step can never silently become autonomous.
+- **Route every signal.** Every non-`default` signal a step can emit must be mapped in `routes:`. For an autonomous `Agent`, that means every `outcome.enum` value plus the reserved exits `max_iterations` / `budget_exceeded` / `error` / `aborted`.
 - **Allowlist every model.** Any model a workflow touches must be listed in `spec.context.models`.
 - **One node per file.** A `@node("name")` runner must live in `nodes/name.py`.
 
@@ -138,23 +140,23 @@ A prompt like *"triage the ticket: look up the order, then resolve or escalate"*
 
 ```yaml title="workflows/triage_ticket.yaml"
 - id: triage
-  kind: AutonomousAgent
+  kind: Agent
+  mode: autonomous
   agent:
     model: default
     steering: "Resolve the support ticket using the available tools."
     max_iterations: 8
-    skills:                              # project-relative .md files injected into the system prompt
-      - .agents/skills/support-policy.md
-    tools:
-      - ref: lookup_order
-        description: "Fetch order details by order id."  # optional — overrides lookup_order's own description:
+    skills:                              # when-relevant capabilities — inline text or artifact refs
+      - artifact://support-policy
+    tools:                               # REQUIRED in this mode
+      - ref: lookup_order                # description comes from that step's own description:
         parameters:
           type: object
           properties: { order_id: { type: string } }
           required: [order_id]
     outcome:
       enum: [resolved, escalate]
-      output_key: agent_result
+      write: agent_result
   routes:
     resolved:        route_by_region    # deterministic switch, NOT the agent
     escalate:        notify_manager
@@ -174,5 +176,5 @@ See [Workflows → Step Kinds](../concepts/workflows.md#step-kinds) for the full
 
 - [The Agentic Contract](../concepts/agentic-contract.md) — why closed-set generation works
 - [Workflows](../concepts/workflows.md) — step kinds and routing reference
-- [Custom Nodes](../examples/custom-nodes.md) — the `functional` escape hatch
+- [Custom Nodes](../examples/custom-nodes.md) — the `Functional` escape hatch
 - [Testing Workflows](../tools/testing.md) — validate generated config with LLM-as-a-Judge

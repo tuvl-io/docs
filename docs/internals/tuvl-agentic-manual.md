@@ -79,6 +79,8 @@ spec:
   ...                        # Kind-specific body
 ```
 
+**The spec-wrapped envelope is the ONLY accepted document form.** A root-level (flat) document — body fields sitting beside `kind:` instead of under `spec:` — is rejected by the loader and by `tuvl validate` with a pointed error, for every kind. Always wrap the body under `spec:`.
+
 ### 2.1 Supported `kind:` values (closed set)
 
 | `kind:` | Loader | Loaded from |
@@ -92,7 +94,8 @@ spec:
 | `RedisConfig`        | same (alias of DataSource)             | `datasources/`                        |
 | `FederationProvider` | `tuvl.core.auth.federation_loader`     | `federation/`                         |
 | `Workflow`           | `tuvl.core.api.manager`                | anywhere (typically `workflows/`)     |
-| `AgentModel`         | lazy, by `AgentRunner`                 | **must** live at `llms/<name>.yaml`   |
+| `AgentModel`         | `tuvl.core.models.agent_models` (central loader, at startup) | `llms/<name>.yaml` recommended |
+| `Artifact`           | `tuvl.core.artifacts.loader` (structured types `guardrail` \| `hook` \| `mcp` — see §2.11) | anywhere (typically `artifacts/`) |
 | `ProjectConfig`      | `tuvl.core.config.Settings`       | `config.yaml`                         |
 | `TelemetryConfig`    | telemetry init                          | `telemetry.yaml`                      |
 | `SystemConfig`       | bootstrap                               | `.tuvl/system.yaml` (do not write)   |
@@ -239,6 +242,9 @@ Accepted shapes:
 ```yaml
 - id: <unique_within_workflow>
   kind: Functional | Agent | Router | APICall | MCP | ModelOp | Response | HumanInTheLoop
+  mode: completion | autonomous # REQUIRED on kind: Agent only (§4.4) — no default
+  hooks:                        # OPTIONAL — observe-only lifecycle hooks (§4.16)
+    - artifact://<hook artifact>
   routes:                       # OPTIONAL
     default: <next_step_id>     # taken when signal == "default" and key present
     error:   <next_step_id>     # taken when signal == "error"
@@ -248,7 +254,7 @@ Accepted shapes:
 
 Routing rules (deterministic):
 
-1. The step returns a `signal` (string). Built-in signals: `"default"`, `"error"`. Routers return `"true"` / `"false"`. Agents may return any string when `output.signal_from` is set.
+1. The step returns a `signal` (string). Built-in signals: `"default"`, `"error"`. Routers return `"true"` / `"false"`. Agents route only through their declared `outcome.enum` values plus the engine-reserved exits (§4.4.2) — an arbitrary LLM string can never become a routing signal.
 2. If `routes[signal]` exists → jump to that step (`END` terminates).
 3. If signal is `"default"` and not in `routes` → fall through to the next sequential step.
 4. If signal is `"error"` and not in `routes` → terminate workflow early.
@@ -256,7 +262,7 @@ Routing rules (deterministic):
 
 ### 2.4 `kind: AgentModel` (LLM preset)
 
-Located at `llms/<name>.yaml`. Referenced from `agent:` steps via `agent.model: <name>` (no `/`).
+Conventionally located at `llms/<name>.yaml` (any location works — dispatch is by `kind:`). Referenced from `agent:` steps via `agent.model: <name>` (no `/`). AgentModels are loaded by the central config loader at startup into `AGENT_MODEL_REGISTRY` like every other kind — there is no lazy per-call file read. A referenced AgentModel that is disabled (`enabled: false`) **raises at call time** — it never silently falls back to another provider.
 
 ```yaml
 kind: AgentModel
@@ -397,6 +403,81 @@ All YAML loaders that resolve env vars accept two forms:
 
 Numeric-looking resolved values (e.g. `"5432"`) are auto-coerced to `int`/`float`.
 
+There is exactly **one templating implementation**: `{{ key }}` context templating (keep / empty / raise variants, chosen per call site) and `${VAR}` / `${VAR:default}` env expansion (the default wins; missing-with-no-default raises). `${VAR}` expansion applies to **configuration fields only** — it is **never** applied to the body of prose artifacts (§2.11), so a prompt can safely discuss `${SECRETS}` without leaking the environment.
+
+### 2.11 Artifacts (`artifacts/` + `kind: Artifact`)
+
+Artifacts are **named, versioned, typed assets** — prompts, steering, skills, guardrails, hooks, and MCP server configs — loaded at startup into one in-memory registry and referenced from workflow YAML via `artifact://` URIs.
+
+**Closed type taxonomy** (anything else is a load error):
+
+| `type` | Class | Authored as |
+|---|---|---|
+| `prompt`    | prose | `.md` with YAML front-matter under `artifacts/` |
+| `steering`  | prose | `.md` with YAML front-matter under `artifacts/` |
+| `skill`     | prose | `.md` with YAML front-matter under `artifacts/` |
+| `guardrail` | structured | standard `kind: Artifact` YAML envelope with `spec.type` (§4.15) |
+| `hook`      | structured | standard `kind: Artifact` YAML envelope with `spec.type` (§4.16) |
+| `mcp`       | structured | standard `kind: Artifact` YAML envelope with `spec.type` (§4.7) |
+
+**Prose artifact format** — markdown with YAML front-matter, under the project's `artifacts/` directory:
+
+```markdown
+---
+name: support-triage-system        # REQUIRED — registry key, [A-Za-z0-9][A-Za-z0-9_.-]*
+type: prompt                       # REQUIRED — prompt | steering | skill
+version: 3                         # positive integer (default 1)
+description: System prompt for the ticket-triage agent.
+---
+You are a support-ticket triage specialist…
+```
+
+**Structured artifact format** — the universal envelope (§2.0), dispatched by the central config loader:
+
+```yaml
+kind: Artifact
+metadata: { name: firecrawl, version: 1, description: Firecrawl MCP server }
+spec:
+  type: mcp                        # guardrail | hook | mcp
+  transport: sse
+  url: https://mcp.firecrawl.dev/sse
+  headers: { Authorization: "Bearer ${FIRECRAWL_KEY}" }
+```
+
+Every artifact (any source) is capped at **512 KB** of content; larger content is refused at load/upload time.
+
+**Reference syntax**: `artifact://name[@version]`, usable in any string-typed field a site accepts. No `@version` → the latest **enabled** version. Site → type compatibility is enforced on resolution:
+
+| Reference site | Accepts types |
+|---|---|
+| `agent.system` / `agent.prompt` | `prompt` |
+| `agent.steering` | `steering`, `prompt` |
+| `agent.skills[]` | `skill` |
+| `supervisor.criteria` / guardrail `llm_judge.criteria` | `steering` (the old `criteria` type folded into `steering`) |
+| `agent.guardrails.{input,output,tools}[]` | `guardrail` |
+| step `hooks:[]` / workflow `spec.hooks:[]` | `hook` |
+| `mcp.server` | `mcp` |
+
+**Three sources, one namespace.** A name is owned by exactly one source; on collision the precedence is **file → db → external** (the loser is shadowed entirely, with a boot warning — a checked-in file always beats a remote pack):
+
+1. **Project files** — `artifacts/` prose `.md` plus `kind: Artifact` YAML anywhere.
+2. **DB uploads** — `POST /api/artifacts` (Biscuit scope `artifacts:write`; `artifacts:read` to list/read; `iam:admin` bypasses). Rows live in `tuvl_system_artifacts`; an upload always creates a **new version row**, never an in-place mutation (`enabled` is the only mutable column). Uploads register on the receiving worker immediately; other workers pick them up at next boot.
+3. **External sources** — declared in `config.yaml`:
+
+   ```yaml
+   spec:
+     artifact_sources:
+       - name: org-prompt-pack
+         url: https://artifacts.example.com/packs/support-v3.tar.gz
+         sha256: "9f2c…"     # REQUIRED — unpinned sources are refused at boot
+   ```
+
+   Each source is a `.tar.gz` of prose `.md` and structured `kind: Artifact` files. The download is verified against the pinned `sha256` **before** anything enters the registry, then unpacked into the hash-keyed cache `.tuvl/artifacts/cache/<sha256>/` — a warm cache means fully offline restarts.
+
+**Boot posture.** At startup the engine resolves and type-checks **every** `artifact://` reference in every registered workflow. Unresolved refs are a **startup failure in production**; in dev mode they warn at boot and produce a precise error at runtime. In dev mode, edits to file-source `.md` artifacts apply on the next run without a restart (mtime refresh).
+
+**Validation.** `tuvl validate` validates the `artifacts/` directory (front-matter, types, structured specs) and every reference (existence, pinned version, site type-compatibility). A **floating (unpinned) ref** is a warning — so `tuvl ship --strict` fails on it (Golden Rule 30); an artifact no workflow references gets a notice.
+
 ---
 
 ## 3. Versioning & Multi-Document Rules
@@ -406,15 +487,17 @@ Numeric-looking resolved values (e.g. `"5432"`) are auto-coerced to `int`/`float
 `load_all_configs()` processes documents in this **fixed** sequence; emit dependencies before dependents:
 
 ```
-ModelDefinition
-  → EmbeddingRegistry / EmbeddingConfig
-    → CollectionRegistry / CollectionConfig
-      → DataSource / RedisConfig
-        → FederationProvider
-          → Workflow
+Artifact
+  → AgentModel
+    → ModelDefinition
+      → EmbeddingRegistry / EmbeddingConfig
+        → CollectionRegistry / CollectionConfig
+          → DataSource / RedisConfig
+            → FederationProvider
+              → Workflow
 ```
 
-`AgentModel`, `ProjectConfig`, `TelemetryConfig`, `SystemConfig` are out-of-band and loaded by their own subsystems.
+`ProjectConfig`, `TelemetryConfig`, `SystemConfig` are out-of-band and loaded by their own subsystems. Prose (`.md`) artifacts are loaded by the artifact file walk (§2.11), not this YAML dispatch.
 
 ### 3.2 Multi-document YAML streams (`---`)
 
@@ -497,16 +580,15 @@ The `WorkflowEngine` executes steps sequentially, dispatched by `kind:`. Each st
 | `kind:` | Purpose | Signals emitted |
 |---|---|---|
 | `Functional`     | Run a Python callable from `NODE_REGISTRY` (custom or built-in). | `default`, `error`, or any string returned by the node. |
-| `Agent`          | LiteLLM `acompletion` with structured-output parsing. | `default` (or value of `output.signal_from`), `error`, `timeout`, `parse_error`. |
-| `AutonomousAgent`| Bounded LiteLLM tool-loop (ReAct): the model calls declared tools until done. | one of `outcome.enum`, or `default` (no enum), or `max_iterations` / `budget_exceeded` / `error` / `aborted`. |
+| `Agent`          | The one LLM step. **`mode: completion \| autonomous` is REQUIRED** on the step: `completion` = one retried LiteLLM call (§4.4); `autonomous` = bounded tool-loop (§4.13). | one of `outcome.enum`, or `default` (no enum); reserved: `error`, plus `parse_error` / `timeout` (completion) and `max_iterations` / `budget_exceeded` / `aborted` (autonomous), plus `guardrail_violation` when guardrails are attached. |
 | `APICall`        | Outbound HTTP via a shared `httpx.AsyncClient`. | `default`, `error`. |
-| `MCP`            | Call a Model Context Protocol tool (SSE or stdio transport). | `default`, `error`. |
+| `MCP`            | Call a Model Context Protocol tool — connection config lives in a `type: mcp` artifact (§4.7). | `default`, `error`. |
 | `ModelOp`        | Direct CRUD against a registered model via `WorkflowUoW`. | `default`, `error`. |
 | `Router`         | Pure-function condition evaluator. | `true`, `false`, `error`. |
 | `Response`       | Shape `context["_response"]` for the HTTP body. | `default`, `error`. |
 | `HumanInTheLoop` | Persist a `SystemWorkflowInstance`, raise `SuspendWorkflowError` (HTTP 202 / SSE `suspended` frame). | suspends — no signal. |
 
-Agents must never emit a `kind:` outside this set.
+That is the full closed set — **eight kinds**. `kind: AutonomousAgent` no longer exists; the autonomous loop is `kind: Agent` + `mode: autonomous`. Agents must never emit a `kind:` outside this set, and every `Agent` step must declare `mode:` — there is no default (the validator errors and the runtime raises).
 
 ### 4.2 Built-in `Functional` runners (system nodes)
 
@@ -591,24 +673,69 @@ Return conventions:
 - `(dict, str)` → updated context + explicit signal.
 - Exception → engine catches it, sets `ctx["_last_error"]`, signal becomes `"error"`.
 
-### 4.4 `kind: Agent` (LLM step)
+### 4.4 `kind: Agent` (the unified LLM step)
+
+One agent kind, two execution modes, one shared contract. Every `Agent` step **must** declare `mode:` at the step level:
+
+- **`mode: completion`** — a single retried LLM call (documented here).
+- **`mode: autonomous`** — a bounded ReAct tool-loop (documented in §4.13).
+
+There is **no default mode**: an `Agent` step without `mode:` is a `tuvl validate` error and a runtime `RuntimeError` — a step can never silently become autonomous.
+
+**Shared `agent:` fields (both modes):** `model`, `retry: {attempts, on, backoff}`, `context_injection`, `skills`, `guardrails` (§4.15), `outcome` (§4.4.1). **Completion-only:** `system`, `prompt`. **Autonomous-only:** `steering`, `tools` (REQUIRED in that mode), `max_iterations`, `token_budget`. The validator rejects mode-inappropriate fields with a pointed error. `system`, `prompt`, `steering`, and each `skills[]` entry take **inline text or an `artifact://` reference** (§2.11).
+
+#### 4.4.1 The unified `outcome` contract (both modes)
+
+`agent.outcome` replaces both the old completion `output.{format,map,signal_from}` block and the old `outcome.{enum,output_key}` block — the validator rejects the removed keys with pointed errors.
+
+```yaml
+outcome:
+  write: research                    # context key receiving the result payload (default <step_id>_result)
+  format: json                       # json | text        (completion; autonomous is JSON-final by contract)
+  enum: [answered, insufficient]     # OPTIONAL closed signal set
+  map: { llm_key: ctx_key }          # OPTIONAL rename table (completion + json only)
+```
+
+- **`enum` declared** → the model must return an `"outcome"` field holding **exactly one** declared value; that value becomes the route signal, validated against the closed set. An arbitrary LLM string can never become a routing signal — an undeclared outcome routes through `error`. **Every `enum` value must be mapped in `routes:`** (validator error otherwise).
+- **`enum` absent** → the step exits on `default`.
+- **Completion + `format: json`** — all parsed JSON fields still auto-merge into context (minus the `"outcome"` signal field), `map` renames apply, and `write` — when explicitly declared — additionally captures the full parsed payload.
+- **Completion + `format: text`** — the trimmed raw text lands at `write`; signal is `default`.
+- **Autonomous** — the model's final no-tool turn is `{"outcome": <enum value>, "result": <payload>}`; **only** `write` lands in context (no field auto-merge).
+
+#### 4.4.2 Reserved exits (engine-owned)
+
+Emitted alongside the author's `enum` values; never reuse them as `enum` entries, and route them:
+
+| Signal | Mode | Emitted when |
+|---|---|---|
+| `error` | both | LLM/transport failure, invalid outcome value, fatal tool timeout |
+| `parse_error` | completion | the response is not valid JSON (retryable via `retry.on`) |
+| `timeout` | completion | the LLM call exceeded `timeout` (retryable via `retry.on`) |
+| `max_iterations` | autonomous | the loop cap was reached without a final answer |
+| `budget_exceeded` | autonomous | cumulative tokens reached `token_budget` |
+| `aborted` | autonomous | supervisor/operator abort, or a pause outlived its deadline |
+| `guardrail_violation` | both | a declared guardrail check failed (§4.15) |
+
+#### 4.4.3 `mode: completion`
 
 ```yaml
 - id: classify
   kind: Agent
+  mode: completion              # REQUIRED
   agent:
     model: default              # AgentModel name (no /) OR a LiteLLM string
-    system: |
+    system: |                   # inline text or artifact://<prompt artifact>
       You are a strict classifier.
     prompt: |
       Message: {{ message }}
-      Return JSON: {"category": "urgent" | "normal" | "spam"}
-    output:
-      format: json              # json | text | signal
+      Classify the message.
+    outcome:
+      format: json              # json | text
+      enum: [urgent, normal, spam]   # the closed signal set
       map:                      # OPTIONAL rename layer (llm_key → ctx_key)
-        category: message_category
-      signal_from: category     # OPTIONAL — routes by this context key
-    context_injection:          # OPTIONAL — appended as a system message
+        reason: triage_reason
+      write: triage_result      # OPTIONAL — captures the full parsed payload
+    context_injection:          # OPTIONAL — injected as a delimited untrusted-content message
       - search_results          # e.g. output of a prior DataSearch step
     retry:
       attempts: 3
@@ -620,14 +747,15 @@ Return conventions:
     normal: queue
     spam:   discard
     error:  alert_ops
+    parse_error: alert_ops
 ```
 
 Engine behaviour the agent must rely on:
 
-- **Auto-inject**: when `format: json`, all public (non-`_`-prefixed) context keys are appended to the user message as an `## Input Data` JSON block. Generators should **not** manually duplicate context fields into the prompt.
-- **All JSON fields are merged into context**. `output.map` is purely a rename layer.
-- `output.format: json` triggers system-prompt schema injection from the workflow's `trigger.response_schema` when it is an inline list.
-- `output.format: signal` → the trimmed lowercase response text becomes the route signal directly. No JSON parsing.
+- **Auto-inject**: when `outcome.format: json`, all public (non-`_`-prefixed) context keys are appended to the user message as an `## Input Data` JSON block. Generators should **not** manually duplicate context fields into the prompt.
+- **All JSON fields are merged into context** (the `"outcome"` signal field excepted). `outcome.map` is purely a rename layer.
+- `outcome.format: json` triggers system-prompt schema injection from the workflow's `trigger.response_schema` when it is an inline list.
+- With `enum` declared, the enum instruction is appended to the prompt automatically; the returned `"outcome"` value routes the workflow (§4.4.1).
 
 ### 4.5 `kind: Router`
 
@@ -662,8 +790,8 @@ stringified field value as the signal and routes via `routes:`, falling back to
     default: resolve_other       # any unmapped value lands here
 ```
 
-This is the idiomatic way to add data-driven branching after an
-`AutonomousAgent` outcome — keep the deterministic logic here, not in the model.
+This is the idiomatic way to add data-driven branching after an autonomous-mode
+`Agent` outcome — keep the deterministic logic here, not in the model.
 
 ### 4.6 `kind: APICall`
 
@@ -691,39 +819,55 @@ This is the idiomatic way to add data-driven branching after an
 
 ### 4.7 `kind: MCP`
 
+Connection configuration lives **only** in a `type: mcp` artifact (§2.11) — one server, one definition, N steps. Inline transport blocks (`mcp.transport` / `url` / `headers` / `command` / `args` / `env` on the step) are **rejected** with a pointed error by both the validator and the runtime.
+
+The artifact declares the connection:
+
 ```yaml
-# SSE transport
-- id: search_docs
+# artifacts/github_mcp.yaml
+kind: Artifact
+metadata: { name: github-mcp, version: 1 }
+spec:
+  type: mcp
+  transport: stdio                 # sse | stdio (default sse)
+  command: npx                     # stdio: command/args/env
+  args: ["@modelcontextprotocol/server-github"]
+  env:
+    GITHUB_TOKEN: "${GITHUB_TOKEN}"   # ${VAR} expands from the environment
+---
+kind: Artifact
+metadata: { name: docs-search, version: 1 }
+spec:
+  type: mcp
+  transport: sse                   # sse: url/headers
+  url: http://localhost:3001/sse
+  headers:
+    Authorization: "Bearer ${DOCS_TOKEN}"
+```
+
+The step carries only the call — server ref, tool, timeout, arguments, and the response mapping:
+
+```yaml
+- id: list_issues
   kind: MCP
   mcp:
-    transport: sse                  # default
-    url: http://localhost:3001/sse
-    headers:                        # OPTIONAL
-      Authorization: "Bearer {{ token }}"
-    timeout: 30
-    tool: search                    # REQUIRED — MCP tool name
-    arguments:
-      query: "{{ user_query }}"
+    server: artifact://github-mcp   # REQUIRED — ref to a `type: mcp` artifact
+    tool: list_issues               # REQUIRED — MCP tool name
+    timeout: 30                     # OPTIONAL (default 30)
+    arguments:                      # {{ctx}} templating supported
+      owner: "{{ owner }}"
+      repo:  "{{ repo }}"
   response:
     output_key: mcp_result
     extract:
       - path: "0.title"
         as: first_title
-
-# stdio transport (local server)
-- id: list_issues
-  kind: MCP
-  mcp:
-    transport: stdio
-    command: npx
-    args: ["@modelcontextprotocol/server-github"]
-    env:
-      GITHUB_TOKEN: "{{ gh_token }}"
-    tool: list_issues
-    arguments:
-      owner: "{{ owner }}"
-      repo:  "{{ repo }}"
+  routes:
+    default: next
+    error:   fallback
 ```
+
+`${VAR}` in the artifact's `env` / `headers` / `url` expands from the environment; `{{ }}` context templating still applies afterwards.
 
 ### 4.8 `kind: ModelOp`
 
@@ -808,7 +952,7 @@ Resume rules: when the step declares `auth.required_group`, the resumer must car
 | `_step` | engine | Current step dict (set only inside functional nodes) |
 | `_response` | `Response` step | Shaped HTTP body |
 | `_last_error` | any step on failure | Error string |
-| `_last_error_type` | agent step | `error` \| `timeout` \| `parse_error` |
+| `_last_error_type` | agent step | `error` \| `timeout` \| `parse_error` \| `max_iterations` \| `budget_exceeded` \| `aborted` \| `guardrail_violation` |
 | `_api_status_code` | `APICall` step | HTTP status on error |
 | `_context_model_versions` | engine | `{ModelName: schema_version}` pin map |
 | `_schema_version` | versioned route | Requested `api_version` segment |
@@ -826,32 +970,32 @@ Versioned models are not implemented as PostgreSQL `SCHEMA` namespaces — they 
 
 Therefore, to "target v2 schema": (a) write a `ModelDefinition` with `schema_version: v2` and a distinct `spec.tablename` (e.g. `candidates_v2`), (b) flip `enabled: true`, (c) reference it from the workflow via `context.models[].version: v2`.
 
-### 4.13 `kind: AutonomousAgent` (bounded tool-loop)
+### 4.13 `kind: Agent` — `mode: autonomous` (bounded tool-loop)
 
-A single LLM step that runs a **bounded ReAct loop**: the model is given its
-`steering` (persistent instruction) and a declared set of tools, autonomously
-chooses which to call (zero or more times), observes results, and re-decides
-until it stops calling tools — then emits **one** of a declared set of outcomes
-that routes the workflow.
+The autonomous mode of the unified `Agent` step (§4.4) runs a **bounded ReAct
+loop**: the model is given its `steering` (persistent instruction) and a
+declared set of tools, autonomously chooses which to call (zero or more times),
+observes results, and re-decides until it stops calling tools — then emits
+**one** of a declared set of outcomes that routes the workflow.
 
-Unlike `kind: Agent` (one completion), this loops. **Autonomy is bounded by the
-contract:** tools are an author-declared closed set, exits are a closed
+Unlike `mode: completion` (one retried call), this loops. **Autonomy is bounded
+by the contract:** tools are an author-declared closed set, exits are a closed
 `outcome.enum`, and the loop is capped by `max_iterations` / `token_budget`.
 
 ```yaml
 - id: triage_agent
-  kind: AutonomousAgent
+  kind: Agent
+  mode: autonomous                  # REQUIRED — the mode discriminator
   agent:
-    model: default                  # AgentModel name OR LiteLLM string; must be in spec.context.models
-    steering: |                     # persistent instruction, ALWAYS injected (renamed from `goal`)
-      Resolve the customer ticket. Use the tools to gather info and act.
-    # steering_files: [agents/<workflow>__triage_agent/steering/policy.md]   # always injected
-    # skills:         [agents/<workflow>__triage_agent/skills/refunds.md]    # injected when relevant
+    model: default                  # AgentModel name OR LiteLLM string
+    steering: |                     # persistent instruction, ALWAYS injected —
+      Resolve the customer ticket.  # inline text or artifact://<steering artifact>
+      Use the tools to gather info and act.
+    skills:                         # OPTIONAL — injected as when-relevant capabilities;
+      - artifact://refund-policy    # inline text or artifact://<skill artifact>
     max_iterations: 8               # hard cap (default 8)
     token_budget: 50000             # OPTIONAL hard cap on cumulative tokens
-    skills:                         # OPTIONAL project-relative .md files injected into the system prompt
-      - .agents/skills/refunds.md   # markdown instructions the agent follows; missing paths are skipped
-    tools:                          # off-spine components the agent may call
+    tools:                          # REQUIRED in this mode — off-spine components the agent may call
       - ref: lookup_order           # references another step's id in THIS workflow
         # The tool's description is REQUIRED and is sourced from the referenced
         # step's top-level `description:` (e.g. the lookup_order step); a
@@ -864,9 +1008,11 @@ contract:** tools are an author-declared closed set, exits are a closed
           required: [order_id]
         writes_context: false       # default false: tool result returns to the agent only
       - ref: issue_refund
+    guardrails:                     # OPTIONAL (§4.15) — input | output | tools gates
+      tools: [artifact://no-secrets-in-observations]
     outcome:
       enum: [resolved, escalate, needs_human]   # the closed set of exits
-      output_key: agent_result      # the single data output written to context
+      write: agent_result           # the single data output written to context
   routes:                           # every outcome + any abnormal exit must be mapped
     resolved:        format_reply
     escalate:        notify_manager
@@ -874,10 +1020,15 @@ contract:** tools are an author-declared closed set, exits are a closed
     max_iterations:  fallback_summary
     error:           alert_ops
     budget_exceeded: fallback_summary
+    aborted:         alert_ops
 ```
 
 Engine behaviour the agent must rely on:
 
+- **`mode: autonomous` requires `agent.tools`** — a loop with no tools is a
+  completion step; the validator errors. `system` / `prompt` are
+  completion-only fields and are rejected here; `steering` is the instruction
+  channel.
 - **Tools are other declared steps.** Each `tools[].ref` must be the `id` of
   another `APICall` / `MCP` / `ModelOp` / `Functional` step in the same
   workflow. When the model calls a tool, the engine runs that step with the
@@ -886,13 +1037,16 @@ Engine behaviour the agent must rely on:
 - **Each tool needs a `description`.** It is how the model decides when to call
   the tool; a missing description is a `tuvl validate` error.
 - **Context policy.** The agent reads the full public context, writes only its
-  `output_key`. Tool results return to the agent; a tool merges its public
-  output back into the shared context only when `writes_context: true`.
+  `outcome.write` key (default `<step_id>_result`) — the model's final turn is
+  `{"outcome": …, "result": …}` and only the `result` payload lands there. Tool
+  results return to the agent; a tool merges its public output back into the
+  shared context only when `writes_context: true`.
 - **Exits are a closed set.** The model must end on one `outcome.enum` value
   (rule 6 applies — every outcome must be mapped in `routes:`). The reserved
   abnormal exits `max_iterations` / `budget_exceeded` / `error` — plus `aborted`
-  when a `spec.supervisor` (§4.14) or the operator API can abort the run — should
-  also be mapped to fallbacks. An undeclared outcome routes to `error`.
+  when a `spec.supervisor` (§4.14) or the operator API can abort the run, and
+  `guardrail_violation` when guardrails are attached (§4.15) — should also be
+  mapped to fallbacks. An undeclared outcome routes to `error`.
 - **Data-driven branching** after an outcome belongs in a deterministic
   `Router` (see §4.5 `match:` switch) or `Functional` step — never push country
   / tier / region logic into the model.
@@ -902,9 +1056,10 @@ Engine behaviour the agent must rely on:
 ### 4.14 `spec.supervisor` (live agent supervision)
 
 An **optional** per-workflow block — a **sibling of `steps:`, not a step** — that
-watches this workflow's `AutonomousAgent` runs live and can **pause**, **steer**,
-or **abort** them. Interventions are **cooperative**: they land at the agent's
-turn boundary (between iterations / tool calls), never mid-LLM-call or mid-tool.
+watches this workflow's autonomous-mode `Agent` runs live and can **pause**,
+**steer**, or **abort** them. Interventions are **cooperative**: they land at the
+agent's turn boundary (between iterations / tool calls), never mid-LLM-call or
+mid-tool.
 
 It has two independent triggers: **deterministic `rules`** (checked every turn,
 free) and an optional **LLM judge** (`model` + `criteria`, checked every
@@ -912,9 +1067,9 @@ free) and an optional **LLM judge** (`model` + `criteria`, checked every
 
 ```yaml
 spec:
-  # trigger / context / steps: [ ... an AutonomousAgent step ... ]
+  # trigger / context / steps: [ ... an autonomous-mode Agent step ... ]
   supervisor:
-    watches: [agents]            # default ["agents"]; watches this workflow's AutonomousAgent runs
+    watches: [agents]            # default ["agents"]; watches this workflow's autonomous Agent runs
     rules:                       # deterministic, evaluated every turn
       - when: iteration_reached  # the loop has reached iteration `gte`
         gte: 6
@@ -927,9 +1082,9 @@ spec:
         gt: 0.9
         then: steer
     model: judge                 # OPTIONAL LLM judge — AgentModel name or LiteLLM string
-    criteria: |                  # inline policy (or criteria_file — a file wins if both are set)
+    criteria: |                  # inline policy text, or artifact://<steering artifact>
       The agent must not promise a refund above $500 or contact a third party.
-    # criteria_file: agents/<workflow>__supervisor/steering/policy.md
+    # criteria: artifact://refund-policy   # `criteria_file` was REMOVED — use an artifact ref
     every_n_iterations: 2        # judge cadence (default 1)
     on_violation: pause          # action when the judge verdict fails (default pause)
     on_judge_error: ignore       # ignore | pause | abort when the judge errors/times out (default ignore)
@@ -938,18 +1093,22 @@ spec:
 
 Behaviour the agent must rely on:
 
+- **`criteria` is inline text or an `artifact://` ref to a `steering` artifact**
+  (§2.11 — a `criteria` artifact TYPE does not exist; it folded into `steering`).
+  An artifact ref is resolved per judge pass, so dev-mode `.md` edits apply live.
+  `criteria_file` was **removed**; `tuvl validate` rejects it with a pointed error.
 - **`abort` exits through the reserved signal `aborted`.** A supervisor (or the
-  operator API) abort ends the `AutonomousAgent` on `aborted`, so if any rule or
-  the judge can `abort`, the step's `routes:` **must** map `aborted:` (rule 6 and
-  rule 26). `tuvl validate` warns when it is unmapped; at runtime an unmapped
+  operator API) abort ends the autonomous agent run on `aborted`, so if any rule
+  or the judge can `abort`, the step's `routes:` **must** map `aborted:` (rule 6
+  and rule 26). `tuvl validate` warns when it is unmapped; at runtime an unmapped
   `aborted` ends the run cleanly rather than raising.
 - **Interventions are cooperative.** `pause` parks the loop, `steer` injects a
   system message before the next turn, `abort` stops it — all at the turn
   boundary, never mid-call.
 - **The supervision layer is fail-open by default.** Without a `token_budget` the
-  `budget_fraction` rule can never fire; a missing `criteria` / `criteria_file`
-  or absent `model` disables the judge; and when the judge errors or times out
-  the run continues — unless `on_judge_error` is `pause` / `abort`.
+  `budget_fraction` rule can never fire; a missing `criteria` or absent `model`
+  disables the judge; and when the judge errors or times out the run continues —
+  unless `on_judge_error` is `pause` / `abort`.
 - **Runtime ceilings (configurable).** A paused run escalates to `abort` after
   `TUVL_AGENT_PAUSE_MAX_S` (default 300s) instead of pinning its DB connection;
   the judge is bounded by `TUVL_AGENT_JUDGE_TIMEOUT_S` (default 30s) and runs as
@@ -960,6 +1119,83 @@ Behaviour the agent must rely on:
 > `agent:control` to mutate) can pause / steer / abort live runs from outside the
 > supervisor; cross-worker control requires Redis (a no-op without it). The agent
 > orchestrator is tagged **experimental**.
+
+---
+
+### 4.15 Guardrails (`type: guardrail` artifacts)
+
+Artifact-backed I/O validation for `Agent` steps. A `type: guardrail` artifact declares a **closed set of checks**; the step attaches it per gate:
+
+```yaml
+# artifacts/brief_schema_check.yaml
+kind: Artifact
+metadata: { name: brief-schema-check, version: 1 }
+spec:
+  type: guardrail
+  checks:
+    - check: json_schema             # minimal subset: type / required / properties / items / enum
+      schema: { type: object, required: [brief, sources] }
+    - check: regex_deny
+      patterns: ["(?i)api[_-]?key"]  # REQUIRED for regex_deny
+    - check: max_chars
+      limit: 20000                   # REQUIRED for max_chars
+    - check: pii_mask                # masks declared `secure: true` fields in JSON content — a TRANSFORM, never fails
+    - check: llm_judge               # the only check that costs an LLM call
+      model: default                 # REQUIRED
+      criteria: artifact://output-safety-policy   # REQUIRED — inline text or a steering artifact ref
+      on_judge_error: ignore         # ignore | violation (default ignore = fail-open)
+```
+
+Attach on the agent:
+
+```yaml
+agent:
+  guardrails:
+    input:  [artifact://no-injection]        # runs BEFORE anything reaches the model
+    output: [artifact://brief-schema-check]  # runs on the final content, before the context merge
+    tools:  [artifact://no-secrets]          # runs per tool observation — autonomous mode ONLY
+```
+
+Behaviour the agent must rely on:
+
+- The check set is closed: `json_schema` | `regex_deny` | `max_chars` | `pii_mask` | `llm_judge`. Anything else is a `tuvl validate` error.
+- A failing check emits the **reserved signal `guardrail_violation`**, routed via `routes:` — no exceptions, no 500s. `_last_error` names the failing artifact and check. Map `guardrail_violation:` whenever guardrails are attached (validator warns otherwise).
+- `pii_mask` is a transform, never a failure — it masks `secure: true` fields in JSON content so PII can't cross the gate unmasked.
+- Deterministic checks run in-process; `llm_judge` is the only check that costs a call, and it is fail-open by default (`on_judge_error: violation` opts into fail-closed).
+- The `tools` gate is autonomous-mode only (validator error on a completion step).
+
+---
+
+### 4.16 Hooks (`type: hook` artifacts — observe-only)
+
+Artifact-backed lifecycle observers. A `type: hook` artifact declares **one** subscription:
+
+```yaml
+kind: Artifact
+metadata: { name: audit-tool-calls, version: 1 }
+spec:
+  type: hook
+  on: after_tool          # before_step | after_step | before_tool | after_tool | on_error
+  action: log             # log | metric | notify
+  # target: alert_ops     # REQUIRED when action: notify — a declared APICall step id in the attaching workflow
+```
+
+Attach per step or workflow-wide:
+
+```yaml
+spec:
+  hooks: [artifact://audit-tool-calls]      # workflow-wide — fires for every step
+  steps:
+    - id: triage_agent
+      hooks: [artifact://notify-on-error]   # per-step — merged with the workflow list
+```
+
+Behaviour the agent must rely on:
+
+- **Hooks are observe-only.** They never mutate context and never affect flow control — that's what guardrails and the supervisor are for. A failing hook is logged and swallowed.
+- `action: metric` increments the OTel counter `tuvl.hook.events`; `action: log` emits a structured `workflow.hook` event.
+- `action: notify` fires a **declared `APICall` step** in the attaching workflow (`spec.target` = its step id) with the event payload on a private context copy — author-declared wiring, the same trust model as agent tools. The target's result is discarded.
+- `before_tool` / `after_tool` fire only around autonomous-agent tool calls; `on_error` fires after a step exits on the `error` signal.
 
 ---
 
@@ -979,9 +1215,9 @@ These are **hard constraints**. Violating any one of them produces invalid YAML 
 10. **Never write to reserved context keys** (§4.11). Use namespaced names (`candidate_*`, `evaluation_*`, …).
 11. **Always set `input: false` on server-generated fields** (`id`, `created_at`, `updated_at`, audit fields). They must not appear in Create schemas.
 12. **Always mark PII fields `secure: true`.** This is the only mechanism that prevents PII leakage into OpenTelemetry spans.
-13. **Use `ModelOp` before writing a custom Python node** for any pure CRUD. Custom nodes exist for orchestration that cannot be expressed as one of the seven step kinds.
+13. **Use `ModelOp` before writing a custom Python node** for any pure CRUD. Custom nodes exist for orchestration that cannot be expressed as one of the other step kinds.
 14. **One `@node()` decorator per file.** Name the file `nodes/{runner_name}.py` — the file name must match the decorator argument exactly. Never bundle multiple node functions into one file. Violation causes the UI code editor to display scaffold code instead of the real implementation for every node whose name does not match the file name.
-15. **For LLM JSON parsing, set `output.format: json` and rely on auto-merge.** Do not manually duplicate context fields into the prompt — the engine appends an `## Input Data` block automatically.
+15. **For LLM JSON parsing, set `outcome.format: json` and rely on auto-merge.** Do not manually duplicate context fields into the prompt — the engine appends an `## Input Data` block automatically. (The old `output.{format,map,signal_from}` block was removed — signals come only from `outcome.enum`.)
 16. **For RAG, use `DataSearch` then `Agent` with `context_injection: [<DataSearch output_key>]`.** Do not concatenate retrieval results into the prompt manually.
 17. **When pinning a model version in a workflow, ensure that exact `schema_version` is `enabled: true`** in its `ModelDefinition`. Mismatch raises `RuntimeError` at runtime.
 18. **Never use the same `spec.tablename` for two enabled versions of the same model.** The loader rejects this with a cross-version collision error.
@@ -991,8 +1227,12 @@ These are **hard constraints**. Violating any one of them produces invalid YAML 
 22. **Use `type: enum` (not `type: string` with a `description:` listing values) whenever a field has a finite, stable closed set of valid values.** Always supply `enum_values: [...]`; omitting it silently creates a string column. The DB enforces the constraint independently of application code; the Pydantic layer rejects invalid values before any DB round-trip.
 23. **Every CRUD route is scope-gated by default.** The auto-generated `/models/{model}/` endpoints require a valid Biscuit token. Scope names default to `{modelname.lower()}:read`, `{modelname.lower()}:write`, `{modelname.lower()}:delete`. When a model's CRUD actions should fall under a different IAM domain, use `spec.access.{read,write,delete}_scope` in the `ModelDefinition`. Tokens carrying `iam:admin` bypass all scope checks. Always ensure the IAM role that owns CRUD access has these scopes assigned — use `GET /admin/scopes` to verify the exact strings.
 24. **All log output from tuvl is structured (structlog kwargs).** In production (`TUVL_ENV=production`) logs are emitted as JSON lines; in development they use a human-readable console renderer. When writing custom nodes or debugging, prefer reading the `event` key and the named kwargs rather than parsing f-string message text.
-25. **`AutonomousAgent` tools are a declared closed set, and its exits are bounded.** Every `agent.tools[].ref` must name another step in the same workflow; give each tool a `description`. Every `outcome.enum` value must be mapped in `routes:` (rule 6), and you should also map the reserved abnormal exits `max_iterations` / `budget_exceeded` / `error`. Never push deterministic branching (country, tier, region) into the agent — do it in a downstream `Router` (`match:`) or `Functional` step.
-26. **When a workflow declares a `spec.supervisor` (§4.14) whose rules or judge can `abort`, map `aborted:` in the `AutonomousAgent`'s `routes:`.** A supervisor or operator abort exits the agent through the reserved `aborted` signal; leaving it unmapped is a `tuvl validate` warning and, at runtime, ends the run without your fallback branch.
+25. **Autonomous-agent tools are a declared closed set, and its exits are bounded.** In `mode: autonomous`, `agent.tools` is REQUIRED; every `agent.tools[].ref` must name another step in the same workflow; give each tool a `description`. Every `outcome.enum` value must be mapped in `routes:` (rule 6), and you should also map the reserved abnormal exits `max_iterations` / `budget_exceeded` / `error`. Never push deterministic branching (country, tier, region) into the agent — do it in a downstream `Router` (`match:`) or `Functional` step.
+26. **When a workflow declares a `spec.supervisor` (§4.14) whose rules or judge can `abort`, map `aborted:` in the autonomous `Agent` step's `routes:`.** A supervisor or operator abort exits the agent through the reserved `aborted` signal; leaving it unmapped is a `tuvl validate` warning and, at runtime, ends the run without your fallback branch.
+27. **Every `Agent` step MUST declare `mode: completion` or `mode: autonomous` at the step level.** There is no default — the validator errors and the runtime raises. Use only mode-appropriate fields: `system` / `prompt` are completion-only; `steering` / `tools` / `max_iterations` / `token_budget` are autonomous-only. `kind: AutonomousAgent` no longer exists.
+28. **Every `artifact://` reference must resolve and type-check, and every routed signal must have an exit.** A ref must name a registered artifact of a type the site accepts (§2.11 compat table); every `outcome.enum` value and every applicable reserved exit — including `guardrail_violation` when guardrails are attached — must be mapped in `routes:`. Unresolved refs fail startup in production and fail `tuvl validate` always.
+29. **MCP connection configuration goes ONLY in a `type: mcp` artifact.** The step declares `mcp.server: artifact://<name>` plus the tool call; inline `transport` / `url` / `headers` / `command` / `args` / `env` on the step are rejected with a pointed error.
+30. **Pin artifact versions (`artifact://name@N`) for production.** A floating (unpinned) ref is a `tuvl validate` warning, so `tuvl ship --strict` fails on it; pinned refs make deploys reproducible. External `artifact_sources` must always pin `sha256` — unpinned sources are refused at boot.
 
 ---
 
@@ -1131,12 +1371,13 @@ spec:
 
     - id: score
       kind: Agent
+      mode: completion
       agent:
         model: default
         system: "You are a recruiter. Score the candidate from 0-100."
         prompt: "Score this candidate's CV relative to the retrieved corpus."
         context_injection: [similar_cvs]
-        output:
+        outcome:
           format: json
           map: { score: candidate_score }
         retry: { attempts: 2, on: [parse_error, timeout] }
@@ -1244,10 +1485,13 @@ nodes/
 Business requirement
 ├── "Store and CRUD a domain entity"         → ModelDefinition (+ schema: true)
 ├── "Trigger logic on an HTTP request"       → Workflow with trigger.path
-├── "Call an LLM"                            → step kind: Agent (+ AgentModel if reused)
-├── "Let an LLM pick & call tools in a loop" → step kind: AutonomousAgent (tools = other steps)
+├── "Call an LLM once"                       → step kind: Agent, mode: completion (+ AgentModel if reused)
+├── "Let an LLM pick & call tools in a loop" → step kind: Agent, mode: autonomous (tools = other steps)
 ├── "Call an external HTTP API"              → step kind: APICall
-├── "Call an MCP tool"                       → step kind: MCP
+├── "Call an MCP tool"                       → step kind: MCP + a `type: mcp` Artifact (connection config)
+├── "Share a prompt/policy across steps"     → artifact (prompt | steering | skill) + artifact:// refs
+├── "Validate/limit what an agent reads or emits" → `type: guardrail` Artifact + agent.guardrails
+├── "Audit/notify on workflow lifecycle events"   → `type: hook` Artifact + hooks: / spec.hooks
 ├── "Read/Write a domain entity in a flow"   → step kind: ModelOp
 ├── "Branch on a value"                      → step kind: Router
 ├── "Custom Python logic"                    → step kind: Functional + @node-decorated runner
