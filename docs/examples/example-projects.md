@@ -22,7 +22,7 @@ IAM scopes and groups, and the `tuvl test` framework with LLM-judge evaluations.
 ## Running one
 
 ```bash
-uv tool install "tuvl[standard]>=2026.3.1.0"
+uv tool install "tuvl[standard]>=2026.4.0.0"
 git clone https://github.com/tuvl-io/examples.git
 cd examples/<project-name>
 cp .env.example .env        # fill in DATABASE_URL, GEMINI_API_KEY, …
