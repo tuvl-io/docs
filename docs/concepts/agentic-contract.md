@@ -12,8 +12,8 @@ tuvl removes the unbounded surface. Instead of generating arbitrary code, the ag
 
 Three things are finite and fixed in tuvl. An agent (or a human) never invents new ones:
 
-- **Step kinds** — a workflow step is exactly one of: `Functional`, `Agent`, `AutonomousAgent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop`.
-- **Document kinds** — every YAML file declares a `kind:` from a fixed set (`Workflow`, `ModelDefinition`, `DataSource`, `AgentModel`, `RedisConfig`, `FederationProvider`, `TelemetryConfig`, and the embedding/collection/project/system configs). See the [agentic manual](../internals/tuvl-agentic-manual.md) for the authoritative list.
+- **Step kinds** — a workflow step is exactly one of: `Functional`, `Agent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop`. Every `Agent` step declares `mode: completion | autonomous` — the closed set covers both the single call and the bounded tool loop.
+- **Document kinds** — every YAML file declares a `kind:` from a fixed set (`Workflow`, `ModelDefinition`, `DataSource`, `AgentModel`, `Artifact`, `RedisConfig`, `FederationProvider`, `TelemetryConfig`, and the embedding/collection/project/system configs). See the [agentic manual](../internals/tuvl-agentic-manual.md) for the authoritative list.
 - **Reserved context keys** — engine-owned keys (`_session`, `_db`, `_response`, `_last_error`, …) that workflows read but must never mutate.
 
 Because the grammar is bounded, a coding agent has a small, well-defined target. It cannot reach for "any function, any class, any decorator" — only the kinds that exist. That is the entire reason an agent can generate a valid tuvl backend on the first try.
@@ -31,7 +31,7 @@ This is what "no silent failures" means: an invalid backend never boots, so a wr
 
 ## The escape hatch
 
-A closed set is only practical if there is a way out when the fixed kinds aren't enough. In tuvl that door is the **`functional` step kind**: it runs arbitrary Python from a custom node, so anything the declarative kinds can't express drops cleanly into code — without abandoning the contract for the rest of the workflow. See [Nodes](nodes.md).
+A closed set is only practical if there is a way out when the fixed kinds aren't enough. In tuvl that door is the **`Functional` step kind**: it runs arbitrary Python from a custom node, so anything the declarative kinds can't express drops cleanly into code — without abandoning the contract for the rest of the workflow. See [Nodes](nodes.md).
 
 ## Why it matters for agents
 

@@ -3,7 +3,7 @@
 **A lightweight, local-first workflow orchestration engine for AI-powered business automation.**
 
 !!! note "Early stable release"
-    tuvl **2026.3.2.0** is production-ready: the API and YAML schemas are stable and
+    tuvl **2026.4.0.0** is production-ready: the API and YAML schemas are stable and
     versioned. As an early release in the stable line it is still maturing quickly,
     so expect additive improvements between versions.
 
@@ -32,6 +32,7 @@ spec:
 
     - id: "ai_vetting"
       kind: "Agent"
+      mode: "completion"
       agent:
         model: "ollama/llama3"
         prompt: |
@@ -68,7 +69,7 @@ spec:
 
     ---
 
-    Beyond a single call: an `AutonomousAgent` step runs a bounded tool-calling loop — the model picks from your declared tools until it emits a declared outcome, capped by `max_iterations` and `token_budget`.
+    Beyond a single call: an `Agent` step in `mode: autonomous` runs a bounded tool-calling loop — the model picks from your declared tools until it emits a declared outcome, capped by `max_iterations` and `token_budget`.
 
     [:octicons-arrow-right-24: Autonomous agents](concepts/workflows.md#autonomous-agent-steps)
 
@@ -79,6 +80,14 @@ spec:
     An optional per-workflow watcher observes each autonomous run live and can **pause, steer, or abort** it mid-loop — deterministic rules or an LLM judge — with an operator API and a live Insight dashboard.
 
     [:octicons-arrow-right-24: Supervise agents](configuration/agents.md#supervising-an-autonomous-agent)
+
+-   :material-package-variant:{ .lg .middle } **Artifacts**
+
+    ---
+
+    Prompts, steering, skills, guardrails, hooks, and MCP server configs as named, versioned, typed assets — referenced from YAML via `artifact://name[@version]` and sourced from project files, DB uploads, or sha256-pinned external packs.
+
+    [:octicons-arrow-right-24: Artifacts](internals/tuvl-agentic-manual.md#211-artifacts-artifacts-kind-artifact)
 
 -   :material-database:{ .lg .middle } **Dynamic Models**
 
@@ -159,8 +168,8 @@ flowchart TD
     subgraph Execution & Integrations
         Engine -->|ModelOp| UoW
         UoW -->|SQLModel Object Mapper| PG[(PostgreSQL)]
-        Engine -->|Agent| LLM[LiteLLM Any Provider]
-        Engine -->|AutonomousAgent| Loop[Bounded Tool-Calling Loop]
+        Engine -->|Agent completion| LLM[LiteLLM Any Provider]
+        Engine -->|Agent autonomous| Loop[Bounded Tool-Calling Loop]
         Loop -->|LLM + declared tools| LLM
         Sup[Agent Supervisor<br>pause · steer · abort] -.watches.-> Loop
         Engine -->|DataSearch| RAG[(pgvector RAG)]

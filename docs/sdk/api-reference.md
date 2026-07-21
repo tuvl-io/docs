@@ -445,11 +445,32 @@ interface StepEvent {
 |---|---|
 | `event_type` | `"step"` during execution, `"done"` on success, `"error"` on failure |
 | `step_id` | The step's `id` field from the workflow YAML |
-| `kind` | Step kind: `Functional`, `Agent`, `AutonomousAgent`, `MCP`, `APICall`, `Router`, `Response`, `ModelOp`, `HumanInTheLoop` |
+| `kind` | Step kind: `Functional`, `Agent`, `MCP`, `APICall`, `Router`, `Response`, `ModelOp`, `HumanInTheLoop` |
 | `signal` | Routing signal emitted by the step (e.g. `"default"`, `"true"`, `"false"`, custom) |
 | `snapshot` | All public context keys (no `_` prefix) after this step completed |
 | `duration_ms` | Wall time for this step in milliseconds |
 | `error_detail` | Error message when `event_type === "error"` |
+
+---
+
+### `AgentProgress` / `agentProgress()`
+
+An autonomous-mode `Agent` step streams live loop progress mid-step as ordinary `StepEvent`s with `kind: "Agent"`, `signal: "running"`, and the payload under `snapshot.agent_progress`. The frames carry loop metadata only (no context values); the terminating frame is a normal `StepEvent` whose `signal` is the agent's outcome or a reserved exit (`max_iterations` | `budget_exceeded` | `error` | `aborted` | `guardrail_violation`).
+
+```ts
+interface AgentProgress {
+  type:        "iteration" | "tool_call" | "outcome";
+  iteration:   number;      // 1-based loop iteration index
+  tool_calls?: number;      // iteration frames: tools requested this turn
+  tokens_used?: number;     // iteration frames: cumulative tokens so far
+  tool?:       string;      // tool_call frames: the tool (component ref) invoked
+  signal?:     string;      // tool_call / outcome frames: the signal produced
+}
+
+function agentProgress(event: StepEvent): AgentProgress | null;
+```
+
+Use the `agentProgress()` helper to read the payload off a streamed event — it returns `null` for anything that is not an agent progress frame, and works for both the SSE `StepEvent` and the gRPC `GrpcStepEvent`.
 
 ---
 

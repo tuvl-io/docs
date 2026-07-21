@@ -2,7 +2,7 @@
 
 `kind: Functional` is the escape hatch of tuvl's closed step-kind set: arbitrary async Python executed inside a declared workflow contract. The YAML declares *where* the node runs, what it may touch, and where each of its signals routes; the Python decides *what* happens. Everything else — spans, structured logs, context masking, data-access permissions, error routing — is supplied by the engine around the call.
 
-This document covers the node contract, registration and discovery, the exact execution path in the runner, data access rules, the built-in system nodes, and how a Functional step doubles as an AutonomousAgent tool. For the YAML authoring rules themselves, see the [agentic manual](tuvl-agentic-manual.md) §4.3 and Golden Rules 13/14 in §5 — they are the authoring authority and are not duplicated here.
+This document covers the node contract, registration and discovery, the exact execution path in the runner, data access rules, the built-in system nodes, and how a Functional step doubles as a tool for an autonomous-mode `Agent` step. For the YAML authoring rules themselves, see the [agentic manual](tuvl-agentic-manual.md) §4.3 and Golden Rules 13/14 in §5 — they are the authoring authority and are not duplicated here.
 
 ---
 
@@ -216,7 +216,7 @@ Because registration checks `if name not in NODE_REGISTRY`, a user file `nodes/D
 
 ## 7. Functional Steps as Agent Tools
 
-A Functional step can serve as a tool for a `kind: AutonomousAgent` step: `agent.tools[].ref` names the step id, and the agent's model may then call it during its loop. The dispatch path (`_dispatch_tool` in `src/tuvl/core/engine/runner.py`) runs the node against a shallow copy of the live context with the model-generated arguments merged in; the public-context delta the node produced is returned to the model as the tool result, and merges back into the real context only when the tool entry sets `writes_context: true`. The step's own `routes:` are ignored in tool mode. Every tool needs a `description` — sourced from the referenced step's `description:` field, with the tool entry's own `description:` as a fallback — or `tuvl validate` errors, since the description is what tells the model when to call it. In the dev UI canvas, you attach a step as a tool by dragging from the agent's `tools` handle onto the step's bottom tool handle (a step already wired into the flow must be disconnected first). Full loop semantics: [autonomous-agent.md](autonomous-agent.md).
+A Functional step can serve as a tool for a `kind: Agent` step in `mode: autonomous`: `agent.tools[].ref` names the step id, and the agent's model may then call it during its loop. The dispatch path (`_dispatch_tool` in `src/tuvl/core/engine/runner.py`) runs the node against a shallow copy of the live context with the model-generated arguments merged in; the public-context delta the node produced is returned to the model as the tool result, and merges back into the real context only when the tool entry sets `writes_context: true`. The step's own `routes:` are ignored in tool mode. Every tool needs a `description` — sourced from the referenced step's `description:` field, with the tool entry's own `description:` as a fallback — or `tuvl validate` errors, since the description is what tells the model when to call it. In the dev UI canvas, you attach a step as a tool by dragging from the agent's `tools` handle onto the step's bottom tool handle (a step already wired into the flow must be disconnected first). Full loop semantics: [autonomous-agent.md](autonomous-agent.md).
 
 ---
 

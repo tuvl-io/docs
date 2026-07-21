@@ -1,8 +1,8 @@
 # Agent Supervisor & Orchestrator — Internals
 
-The agent orchestrator is the runtime substrate that makes live `AutonomousAgent`
-runs observable and controllable. On top of it sits `spec.supervisor` — a
-declarative, per-workflow circuit breaker that watches every `AutonomousAgent`
+The agent orchestrator is the runtime substrate that makes live autonomous-mode
+`Agent` runs observable and controllable. On top of it sits `spec.supervisor` — a
+declarative, per-workflow circuit breaker that watches every autonomous agent
 run in that workflow and can **pause**, **steer**, or **abort** it while it runs.
 
 This document covers the internals: how a run becomes addressable, how the
@@ -33,19 +33,19 @@ The orchestrator is tagged **experimental** (engine 2026.2.6).
 
 ## 1. Overview
 
-An `AutonomousAgent` step runs a bounded ReAct tool-loop: the model picks among
-author-declared tools, observes results, and re-decides until it emits one of a
-closed set of outcomes. The loop is already bounded by `max_iterations` and
-`token_budget` — but those are static caps. The supervisor adds a **live,
-zero-trust layer**: an out-of-band watcher that evaluates the run *as it
-happens* and intervenes before a cap is hit.
+An `Agent` step in `mode: autonomous` runs a bounded ReAct tool-loop: the model
+picks among author-declared tools, observes results, and re-decides until it
+emits one of a closed set of outcomes. The loop is already bounded by
+`max_iterations` and `token_budget` — but those are static caps. The supervisor
+adds a **live, zero-trust layer**: an out-of-band watcher that evaluates the run
+*as it happens* and intervenes before a cap is hit.
 
 Key properties:
 
 - **A sibling of `steps:`, not a step.** `spec.supervisor` is one optional block
   per workflow. It never appears in `routes:` and consumes no iteration of the
   loop it watches.
-- **Out-of-band.** For each `AutonomousAgent` run, the engine spawns a separate
+- **Out-of-band.** For each autonomous agent run, the engine spawns a separate
   asyncio task (`Supervisor.watch`) that subscribes to the run's live progress
   fan-out. The agent loop never calls the supervisor; it only publishes events
   and consults a control channel.
@@ -61,7 +61,7 @@ Key properties:
 ## 2. Architecture
 
 ```
-AutonomousAgent loop (autonomous_agent_runner)
+Autonomous Agent loop (agent_core)
    │ progress events                        ▲ directives, consulted
    │ (iteration / tool_call / outcome)      │ at the turn boundary
    ▼                                        │
@@ -83,7 +83,7 @@ RunHandle ───────────────────────�
 ```
 
 The wiring lives in `tuvl.core.engine.runner` (`_run_autonomous_agent_step`).
-For every `AutonomousAgent` execution the engine:
+For every autonomous-mode `Agent` execution the engine:
 
 1. Mints a `RunHandle` (`run_id`, workflow, step id, tenant/user from the
    request's ContextVars, `token_budget`, and the author-declared tool names)
@@ -97,9 +97,9 @@ For every `AutonomousAgent` execution the engine:
 5. On completion (any exit), cancels the supervisor task, unregisters the
    handle, and removes the Redis mirror entry.
 
-The agent loop itself (`autonomous_agent_runner`) checks `AgentControl` at the
-top of every iteration: wait if paused, exit if aborted, inject any queued
-steering messages — then proceeds with the LLM call.
+The agent loop itself (`agent_core.AgentStepRunner._run_autonomous`) checks
+`AgentControl` at the top of every iteration: wait if paused, exit if aborted,
+inject any queued steering messages — then proceeds with the LLM call.
 
 ---
 
@@ -149,10 +149,11 @@ iteration checks read the handle's live counters. The supervisor ignores its own
 
 ## 5. Trigger Path 2 — The LLM Judge
 
-Declaring `model` plus `criteria` (inline) or `criteria_file` (scoped markdown)
-enables the LLM path. It is **cost-gated**: the judge is invoked only on
-`iteration` events, only when the iteration is a multiple of
-`every_n_iterations` (default 1), and never twice for the same iteration.
+Declaring `model` plus `criteria` — inline policy text, or an `artifact://`
+reference to a `steering` artifact — enables the LLM path. It is **cost-gated**:
+the judge is invoked only on `iteration` events, only when the iteration is a
+multiple of `every_n_iterations` (default 1), and never twice for the same
+iteration.
 
 Mechanics (`Supervisor._judge`):
 
@@ -180,11 +181,13 @@ Tool names in `tool_calls` are whitelisted against the author-declared tool set;
 any call to an undeclared name is surfaced as an aggregate count only, so a
 model-chosen string can never smuggle text into the judge prompt.
 
-`criteria_file` must live under `agents/<workflow>__supervisor/steering/`
-(workflow name slugified). The path is resolved against the project root and
-scope-enforced at read time — anything resolving outside that directory is
-skipped with a warning. The file's contents win over inline `criteria` when both
-are set, and are cached after the first load.
+When `criteria` is an `artifact://` ref, it must resolve to a `steering`
+artifact (site compatibility is enforced — the old `criteria` artifact type
+folded into `steering`). The ref is resolved per judge pass through the artifact
+registry, so a dev-mode edit to the `.md` artifact applies live; an unresolvable
+ref logs `supervisor.criteria.unresolved` and disables that judge pass rather
+than failing the run. The old `criteria_file` key was **removed** — `tuvl
+validate` rejects it with a pointed error.
 
 ---
 
@@ -222,7 +225,7 @@ dispatches several tools cannot outlive the directive. The run ends with the
 reserved exit signal **`aborted`**, sets `_last_error` /
 `_last_error_type: aborted`, and increments the `tuvl.agent.aborts` counter.
 
-Because any run can be aborted (supervisor or operator), an `AutonomousAgent`
+Because any run can be aborted (supervisor or operator), an autonomous `Agent`
 step's `routes:` should map `aborted:`. `tuvl validate` warns when it is
 unmapped; at runtime an unrouted `aborted` ends the workflow cleanly (with a
 warning) rather than raising — an out-of-band stop is not an authoring bug.
@@ -241,8 +244,8 @@ The supervision layer never becomes the reason a healthy run dies:
 
 - No `supervisor:` block → no watcher task, no cost.
 - No `token_budget` → `budget_fraction` can never fire.
-- No `model`, or neither `criteria` nor a readable `criteria_file` → the judge
-  path is disabled.
+- No `model` or no `criteria` (or an unresolvable `criteria` artifact ref) →
+  the judge path is disabled.
 - A judge error or timeout logs `supervisor.judge_failed`, increments
   `tuvl.agent.judge_failures`, and by default the run **continues**
   (`on_judge_error: ignore`).
@@ -328,12 +331,14 @@ configured — and is a **complete no-op without Redis** (single-process
 - `watches` entries must be `spine` or `agents`. Only `agents` (the default) has
   runtime effect today; `spine` validates but is currently inert.
 - `every_n_iterations` must be an integer ≥ 1.
-- `criteria_file` must live under `agents/<workflow>__supervisor/steering/`
-  (error otherwise; warning when the file doesn't exist).
+- `criteria_file` is rejected with a pointed error (removed — use `criteria`
+  with inline text or an `artifact://` ref to a steering artifact).
+- A `criteria` artifact ref must resolve to a known artifact of type `steering`
+  (error otherwise); a floating (unpinned) ref is a warning.
 - A bare `model` name (no `/`) is warned about when `llms/<name>.yaml` is not
   found.
-- Separately, every `AutonomousAgent` step with an unmapped `aborted` route gets
-  a warning, since any run can be aborted.
+- Separately, every autonomous `Agent` step with an unmapped `aborted` route
+  gets a warning, since any run can be aborted.
 
 ---
 
@@ -347,8 +352,7 @@ configured — and is a **complete no-op without Redis** (single-process
 | `rules` | `[]` | Deterministic rules, `{when, ...params, then?}` (see §4) |
 | `on_violation` | `pause` | Action when a rule has no `then`, or the judge verdict fails |
 | `model` | — | Judge model; an AgentModel name (`llms/<name>.yaml`) or a litellm string |
-| `criteria` | — | Inline judge policy text |
-| `criteria_file` | — | Scoped `.md` policy file; wins over `criteria` when both are set |
+| `criteria` | — | Judge policy — inline text or `artifact://<steering artifact>` (resolved per judge pass) |
 | `every_n_iterations` | `1` | Judge cadence (clamped to ≥ 1) |
 | `on_judge_error` | `ignore` | `ignore` \| `pause` \| `abort` when the judge errors or times out |
 | `steer_message` | generic refocus text | Steer text for deterministic `steer` rules |
@@ -382,7 +386,7 @@ structured log events and span hierarchy an agent run produces.
 | `tuvl.core.engine.orchestrator.supervisor` | `Supervisor.watch`, rule matching, the judge subtask, `_apply_action` |
 | `tuvl.core.engine.orchestrator.redis_mirror` | Cross-worker snapshots, control pub/sub, subscriber restart loop |
 | `tuvl.core.engine.orchestrator.metrics` | The six agent counters |
-| `tuvl.core.engine.autonomous_agent_runner` | The agent loop and its control checkpoint (pause/abort/steer landing sites) |
+| `tuvl.core.engine.agent_core` | The unified agent runtime — the autonomous loop and its control checkpoint (pause/abort/steer landing sites) |
 | `tuvl.core.engine.runner` | Handle registration, supervisor task lifecycle, progress fan-out wiring, `aborted` routing |
 | `tuvl.core.api.orchestrator_router` | The operator API and its scope/tenant enforcement |
 | `tuvl.core.insight.judge` | Shared judge core: `Scorecard`, `judge_async`, `SUPERVISOR_SYSTEM_PROMPT` |

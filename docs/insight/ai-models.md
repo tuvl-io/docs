@@ -115,17 +115,21 @@ Reference the model by its `metadata.name` value in an `Agent` step:
 ```yaml
 - id: score_cv
   kind: Agent
+  mode: completion
   agent:
     model: default          # matches AgentModel metadata.name
     prompt: |
       Score this CV: {{ full_name }}, {{ experience_years }} years experience.
-      Return JSON: {"score": <int>, "route": "strong|weak"}
+      Return JSON: {"score": <int>}
+    outcome:
+      format: json
+      enum: [strong, weak]
   routes:
     strong: fast_track
     weak: reject
 ```
 
-The agent step passes the rendered prompt to the LLM, parses the JSON response, and routes to the step named in `routes` based on the `route` field of the response.
+The agent step passes the rendered prompt to the LLM, parses the JSON response, and routes to the step named in `routes` based on the returned `"outcome"` field, validated against the closed `outcome.enum` set.
 
 ---
 

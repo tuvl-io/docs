@@ -13,7 +13,7 @@
 5. [The Allowlist Boundary](#5-the-allowlist-boundary)
 6. [Version Pinning](#6-version-pinning)
 7. [ModelOp vs the REST CRUD Routes](#7-modelop-vs-the-rest-crud-routes)
-8. [As an AutonomousAgent Tool](#8-as-an-autonomousagent-tool)
+8. [As an Autonomous Agent Tool](#8-as-an-autonomous-agent-tool)
 9. [Validation and Failure Modes](#9-validation-and-failure-modes)
 10. [Reading the Code](#10-reading-the-code)
 
@@ -167,9 +167,9 @@ Use REST when an external client owns the call; use ModelOp when persistence is 
 
 ---
 
-## 8. As an AutonomousAgent Tool
+## 8. As an Autonomous Agent Tool
 
-A ModelOp step can be declared as a tool for a `kind: AutonomousAgent` step (`agent.tools[].ref` naming the step id). See [`autonomous-agent.md`](autonomous-agent.md) for the loop itself; the ModelOp-specific mechanics:
+A ModelOp step can be declared as a tool for a `kind: Agent` step in `mode: autonomous` (`agent.tools[].ref` naming the step id). See [`autonomous-agent.md`](autonomous-agent.md) for the loop itself; the ModelOp-specific mechanics:
 
 - **Parameter schema.** When the tool entry omits `parameters`, `_derive_parameters` in `src/tuvl/core/engine/agent_tools.py` derives one. For ModelOp it is a single free-form object property named `payload` ("Record fields for the operation."). Author the step's `payload: "{{payload}}"` so the LLM-provided object flows in via the sole-reference rule. Declare explicit `parameters` for a precise field contract.
 - **Dispatch.** `_dispatch_tool` runs the referenced step against a shallow copy of the context with the LLM's arguments merged in. The copy shares the same `_db` handle, so the allowlist and the run's single transaction still apply — an agent cannot reach a model the workflow did not declare.
