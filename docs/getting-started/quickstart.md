@@ -141,6 +141,7 @@ spec:
 
     - id: "prioritize"
       kind: "Agent"
+      mode: "completion"
       agent:
         model: "ollama/llama3"
         system: |
@@ -152,7 +153,7 @@ spec:
           Company: {{ company }}
           
           Respond with JSON: {"priority": "high" | "medium" | "low"}
-        output:
+        outcome:
           format: json
           map:
             priority: priority

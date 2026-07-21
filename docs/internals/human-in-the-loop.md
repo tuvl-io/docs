@@ -14,7 +14,7 @@ This document covers the internals: what is persisted, how the engine suspends, 
 4. [The Resume Path](#4-the-resume-path)
 5. [Resume Authorization](#5-resume-authorization)
 6. [Versioning & Definition Drift](#6-versioning-definition-drift)
-7. [Interaction with AutonomousAgent](#7-interaction-with-autonomousagent)
+7. [Interaction with Autonomous Agents](#7-interaction-with-autonomous-agents)
 8. [Operational Notes](#8-operational-notes)
 9. [Failure Modes](#9-failure-modes)
 10. [Reading the Code](#10-reading-the-code)
@@ -197,17 +197,18 @@ Consequences of changing a workflow while instances are pending:
 
 ---
 
-## 7. Interaction with AutonomousAgent
+## 7. Interaction with Autonomous Agents
 
-A `HumanInTheLoop` step is a natural escalation target for an `AutonomousAgent`'s closed outcome set. The agent's `outcome.enum` values are routed like any other signal, and a route may point at a HITL step id:
+A `HumanInTheLoop` step is a natural escalation target for an autonomous-mode `Agent`'s closed outcome set. The agent's `outcome.enum` values are routed like any other signal, and a route may point at a HITL step id:
 
 ```yaml
 - id: triage_agent
-  kind: AutonomousAgent
+  kind: Agent
+  mode: autonomous
   agent:
     outcome:
       enum: [resolved, escalate, needs_human]
-      output_key: agent_result
+      write: agent_result
   routes:
     resolved:    format_reply
     escalate:    notify_manager

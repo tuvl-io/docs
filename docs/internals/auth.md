@@ -224,6 +224,7 @@ Users and roles are administered under `/auth/admin/users` and `/auth/admin/role
 | Engine admin | `/admin/*` (workflow toggle, fork, scope catalogue, …) | `iam:admin` |
 | IAM admin | `/auth/admin/*` (users, roles, federation) | `iam:admin` |
 | Operator API | `/api/agents/*` | `agent:observe` to read, `agent:control` to act |
+| Artifact API | `/api/artifacts` | `artifacts:read` to list/read, `artifacts:write` to upload (a new version row per upload, never in-place) |
 | HITL resume | `/…/resume` | owner / `auth.required_group` / `iam:admin` — see `human-in-the-loop.md` §5 |
 | Dev & Insight | `/dev/*`, `/api/insight/*` | dev-mode security key, never Biscuit-based (§9) |
 
@@ -233,6 +234,7 @@ Notes:
 - **Workflow gates are metadata-only.** `_build_route_deps` in `tuvl/core/api/manager.py` reads exactly `metadata.required_scope` and `metadata.required_group` from the workflow YAML — nothing inside `steps:` changes route auth. `required_group` names an IAM role; membership in that single group is required (alongside the scope, when both are declared).
 - **Scope discovery.** `GET /admin/scopes` (itself `iam:admin`) returns every enforceable scope grouped by source — `crud` (per model, honoring overrides), `workflows` (per `required_scope`), and `system` (`["iam:admin"]`) — so an admin composing roles doesn't have to grep YAML.
 - The operator API additionally scopes runs by tenant and returns 404 for foreign-tenant run ids rather than leaking existence.
+- **Artifact uploads are prompt-level trust.** A prompt/steering artifact carries instruction-level authority once a workflow references it, so `artifacts:write` belongs to the same principals who may edit workflows; `iam:admin` bypasses both artifact scopes.
 
 Example workflow gate:
 

@@ -465,6 +465,20 @@ Deep-copies the model config, stamps `new_version`, and writes it to
 
 ---
 
+## Artifacts API
+
+Manage [artifacts](../internals/tuvl-agentic-manual.md#211-artifacts-artifacts-kind-artifact) — named, versioned, typed assets (prompts, steering, skills, guardrails, hooks, MCP server configs) referenced from workflow YAML via `artifact://name[@version]`.
+
+| Method | Endpoint | Scope | Description |
+|--------|----------|-------|-------------|
+| `GET` | `/api/artifacts` | `artifacts:read` | List every registered artifact (all sources) with version metadata |
+| `GET` | `/api/artifacts/{name}?version=N` | `artifacts:read` | Fetch one artifact version's content and hash (latest enabled when `version` is omitted) |
+| `POST` | `/api/artifacts` | `artifacts:write` | Upload a new artifact **version row** (never an in-place overwrite) — registered on the receiving worker immediately, other workers at next boot |
+
+`iam:admin` bypasses both scopes. Uploads are capped at 512 KB and validated against the closed type set (`prompt`, `steering`, `skill`, `guardrail`, `hook`, `mcp`); structured types take a JSON object as `content`. Rows persist in the `tuvl_system_artifacts` table, and a checked-in project file with the same name always shadows a DB upload.
+
+---
+
 ## Error Handling
 
 ### HTTP Status Codes

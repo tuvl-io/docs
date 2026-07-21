@@ -10,6 +10,7 @@ tuvl uses YAML files for all configuration. This keeps your logic declarative an
 | `Workflow` | `workflows/` | Business logic flows |
 | `DataSource` | `datasources/` | Database connections |
 | `AgentModel` | `agents/` | LLM provider presets |
+| `Artifact` | `artifacts/` | Named, versioned assets — prompts, steering, skills, guardrails, hooks, MCP servers — referenced via `artifact://name[@version]` |
 
 ## Environment Variables
 
