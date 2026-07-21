@@ -757,6 +757,47 @@ Engine behaviour the agent must rely on:
 - `outcome.format: json` triggers system-prompt schema injection from the workflow's `trigger.response_schema` when it is an inline list.
 - With `enum` declared, the enum instruction is appended to the prompt automatically; the returned `"outcome"` value routes the workflow (§4.4.1).
 
+#### 4.4.4 Authoring the Agent step in Insight (the Agent node)
+
+The Insight canvas represents `kind: Agent` as **one node** — there is no
+separate AutonomousAgent node. The node's behaviour, and what round-trips to the
+YAML above:
+
+- **Mode toggle.** A single `mode: completion | autonomous` control on the node
+  switches the editable fields and the node's ports. Completion mode shows
+  `system` / `prompt`; autonomous mode shows `steering`, the tool wiring, and
+  `max_iterations` / `token_budget`. The shared fields (`model`, `retry`,
+  `context_injection`, `skills`, `guardrails`, `outcome`) are present in both.
+  The palette offers **`Agent`** (defaults to `mode: completion`) and an
+  **`Agent (autonomous)`** shortcut that pre-sets the mode — both serialise as
+  `kind: Agent`.
+- **Outcome-exit handles.** Every value in `outcome.enum` becomes a **named
+  source handle** on the node's right edge, in either mode — draw an edge from
+  it to wire that outcome's `route`. Autonomous mode additionally exposes the
+  reserved-exit handles (`max_iterations` / `budget_exceeded` / `error` /
+  `aborted` / `guardrail_violation`); completion adds `error`. With no `enum`,
+  the node keeps a single `default` exit. (Edges carry the handle name straight
+  into `routes:`; adding an enum value or reserved exit that isn't mapped is the
+  same `tuvl validate` error described in §4.4.1 / rule 6.)
+- **Tool wiring (autonomous).** The bottom `tools` handle connects to
+  tool-eligible steps (`APICall` / `MCP` / `ModelOp` / `Functional`), appending
+  each to `agent.tools[].ref`; the tool's model-facing description comes from the
+  **referenced step's** `description:` (§4.13). Tool edges are not routes and are
+  re-derived from `agent.tools` on load.
+- **Prose fields are picker-or-inline.** `system` / `prompt` / `steering`, and
+  each `skills` / `guardrails` entry, are edited as either inline text or a
+  picker that inserts an `artifact://name@version` reference from the artifacts
+  registry (§2.11). There is no per-agent scoped-file picker — the former
+  `steering_files` / scoped-directory UI is gone; assets are artifacts.
+- **MCP + supervisor** editors follow the same rule: the MCP node picks a
+  `type: mcp` server artifact (§4.7), and the supervisor `criteria` is inline or
+  a steering-artifact ref (§4.14) — no inline transport blocks, no
+  `criteria_file`.
+
+Legacy `kind: AutonomousAgent` YAML still loads onto the canvas (normalised to
+`kind: Agent` + `mode: autonomous` in memory), but the node always **serialises
+the current shape** — opening and saving an old workflow migrates it.
+
 ### 4.5 `kind: Router`
 
 ```yaml
