@@ -11,7 +11,7 @@
 
 TUVL is a **stateless ASGI router** that loads declarative YAML configurations at startup and mounts them as live FastAPI routes.
 
-> **Current version:** `2026.4.0.0`  
+> **Current version:** `1.0.0`  
 > Run `tuvl --version` (alias `-v`) to confirm the active version at any time.
 
 ```mermaid
@@ -1553,6 +1553,7 @@ Business requirement
 
 | Date | Change |
 |---|---|
+| 2026-07-23 | §1 — version badge `1.0.0`. **First stable release under [SemVer](https://semver.org)** — identical payload to `2026.4.0.0`, re-versioned to establish the semantic-versioning baseline; the calendar-versioned `2026.x` line is yanked on PyPI (pin `tuvl>=1.0.0`). `tuvl ship` Dockerfiles now float the engine to the latest release the project's `pyproject.toml` allows (`uv sync --upgrade-package tuvl`). Portal, docs, and `@tuvl/client` `1.0.0` align in lockstep. |
 | 2026-07-20 | §1 — version badge `2026.4.0.0`. **The artifact release (breaking).** One `kind: Agent` with required `mode: completion \| autonomous` replaces `AutonomousAgent` (§4.4/§4.13; closed set now **eight** kinds); one `outcome {write, format, enum, map}` contract replaces `output.{format,map,signal_from}` and `outcome.{enum,output_key}` (§4.4.1). New **artifact subsystem** (§2.11): `prompt · steering · skill · guardrail · hook · mcp` assets in `artifacts/`, referenced via `artifact://name[@version]`, sources file → DB (`/api/artifacts`, `artifacts:read\|write`) → sha256-pinned external packs, 512 KB cap, boot-time ref resolution. New **guardrails** (§4.15, reserved `guardrail_violation` exit) and observe-only **hooks** (§4.16). MCP connection config moves into `type: mcp` artifacts (§4.7); supervisor `criteria` is inline or a steering-artifact ref (`criteria_file` removed, §4.14); `steering_files` and the scoped `agents/<scope>/` dirs are removed; the spec-wrapped envelope is the only accepted document form. Golden Rules 27–30 added. Portal, docs, and `@tuvl/client` `2026.4.0` align in lockstep. |
 | 2026-07-18 | §1 — version badge `2026.3.2.0`. Security release: gRPC transports now enforce token **revocation** (both servicers verify through a shared helper delegating to the REST chain — signature, blacklist, expiry in lockstep), and `tuvl init` emits `${POSTGRES_PASSWORD}` / `${POSTGRES_HOST:<default>}`-style env references in `datasources/postgres.yaml` instead of literal credentials, so scaffolded YAML and `tuvl ship` images carry no secrets. Portal (`tuvl.io`), docs (`tuvl.dev`) and the TypeScript SDK (`@tuvl/client` `2026.3.2`) align in lockstep. |
 | 2026-07-13 | §1 — version badge `2026.3.1.0`. New CLI command **`tuvl ship`**: packages a project for production — runs the full `tuvl validate` pass (errors abort; `--strict` also blocks on warnings), generates a production `Dockerfile` + `.dockerignore` and a Helm chart under `deploy/chart/<name>/`, then builds the container image (`--tag`, `--no-build`, `--push`, `--force`). The image runs `tuvl run` as a non-root user with `TUVL_ENV=production` (no dev routes, no Insight UI, JSON logs, telemetry on) and a `/health` HEALTHCHECK. Positioning moves from beta to **early stable** — the API and YAML schemas are stable and versioned (PyPI `Development Status :: 5 - Production/Stable`). Marketing portal (`tuvl.io`), docs site (`tuvl.dev`) and the TypeScript SDK (`@tuvl/client` `2026.3.1`) align in lockstep. |
