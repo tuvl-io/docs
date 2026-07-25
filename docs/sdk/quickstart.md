@@ -175,7 +175,7 @@ await client.crud("candidate").delete(created.id);
 
 ---
 
-## 8. Force a transport
+## 7. Force a transport
 
 ```ts
 // Always SSE regardless of workflow hints
@@ -194,7 +194,7 @@ await client.execute("screen-candidate", {
 
 ---
 
-## 9. Cancellation
+## 8. Cancellation
 
 ```ts
 const controller = new AbortController();

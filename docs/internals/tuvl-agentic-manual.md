@@ -217,6 +217,7 @@ spec:
   trigger:
     path: /api/onboard          # REQUIRED to mount as HTTP route. Omit → workflow exists but is not mounted (callable via /{schema_version}/run/{name})
     method: POST                # GET | POST | PUT | PATCH | DELETE
+    schedule: "*/15 * * * *"    # OPTIONAL — 5-field cron (UTC); runs the workflow on a schedule. Coexists with path, or stands alone. See §2.3.2a.
     input_schema: context       # see §2.3.2
     response_schema: Candidate.read
     public: false                # OPTIONAL, default false — see below
@@ -252,6 +253,22 @@ Accepted shapes:
 | `"list[<ModelName>.<variant>]"` | Array of records. |
 | Inline list of `{name,type,required,default,description}` | Ad-hoc schema (`type` ∈ `string|integer|float|boolean`). |
 | omitted | Untyped — request body becomes the raw context dict. |
+
+#### 2.3.2a `trigger.schedule` — scheduled (cron) execution
+
+```yaml
+trigger:
+  schedule: "*/15 * * * *"    # every 15 minutes, UTC
+```
+
+A workflow with `schedule` runs on a cron cadence with no HTTP request involved. Semantics:
+
+- **5-field cron, UTC.** Standard `min hour dom month dow` syntax; validated by `tuvl validate` (invalid expression = error). Minimum granularity is one minute.
+- **Coexists with `path`** — a workflow can be both HTTP-triggered and scheduled; `schedule` alone is also valid (the workflow is not mounted as a route, and `tuvl validate` does not warn about the missing path).
+- **Exactly one fire per slot across workers.** Every worker's scheduler wakes at the fire time; a Postgres advisory lock keyed on (workflow, fire-time) guarantees a single execution regardless of `--workers` count or replica count.
+- **Empty initial context, no principal.** Scheduled runs start with an empty context (plus `_scheduled: true`) and carry no `_user_id`/`_tenant_id`. Steps that need input must produce it (e.g. a leading `Functional` step). Multi-tenant deployments: scheduled workflows run outside tenant context and are not supported.
+- **Skip on miss, no catch-up.** Fires that pass while the process is down are skipped; the scheduler resumes at the next future slot.
+- Disable globally with `TUVL_SCHEDULER_ENABLED=false`.
 
 #### 2.3.3 Step envelope (common to every `kind:`)
 
@@ -1546,6 +1563,7 @@ nodes/
 Business requirement
 ├── "Store and CRUD a domain entity"         → ModelDefinition (+ schema: true)
 ├── "Trigger logic on an HTTP request"       → Workflow with trigger.path
+├── "Run a workflow on a schedule"           → Workflow with trigger.schedule (5-field cron, UTC — §2.3.2a)
 ├── "Call an LLM once"                       → step kind: Agent, mode: completion (+ AgentModel if reused)
 ├── "Let an LLM pick & call tools in a loop" → step kind: Agent, mode: autonomous (tools = other steps)
 ├── "Call an external HTTP API"              → step kind: APICall

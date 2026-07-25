@@ -244,7 +244,7 @@ Response:
 
 ## Explore the API
 
-Open `http://localhost:8000/ui/` and paste the security key to access the tuvl insight developer portal, where you can:
+Open `http://localhost:8000/insight/` and paste the security key to access the tuvl insight developer portal, where you can:
 
 - Browse and test all your workflow endpoints
 - Inspect live step events and execution traces
