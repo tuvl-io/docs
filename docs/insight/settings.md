@@ -8,13 +8,14 @@ The Settings section configures project-level infrastructure and observability i
 
 ## Navigation
 
-The left panel groups settings into three categories:
+The left panel groups settings into four categories:
 
 | Category | Item | Purpose |
 |----------|------|---------|
 | Infrastructure | Redis | Shared state for multi-worker deployments |
 | Observability | Telemetry | OpenTelemetry trace and metric export |
 | Testing | LLM Judge | Automated quality evaluation for CI |
+| Security | API Access | Control which HTTP API surfaces are mounted |
 
 ---
 
@@ -112,3 +113,21 @@ spec:
 | `pass_threshold` | Minimum pass score (0.0–1.0). Runs below this fail the test. |
 
 See the [LLM Judge guide](../configuration/llm-judge.md) and the [Testing Workflows](../tools/testing.md) reference for how to write test cases and run them in CI.
+
+---
+
+## API Access
+
+Control which HTTP API surfaces are mounted. This edits `.tuvl/system.yaml`
+(`kind: SystemConfig`) — see [Configuration Overview](../configuration/overview.md#systemconfig-tuvlsystemyaml)
+for the full knob reference.
+
+### Expose model CRUD APIs
+
+A toggle for `spec.api.expose_model_crud`. When off, only workflow APIs are
+mounted — `/models/*` CRUD endpoints return 404. This applies in production too;
+the `TUVL_EXPOSE_MODEL_CRUD` env var overrides whatever is saved here.
+
+!!! warning "Restart required to apply changes"
+    The API surface is mounted once at startup. Save your config here, then
+    restart the engine with `tuvl run` (or `tuvl dev`) for changes to take effect.
