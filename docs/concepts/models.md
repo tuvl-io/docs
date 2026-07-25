@@ -96,7 +96,7 @@ spec:
     When you create your own model from the template, change this to `schema: true` (or remove the
     line entirely — `true` is the default) to have CRUD endpoints generated automatically.
 
-At the model level, `spec.datasource` routes the model to a named datasource (defaults to `"main_postgres"`):
+At the model level, `spec.datasource` routes the model to a named datasource. When omitted, the model binds to the primary DataSource — the one with `metadata.primary: true`:
 
 ```yaml
 spec:

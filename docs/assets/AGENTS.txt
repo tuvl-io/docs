@@ -12,12 +12,12 @@ As an AI agent working in this codebase, you must follow these rules strictly to
 ## 2. Directory Structure Conventions
 TUVL recursively searches the project directory for YAML files and dispatches them by their `kind:`. Though location doesn't matter strictly, we use these conventions:
 - `models/`: Contains `ModelDefinition`, `EmbeddingRegistry`, `CollectionRegistry`.
+- `artifacts/`: Named, versioned assets — prose `.md` with YAML front-matter (types `prompt` | `steering` | `skill`) and structured `kind: Artifact` YAML (types `guardrail` | `hook` | `mcp`). Referenced anywhere via `artifact://name[@version]`; pin `@version` for production.
 - `workflows/`: Contains `Workflow` files.
 - `datasources/`: Contains `DataSource` configurations.
 - `llms/`: Contains `AgentModel` configurations.
 - `federation/`: Contains `FederationProvider` configurations.
 - `nodes/`: **Must** contain custom Python nodes.
-- `artifacts/`: Named, versioned assets — prose `.md` with YAML front-matter (types `prompt` | `steering` | `skill`) and structured `kind: Artifact` YAML (types `guardrail` | `hook` | `mcp`). Referenced anywhere via `artifact://name[@version]`; pin `@version` for production.
 
 ## 3. Python Custom Nodes Rules
 When YAML isn't enough, you can create a custom `Functional` Python node.
@@ -39,8 +39,8 @@ When YAML isn't enough, you can create a custom `Functional` Python node.
 Use only these `kind:` values in workflow steps — never invent others:
 `Functional`, `Agent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop`. `AutonomousAgent` no longer exists.
 - `Agent` is the one LLM step and **REQUIRES `mode: completion | autonomous` at the step level** (no default — the validator errors and the runtime raises). `mode: completion` is a single retried LLM call (fields `system` / `prompt`); `mode: autonomous` is a bounded tool-calling loop (fields `steering` / `tools` (REQUIRED) / `max_iterations` / `token_budget`) where the model picks tools (each `agent.tools[].ref` names another step in the workflow), observes results, and re-decides until it emits one of a declared `outcome.enum`. Each tool's description (REQUIRED) is sourced from the referenced step's top-level `description:`.
-- **Outcome contract (both modes):** `agent.outcome: {write, format: json|text, enum, map}`. `write` is the context key receiving the result (default `<step_id>_result`). With `enum` declared the model must return an `"outcome"` field holding exactly one declared value — that is the route signal; map every enum value plus the applicable reserved exits (`error`, `parse_error` / `timeout` in completion, `max_iterations` / `budget_exceeded` / `aborted` in autonomous, `guardrail_violation` when guardrails attach) in `routes:`. The old `output.{format,map,signal_from}` and `outcome.output_key` are gone.
-- **Steering & skills:** `agent.steering` is the persistent instruction, ALWAYS injected; `agent.skills` are injected when relevant. Both (and `system` / `prompt`) take inline text or `artifact://` references — `steering_files` and the `agents/<workflow>__<stepId>/` directory scheme are gone.
+- **Outcome contract (both modes):** `agent.outcome: {write, format: json|text, enum, map}`. `write` is the context key receiving the result (default `<step_id>_result`). With `enum` declared the model must return an `"outcome"` field holding exactly one declared value — that is the route signal; map every enum value plus the applicable reserved exits (`error`, `parse_error` / `timeout` in completion, `max_iterations` / `budget_exceeded` / `aborted` in autonomous, `guardrail_violation` when guardrails attach) in `routes:`.
+- **Steering & skills:** `agent.steering` is the persistent instruction, ALWAYS injected; `agent.skills` are injected when relevant. Both (and `system` / `prompt`) take inline text or `artifact://` references.
 - **Guardrails & hooks:** `agent.guardrails: {input|output|tools: [artifact://…]}` attach `type: guardrail` artifacts (closed checks: `json_schema`, `regex_deny`, `max_chars`, `pii_mask`, `llm_judge`); a failing check routes the reserved `guardrail_violation` signal. Observe-only `type: hook` artifacts attach per step (`hooks:`) or workflow-wide (`spec.hooks:`) and never affect flow.
 - `MCP` steps declare `mcp.server: artifact://<name>` pointing at a `type: mcp` artifact that owns the connection config (transport / url / headers / command / args / env) — inline transport blocks on the step are rejected.
 - `Router` supports a multi-way `match:` switch (`match: { field: user.country }`) for data-driven branching — keep deterministic routing logic here, never push it into an agent.
@@ -53,5 +53,12 @@ Use only these `kind:` values in workflow steps — never invent others:
 ## 7. Developer Tooling & CLI
 - **Running locally:** Use `tuvl dev` (or `uv run tuvl dev`) to start the hot-reloading dev server on `http://localhost:8000`.
 - **Auto-Login:** Use `tuvl dev --auto-login` to automatically inject the security key and bypass the Insight developer portal security screen (useful for rapid automated testing).
+- **Validating:** Use `tuvl validate` to check every YAML config, node, and cross-reference without starting the server.
+- **Shipping to production:** Use `tuvl ship` to validate the project, generate a production `Dockerfile` and a Helm chart under `deploy/chart/<name>/`, and build the container image (`--no-build` to skip the build, `--push` to publish).
+
+## 8. API Security
+- **Trigger default-deny:** In production, every workflow trigger route (REST, versioned run, gRPC) requires a valid bearer token by default, even when the workflow declares no `metadata.required_scope` / `required_group`. Anonymous endpoints require an explicit `spec.trigger.public: true`. **Never** combine `public: true` with `required_scope` / `required_group` — validation rejects it. Dev mode exempts unscoped workflows so quickstarts run without a token.
+- **CRUD scope + group gating:** Auto-generated CRUD routes are scope-gated by convention (`{model}:read` / `:write` / `:delete`) and can additionally be pinned to IAM groups via `spec.access.{read,write,delete}_groups` on the `ModelDefinition` — a caller needs the scope AND the group. Leaving a tier's groups undeclared cascades it down from the next-more-privileged tier (write falls back to read, delete falls back to write).
+- **CRUD kill switch:** The entire auto-generated `/models/*` CRUD surface can be disabled project-wide with `spec.api.expose_model_crud: false` in `.tuvl/system.yaml`, or the `TUVL_EXPOSE_MODEL_CRUD` env var.
 
 > For complete syntax and schema details, refer to `docs/tuvl-agentic-manual.md`.

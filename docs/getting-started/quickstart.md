@@ -235,6 +235,13 @@ Response:
 }
 ```
 
+!!! info "No token needed here — dev mode only"
+    This call works without an `Authorization` header because `tuvl dev` exempts
+    workflows with no `required_scope`/`required_group` from authentication. In
+    production every trigger requires a valid bearer token by default, even with
+    neither set — opt a route into anonymous access explicitly with
+    `spec.trigger.public: true`. See [Authorization Surfaces](../security/iam.md#authorization-surfaces).
+
 ## Explore the API
 
 Open `http://localhost:8000/ui/` and paste the security key to access the tuvl insight developer portal, where you can:
