@@ -33,6 +33,73 @@ The only built-in scope is `iam:admin`, which gates all `/auth/admin/*` endpoint
 
 ---
 
+## Authorization Surfaces
+
+Scopes and groups gate two built-in surfaces beyond any custom endpoints you protect yourself
+(see [Protecting Your Own Endpoints](#protecting-your-own-endpoints)): the auto-generated model
+CRUD API and workflow triggers.
+
+### Model CRUD
+
+Every `/models/{model}/…` route requires a valid Biscuit token by default. Scope names default
+to `{modelname.lower()}:read` / `:write` / `:delete`, overridable per model with
+`spec.access.{read,write,delete}_scope` in the `ModelDefinition`.
+
+`spec.access.{read,write,delete}_groups` (a list, or a bare group name) layers an IAM group
+requirement on top of the scope check — both the scope **and** the group must pass. A tier left
+undeclared cascades from the next-more-privileged tier (`write_groups` falls back to
+`read_groups`, `delete_groups` falls back to `write_groups`), so pinning only `read_groups` never
+leaves mutations open to a wider audience than reads. Declaring no groups at all is scope-only.
+`iam:admin` bypasses every scope and group check.
+
+```yaml
+kind: ModelDefinition
+metadata:
+  name: Candidate
+spec:
+  access:
+    read_scope: candidate:read
+    write_scope: candidate:write
+    read_groups: recruiter          # bare string or a list
+    write_groups: [hr_manager]      # delete_groups falls back to this
+```
+
+Use `GET /admin/scopes` to see every enforceable scope grouped by source (`crud`, `workflows`,
+`system`) — its `crud_api_enabled` field also reports whether the CRUD kill switch is currently on.
+
+!!! note "Disabling CRUD entirely"
+    The whole `/models/*` surface can be turned off project-wide with
+    `spec.api.expose_model_crud: false` — see
+    [Configuration Overview](../configuration/overview.md#systemconfig-tuvlsystemyaml). When
+    disabled, the routes are absent, not merely scope-denied.
+
+### Workflow Triggers
+
+Workflow triggers are gated by `metadata.required_scope` and/or `metadata.required_group` in the
+workflow YAML. In production, every trigger route — the REST mount, the versioned
+`/{schema_version}/run/{name}` route, and gRPC `RunWorkflow` — requires a valid bearer token by
+default, even for a workflow that declares neither.
+
+Anonymous access is an explicit opt-in via `spec.trigger.public: true`. Combining `public: true`
+with a declared `required_scope` or `required_group` is a `tuvl validate` error — the engine fails
+closed and always enforces the declared scope/group over `public` at runtime.
+
+```yaml
+kind: Workflow
+metadata:
+  name: register_user
+spec:
+  trigger:
+    path: /api/register
+    method: POST
+    public: true      # anonymous access — no required_scope/required_group allowed alongside this
+```
+
+In dev mode (`tuvl dev`), workflows with no scope/group requirement stay tokenless so quickstarts
+run without a login step.
+
+---
+
 ## Bootstrap
 
 On a fresh installation with no users, the bootstrap endpoint creates the first superadmin:

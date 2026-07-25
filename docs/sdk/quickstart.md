@@ -167,7 +167,11 @@ await client.crud("candidate").delete(created.id);
 ```
 
 !!! info "Scopes"
-    CRUD endpoints enforce `{modelname}:read`, `:write`, and `:delete` Biscuit scopes. Check `me.scopes` from `auth.getMe(token)` before calling CRUD methods if you need to gate UI features.
+    CRUD endpoints enforce `{modelname}:read`, `:write`, and `:delete` Biscuit scopes (plus any
+    `spec.access.{read,write,delete}_groups` the model declares). Check `me.scopes` from
+    `auth.getMe(token)` before calling CRUD methods if you need to gate UI features. A project can
+    also disable the entire CRUD surface with `spec.api.expose_model_crud: false`, in which case
+    these routes are absent (404) rather than scope-denied.
 
 ---
 

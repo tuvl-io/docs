@@ -512,10 +512,9 @@ interface WorkflowManifest {
   name:               string;
   trigger_path:       string;
   trigger_method:     string;
+  public:             boolean;
   has_slow_steps:     boolean;
   slow_kinds_present: string[];
-  required_scope:     string | null;
-  required_group:     string | null;
   steps:              Array<{ id: string; kind: string }>;
 }
 ```
@@ -524,11 +523,15 @@ interface WorkflowManifest {
 |---|---|
 | `trigger_path` | The HTTP path the workflow is mounted at (e.g. `/api/hello`) |
 | `trigger_method` | HTTP verb (`POST`, `GET`, etc.) |
+| `public` | The workflow's declared `spec.trigger.public` flag — `true` means the route accepts anonymous calls |
 | `has_slow_steps` | `true` if the workflow has `Agent`, `MCP`, or `APICall` steps |
 | `slow_kinds_present` | List of slow step kinds found (e.g. `["Agent", "MCP"]`) |
-| `required_scope` | Biscuit scope required to call this workflow, or `null` |
-| `required_group` | IAM group required to call this workflow, or `null` |
 | `steps` | Ordered list of `{id, kind}` for each step |
+
+!!! note "No `required_scope` / `required_group` here"
+    The manifest deliberately omits the enforced scope/group — exposing them would
+    let an anonymous caller reconnoiter exactly which credential to forge. Learn a
+    workflow's authorization requirement from the 401/403 it returns at call time.
 
 ---
 

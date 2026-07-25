@@ -56,7 +56,7 @@ The sidebar contains all top-level sections:
 | **Federation** | OAuth2 / OIDC provider setup |
 | **API Docs** | Live Swagger UI for your project's REST endpoints |
 | **Spectrum** | Workflow test runner and visual debugger |
-| **Settings** | Redis, telemetry, and LLM Judge configuration |
+| **Settings** | Redis, telemetry, LLM Judge, and API Access configuration |
 
 ---
 
