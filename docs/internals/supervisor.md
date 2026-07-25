@@ -9,7 +9,7 @@ This document covers the internals: how a run becomes addressable, how the
 supervisor watches it, and how a directive lands back inside the loop. For the
 authoring contract (the YAML reference), see `tuvl-agentic-manual.md` §4.14.
 
-The orchestrator is tagged **experimental** (engine 2026.2.6).
+The orchestrator is tagged **experimental**.
 
 ---
 
