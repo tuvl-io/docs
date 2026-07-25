@@ -72,7 +72,7 @@ Regular workflow execution and auth endpoints use the standard REST API at `/api
 
 | Requirement | Version |
 |-------------|---------|
-| `tuvl` | ≥ 25.4 |
+| `tuvl` | ≥ 1.0.0 |
 | `tuvl-insight` | Included with `pip install tuvl[standard]` |
 | Browser | Any modern Chromium, Firefox, or Safari |
 

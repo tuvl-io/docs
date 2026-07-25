@@ -464,10 +464,10 @@ The IAM system creates four tables on startup:
 
 | Table | Purpose |
 |-------|---------|
-| `iam_users` | User credentials (email, phone number, names, bcrypt hash, federation fields) |
-| `iam_roles` | Named roles with optional description |
-| `iam_user_roles` | Many-to-many: user ↔ role assignments |
-| `iam_role_scopes` | One row per scope per role |
+| `tuvl_system_iam_users` | User credentials (email, phone number, names, bcrypt hash, federation fields) |
+| `tuvl_system_iam_roles` | Named roles with optional description |
+| `tuvl_system_iam_user_roles` | Many-to-many: user ↔ role assignments |
+| `tuvl_system_iam_role_scopes` | One row per scope per role |
 
 Tables are created automatically via SQLModel's `create_all` during startup — no migration tool required for initial setup.
 
