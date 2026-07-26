@@ -5,9 +5,7 @@
 !!! note "Stable release"
     tuvl **1.0.0** is production-ready: the API and YAML schemas are stable and
     versioned under [SemVer](https://semver.org) — breaking changes bump the
-    major version. Versions before 1.0.0 (the calendar-numbered `2026.x` line)
-    were internal testing builds from tuvl's development phase and are yanked
-    on PyPI in favor of 1.0.0.
+    major version.
 
 <p align="center">
   <em>Pronounced "Thoo-val" (തൂവൽ) in Malayalam means a feather. It refers specifically to the soft feathers or plumage of a bird. </em>
