@@ -1,19 +1,8 @@
-.PHONY: serve serve-versioned sync-internals
+.PHONY: serve sync-internals
 
-# Quick content editing — no version selector
+# Local docs preview.
 serve:
 	uv run mkdocs serve
-
-# Full local preview with version selector (mirrors production)
-# Deploys current docs into the local gh-pages branch, then serves from it.
-serve-versioned:
-	@VERSION=$$(grep '^version' pyproject.toml | sed 's/.*= *"\(.*\)"/\1/') && \
-	ALIAS=$$(echo "$$VERSION" | grep -qE 'b[0-9]+$$|a[0-9]+$$|rc[0-9]+$$' && echo beta || echo latest) && \
-	echo "Deploying $$VERSION (alias: $$ALIAS) to local gh-pages..." && \
-	uv run mike deploy --ignore-remote-status --update-aliases --alias-type=copy "$$VERSION" "$$ALIAS" && \
-	uv run mike set-default --ignore-remote-status "$$ALIAS" && \
-	echo "Serving at http://127.0.0.1:8000" && \
-	uv run mike serve
 
 # Mirror the engine repo's internals docs into docs/internals/.
 # Run after any engine-docs change; the engine repo is the source of truth.
