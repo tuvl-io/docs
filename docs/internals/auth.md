@@ -253,15 +253,17 @@ metadata:
 
 ## 8. REST & gRPC Parity
 
-The gRPC-Web surface (used by the Insight UI) enforces the same contract with the same primitives:
+The entire IAM surface — bootstrap, login, session lifecycle, user/role CRUD, federation-provider admin — has exactly one implementation: `tuvl/core/auth/iam_service.py`. It is transport-neutral (plain DB session and Python inputs in, plain results or a typed `IamError` out — no FastAPI or gRPC types). `tuvl/core/auth/router.py` (REST) and `tuvl/core/grpc/iam_servicer.py` (gRPC-Web, used by the Insight UI) are both **thin adapters** over it: they parse transport input, call into `iam_service`, and map the result (or a raised `IamError` subclass) onto their transport's status representation. Because the logic lives in one place, REST and gRPC have identical behavior by construction rather than by convention — including the login timing-equalization (`iam_service.login` always performs one bcrypt comparison, even against `DUMMY_PW_HASH` for a missing/passwordless account) and the federation-provider path sanitizer (`iam_service.safe_federation_path`, the single path-traversal guard both transports call).
 
-- `tuvl/core/grpc/iam_servicer.py` mirrors the entire `/auth` REST surface (`Bootstrap`, `Login`, `GetMe`, `RefreshToken`, `Logout`, user/role CRUD, role assignment, federation-provider management). Its `_verify_biscuit` performs signature validation **and** calls `enforce_token_security`, matching the REST `verify_token` contract; `_require_admin` then checks for the `iam:admin` scope.
+What's still transport-specific:
+
+- `tuvl/core/grpc/iam_servicer.py` covers the full `/auth` REST surface (`Bootstrap`, `Login`, `GetMe`, `RefreshToken`, `Logout`, user/role CRUD, role assignment, federation-provider management). Its `_verify_biscuit` performs signature validation **and** calls `enforce_token_security`, matching the REST `verify_token` contract; `GetMe` and `RefreshToken` both call the shared `get_current_user`, so the same authorizer policy and `TokenUser` extraction run on both transports; `_require_admin` then checks for the `iam:admin` scope.
 - `tuvl/core/grpc/servicer.py` (`ExecutionServicer.RunWorkflow`) authenticates the token from call metadata, then enforces the workflow's `metadata.required_scope` / `required_group` through the shared `authorize_token` — the same function the REST route dependencies use.
 - **Anti-enumeration ordering.** `RunWorkflow` resolves the target workflow's config (needed to evaluate its `resolve_workflow_auth` policy) before deciding whether a token is required, but defers the `NOT_FOUND` abort until after the token/scope checks. An anonymous caller hitting an unknown or non-public workflow name gets `UNAUTHENTICATED`, never `NOT_FOUND` — so probing the workflow namespace without a valid token can't distinguish "wrong credential" from "no such workflow."
-- Error mapping is mechanical: `TokenUnauthorizedError` / expired / invalid → `UNAUTHENTICATED`; missing scope or group → `PERMISSION_DENIED`.
+- Error mapping is mechanical: `TokenUnauthorizedError` / expired / invalid → `UNAUTHENTICATED`; missing scope or group → `PERMISSION_DENIED`; an `iam_service` domain error (`NotFoundError`, `ConflictError`, `ValidationError`, …) maps to the matching gRPC `StatusCode` the same way REST maps it to an HTTP status.
 - Every IAM RPC is wrapped in the `@_managed` decorator, which scopes database-session cleanup to the single call: any session opened during the handler is deterministically closed when the call returns, raises, or aborts.
 
-Password verification on the gRPC login path routes through the same threadpool bcrypt wrappers as REST.
+Password verification on the gRPC login path routes through `iam_service.login`, which itself dispatches to the same threadpool bcrypt wrappers as REST.
 
 ---
 
@@ -330,7 +332,8 @@ Rules of thumb: 401 always carries `WWW-Authenticate: Bearer` and means "re-auth
 | `tuvl/core/auth/models.py` | The four `tuvl_system_iam_*` tables |
 | `tuvl/core/auth/crypto.py` | bcrypt hashing/verification + threadpool wrappers |
 | `tuvl/core/auth/blacklist.py` | Token revocation store (Redis / in-process) |
-| `tuvl/core/auth/router.py` | `/auth` REST surface: bootstrap, login, me/refresh/logout, user & role admin, OAuth federation flow |
+| `tuvl/core/auth/iam_service.py` | Transport-neutral IAM service — the one implementation of bootstrap, login, refresh/logout, user & role CRUD, and federation-provider admin; `router.py` and `iam_servicer.py` are thin adapters over it |
+| `tuvl/core/auth/router.py` | `/auth` REST surface: bootstrap, login, me/refresh/logout, user & role admin, OAuth federation flow — a thin adapter over `iam_service.py` |
 | `tuvl/core/auth/federation_loader.py` | `kind: FederationProvider` YAML loader and registry |
 | `tuvl/core/api/crud_router.py` | CRUD scope/group derivation, enforcement, `build_crud_routers` kill-switch gate |
 | `tuvl/core/auth/workflow_policy.py` | `resolve_workflow_auth` / `WorkflowAuthPolicy` — shared trigger auth policy (default-deny, `public`, dev exemption) |
@@ -338,7 +341,7 @@ Rules of thumb: 401 always carries `WWW-Authenticate: Bearer` and means "re-auth
 | `tuvl/core/api/manager.py` | `_build_route_deps` — workflow `metadata.required_scope` / `required_group` gates |
 | `tuvl/core/api/execution_router.py` | Versioned run route auth, `/admin/*` guard, `GET /admin/scopes` |
 | `tuvl/core/api/orchestrator_router.py` | Operator API (`agent:observe` / `agent:control`) |
-| `tuvl/core/grpc/iam_servicer.py` | gRPC IAM surface, `_verify_biscuit`, `@_managed` session lifecycle |
+| `tuvl/core/grpc/iam_servicer.py` | gRPC IAM surface, `_verify_biscuit`, `@_managed` session lifecycle — a thin adapter over `iam_service.py` |
 | `tuvl/core/grpc/servicer.py` | gRPC workflow execution auth (shared `authorize_token`) |
 | `tuvl/core/dev/middleware.py` | `/dev/*` dev-key + IP-allowlist gate |
 | `tuvl/cli/session.py`, `tuvl/cli/commands/dev.py` | Dev security key generation and session file |

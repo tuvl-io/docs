@@ -242,6 +242,47 @@ tuvl keys generate --write --force
 
 ---
 
+## `tuvl db`
+
+Database maintenance subcommands for multi-tenant Row-Level Security (RLS).
+Both subcommands load the project first — models, datasources, and the
+`tenant_id` column injected under `multi_tenant` mode — so the tenant-scoped
+tables they operate on are the project's actual tables, not just tuvl's
+internal system tables.
+
+### `tuvl db generate-rls`
+
+Print idempotent RLS-enable + tenant-isolation policy SQL for every
+tenant-scoped table. Review the output and apply it through your normal
+migration tool (Alembic, raw `psql`, etc.) — re-running the generator and
+re-applying the SQL is always safe.
+
+```bash
+# Print to stdout
+tuvl db generate-rls
+
+# Write to a file
+tuvl db generate-rls --out deploy/rls.sql
+
+# Against a specific project
+tuvl db generate-rls --project-dir ./my-project
+```
+
+### `tuvl db check-rls`
+
+Connect to the configured primary datasource and verify every tenant-scoped
+table has the `tuvl_tenant_isolation` policy installed. Exits `0` when every
+expected policy is present, and `1` (listing the missing tables) otherwise —
+designed to run in CI before promoting a deployment to a multi-tenant
+environment. In `single_tenant` mode it reports that there's nothing to
+check.
+
+```bash
+tuvl db check-rls
+```
+
+---
+
 ## `tuvl test`
 
 Run LLM-as-a-Judge workflow tests. Discovers YAML test files, executes each workflow
@@ -288,6 +329,16 @@ tuvl test --tests-dir path/to/tests
 ## `tuvl validate`
 
 Validate configuration files without starting the server.
+
+Discovery is recursive and dispatched purely by each file's `kind:` field —
+the same way the runtime loads a project. Any `*.yaml` or `*.yml` file
+anywhere under the project directory is picked up regardless of which
+folder it lives in (skipping `.tuvl/`, `.git/`, `deploy/`, virtualenvs, and
+other dotdirs). This covers every resource kind, including
+`EmbeddingRegistry`, `EmbeddingConfig`, `CollectionRegistry`,
+`CollectionConfig`, `RedisConfig`, and `FederationProvider` alongside models,
+workflows, and datasources. A file whose `kind:` isn't one tuvl recognizes is
+a validation **error** (the runtime would otherwise silently skip it).
 
 ### Usage
 
@@ -374,7 +425,9 @@ tuvl ship [OPTIONS]
    and a Helm chart under `deploy/chart/<name>/` (`Chart.yaml`, `values.yaml`,
    and templates for the Deployment, Service, and helpers). Existing files are
    left untouched unless you pass `--force`, so you can hand-edit them and
-   re-run `ship` safely.
+   re-run `ship` safely. If a kept `Chart.yaml`'s `appVersion` no longer
+   matches the version being built, `ship` warns that the deployed image tag
+   won't match — re-run with `--force` or bump `appVersion` by hand.
 3. **Build the image** — runs `docker build` (skip with `--no-build`, publish
    with `--push`).
 
@@ -435,6 +488,7 @@ tuvl stream-watch WORKFLOW [OPTIONS]
 | `--payload` | `-p` | `{}` | JSON string sent as the workflow input payload |
 | `--token` | `-t` | — | Biscuit Bearer token. Falls back to `TUVL_BISCUIT_TOKEN` env var |
 | `--url` | `-u` | `http://localhost:8000` | Base URL of the tuvl server |
+| `--timeout` | — | none | Read timeout in seconds for the SSE stream body. By default there is no timeout, so a quiet workflow (slow agent iterations, a HITL wait) can go arbitrarily long between events without the connection being torn down. Only affects the stream body — the initial manifest fetch always uses its own short timeout |
 
 ### Examples
 
