@@ -268,19 +268,19 @@ Each model automatically gets CRUD endpoints:
 
 **Create:**
 ```bash
-curl -X POST http://localhost:8000/api/contact \
+curl -X POST http://localhost:8885/api/contact \
   -H "Content-Type: application/json" \
   -d '{"email": "jane@example.com", "name": "Jane Doe"}'
 ```
 
 **List with filters:**
 ```bash
-curl "http://localhost:8000/api/contact?company=Acme&limit=10"
+curl "http://localhost:8885/api/contact?company=Acme&limit=10"
 ```
 
 **Update:**
 ```bash
-curl -X PATCH http://localhost:8000/api/contact/uuid-here \
+curl -X PATCH http://localhost:8885/api/contact/uuid-here \
   -H "Content-Type: application/json" \
   -d '{"company": "New Company"}'
 ```

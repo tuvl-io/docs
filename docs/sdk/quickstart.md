@@ -37,7 +37,7 @@ Get `@tuvl/client` installed and making live calls in under 5 minutes.
 import { TuvlClient } from "@tuvl/client";
 
 const client = new TuvlClient({
-  baseUrl: "http://localhost:8000",
+  baseUrl: "http://localhost:8885",
   token: process.env.TUVL_TOKEN, // (1)
 });
 ```
@@ -137,7 +137,7 @@ Every tuvl model gets auto-generated REST endpoints. Access them with `client.cr
 ```ts
 import { TuvlClient } from "@tuvl/client";
 
-const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+const client = new TuvlClient({ baseUrl: "http://localhost:8885", token });
 
 // List all candidates
 const candidates = await client.crud("candidate").list();

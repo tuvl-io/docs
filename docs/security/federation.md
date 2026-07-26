@@ -190,7 +190,7 @@ TUVL_OAUTH_BASE_URL=https://your-tuvl-instance.example.com
 ```
 
 This tells tuvl what base URL to use when constructing the redirect URI sent to the provider.
-In local development set it to `http://localhost:8000`.
+In local development set it to `http://localhost:8885`.
 
 ```bash
 TUVL_OAUTH_UI_REDIRECT_URL=https://app.example.com/auth/callback

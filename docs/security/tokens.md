@@ -68,7 +68,7 @@ HTTP/1.1 401 Unauthorized
 A client may request a new token before expiry using the refresh endpoint:
 
 ```bash
-curl -X POST http://localhost:8000/auth/refresh \
+curl -X POST http://localhost:8885/auth/refresh \
   -H "Authorization: Bearer <current_token>"
 ```
 

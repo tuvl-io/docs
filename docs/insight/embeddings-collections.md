@@ -115,7 +115,7 @@ The RAG node returns the top-k chunks as a list in `ctx["rag_results"]`, which y
 Use the auto-generated REST endpoint to index text into a collection:
 
 ```bash
-curl -X POST http://localhost:8000/api/collections/hr_knowledge_base/index \
+curl -X POST http://localhost:8885/api/collections/hr_knowledge_base/index \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"text": "All employees are entitled to 25 days annual leave.", "metadata": {"source": "policy_v3.pdf"}}'

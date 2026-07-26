@@ -19,10 +19,10 @@ tuvl prints the portal URL and a one-time security key:
 
 ```
 ╭─ tuvl dev ───────────────────────────────────────────────────────────╮
-│ Starting tuvl engine in dev mode on port 8000.                       │
+│ Starting tuvl engine in dev mode on port 8885.                       │
 │ Project: /home/user/my-project                                       │
 │                                                                      │
-│ Open http://127.0.0.1:8000/insight/ and the security key is stored  │
+│ Open http://127.0.0.1:8885/insight/ and the security key is stored  │
 │ in .tuvl/.dev-session (run tuvl dev --show-key to print it).         │
 ╰──────────────────────────────────────────────────────────────────────╯
 ```

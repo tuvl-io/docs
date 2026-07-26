@@ -189,13 +189,13 @@ tuvl dev --port 3000
 tuvl dev --project-dir ./services/api
 ```
 
-The dev server starts on `http://localhost:8000` with the built-in tuvl insight UI at `http://localhost:8000/insight/`. A one-time security key is generated and saved to `.tuvl/.dev-session` — paste it into the UI to authenticate.
+The dev server starts on `http://localhost:8885` with the built-in tuvl insight UI at `http://localhost:8885/insight/`. A one-time security key is generated and saved to `.tuvl/.dev-session` — paste it into the UI to authenticate.
 
 ```
 ╭─────────────────────────────── tuvl dev ───────────────────────────────╮
-│ Starting tuvl engine in dev mode on port 8000.                         │
+│ Starting tuvl engine in dev mode on port 8885.                         │
 │                                                                        │
-│ Open http://127.0.0.1:8000/insight/ and the security key is stored    │
+│ Open http://127.0.0.1:8885/insight/ and the security key is stored    │
 │ in .tuvl/.dev-session (run tuvl dev --show-key to print it).           │
 ╰────────────────────────────────────────────────────────────────────────╯
 ```
@@ -208,7 +208,7 @@ The dev server starts on `http://localhost:8000` with the built-in tuvl insight 
 Send a request to your new endpoint:
 
 ```bash
-curl -X POST http://localhost:8000/api/contacts \
+curl -X POST http://localhost:8885/api/contacts \
   -H "Content-Type: application/json" \
   -d '{
     "email": "jane@example.com",
@@ -244,13 +244,13 @@ Response:
 
 ## Explore the API
 
-Open `http://localhost:8000/insight/` and paste the security key to access the tuvl insight developer portal, where you can:
+Open `http://localhost:8885/insight/` and paste the security key to access the tuvl insight developer portal, where you can:
 
 - Browse and test all your workflow endpoints
 - Inspect live step events and execution traces
 - Manage models, datasources, and LLM providers visually
 
-The raw OpenAPI schema is also available at `http://localhost:8000/docs`.
+The raw OpenAPI schema is also available at `http://localhost:8885/docs`.
 
 ## What's Next?
 

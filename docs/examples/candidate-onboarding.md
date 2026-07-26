@@ -266,7 +266,7 @@ tuvl dev
 ### Submit a senior candidate
 
 ```bash
-curl -X POST http://localhost:8000/api/candidates/onboard \
+curl -X POST http://localhost:8885/api/candidates/onboard \
   -H "Content-Type: application/json" \
   -d '{
     "email": "senior@example.com",
@@ -298,7 +298,7 @@ Expected response:
 ### Submit a junior candidate
 
 ```bash
-curl -X POST http://localhost:8000/api/candidates/onboard \
+curl -X POST http://localhost:8885/api/candidates/onboard \
   -H "Content-Type: application/json" \
   -d '{
     "email": "junior@example.com",

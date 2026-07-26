@@ -11,7 +11,7 @@ Authentication helper. Wraps all `/auth/*` endpoints. Create one instance per ap
 ```ts
 import { TuvlAuth } from "@tuvl/client";
 
-const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8885" });
 ```
 
 ### Constructor options
@@ -363,7 +363,7 @@ interface Candidate {
   email: string;
 }
 
-const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+const client = new TuvlClient({ baseUrl: "http://localhost:8885", token });
 
 // List with filters + pagination + relations
 const candidates = await client.crud<Candidate>("candidate").list({
@@ -590,7 +590,7 @@ Async generator for gRPC-Web streaming. Dynamically imports `@protobuf-ts/grpcwe
 import { openGrpcStream } from "@tuvl/client";
 
 for await (const event of openGrpcStream({
-  baseUrl:      "http://localhost:8000",
+  baseUrl:      "http://localhost:8885",
   workflowName: "screen-candidate",
   payloadJson:  JSON.stringify({ candidate_id: 42 }),
   token:        "...",
