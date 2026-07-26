@@ -27,7 +27,7 @@ git clone https://github.com/tuvl-io/examples.git
 cd examples/<project-name>
 cp .env.example .env        # fill in DATABASE_URL, GEMINI_API_KEY, …
 tuvl validate
-tuvl dev                    # → http://localhost:8000 (+ /insight)
+tuvl dev                    # → http://localhost:8885 (+ /insight)
 ```
 
 Per-project infrastructure needs (database, pgvector, API keys, MCP tooling)

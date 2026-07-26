@@ -39,8 +39,8 @@ make dev-core DIR=/path/to/your/project
 make dev DIR=/path/to/your/project
 ```
 
-The server starts on `http://localhost:8000`. The tuvl dev console is at
-`http://localhost:8000/insight` when `TUVL_DEV_MODE=true`.
+The server starts on `http://localhost:8885`. The tuvl dev console is at
+`http://localhost:8885/insight` when `TUVL_DEV_MODE=true`.
 
 ### Proto codegen
 

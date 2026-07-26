@@ -173,16 +173,16 @@ You should see output like:
 
 ```
 ╭─────────────────────────────── tuvl dev ───────────────────────────────╮
-│ Starting tuvl engine in dev mode on port 8000.                         │
+│ Starting tuvl engine in dev mode on port 8885.                         │
 │                                                                        │
 │ Security key                                                           │
 │  XXXX-XXXX-XXXX-XXXX                                                   │
 │                                                                        │
-│ Open http://127.0.0.1:8000/ui/ and paste the key above.               │
+│ Open http://127.0.0.1:8885/ui/ and paste the key above.               │
 ╰────────────────────────────────────────────────────────────────────────╯
 ```
 
-Open `http://127.0.0.1:8000/ui/` in your browser and paste the printed security key to access the tuvl insight developer portal.
+Open `http://127.0.0.1:8885/ui/` in your browser and paste the printed security key to access the tuvl insight developer portal.
 
 ## Next Steps
 

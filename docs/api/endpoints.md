@@ -21,7 +21,7 @@ POST /api/onboard
 ### Request Format
 
 ```bash
-curl -X POST http://localhost:8000/api/onboard \
+curl -X POST http://localhost:8885/api/onboard \
   -H "Content-Type: application/json" \
   -d '{
     "email": "jane@example.com",
@@ -78,7 +78,7 @@ Each model automatically gets CRUD endpoints:
 ### Create
 
 ```bash
-curl -X POST http://localhost:8000/api/contact \
+curl -X POST http://localhost:8885/api/contact \
   -H "Content-Type: application/json" \
   -d '{
     "email": "jane@example.com",
@@ -103,10 +103,10 @@ Response:
 
 ```bash
 # List all (paginated)
-curl http://localhost:8000/api/contact
+curl http://localhost:8885/api/contact
 
 # With filters
-curl "http://localhost:8000/api/contact?company=Acme&limit=10&offset=0"
+curl "http://localhost:8885/api/contact?company=Acme&limit=10&offset=0"
 ```
 
 Query parameters:
@@ -120,13 +120,13 @@ Query parameters:
 ### Get Single
 
 ```bash
-curl http://localhost:8000/api/contact/550e8400-e29b-41d4-a716-446655440000
+curl http://localhost:8885/api/contact/550e8400-e29b-41d4-a716-446655440000
 ```
 
 ### Update
 
 ```bash
-curl -X PATCH http://localhost:8000/api/contact/550e8400-... \
+curl -X PATCH http://localhost:8885/api/contact/550e8400-... \
   -H "Content-Type: application/json" \
   -d '{
     "company": "New Company Name"
@@ -136,7 +136,7 @@ curl -X PATCH http://localhost:8000/api/contact/550e8400-... \
 ### Delete
 
 ```bash
-curl -X DELETE http://localhost:8000/api/contact/550e8400-...
+curl -X DELETE http://localhost:8885/api/contact/550e8400-...
 ```
 
 ## API Documentation
@@ -304,7 +304,7 @@ Social login via configured providers. See [Federation](../security/federation.m
 
 ```bash
 # Start Google sign-in (open in browser)
-curl -L http://localhost:8000/auth/oauth/google/start
+curl -L http://localhost:8885/auth/oauth/google/start
 ```
 
 ### Admin — Federation Providers

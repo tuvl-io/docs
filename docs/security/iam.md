@@ -105,7 +105,7 @@ run without a login step.
 On a fresh installation with no users, the bootstrap endpoint creates the first superadmin:
 
 ```bash
-curl -X POST http://localhost:8000/auth/bootstrap \
+curl -X POST http://localhost:8885/auth/bootstrap \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -154,7 +154,7 @@ Response:
 Use the token in subsequent requests:
 
 ```bash
-curl http://localhost:8000/auth/admin/users \
+curl http://localhost:8885/auth/admin/users \
   -H "Authorization: Bearer <biscuit_b64>"
 ```
 
@@ -163,7 +163,7 @@ curl http://localhost:8000/auth/admin/users \
 Exchange the current token for a new one with a fresh TTL (the old token is immediately revoked):
 
 ```bash
-curl -X POST http://localhost:8000/auth/refresh \
+curl -X POST http://localhost:8885/auth/refresh \
   -H "Authorization: Bearer <old_token>"
 ```
 
@@ -174,7 +174,7 @@ Returns a new `TokenResponse`. The old token is added to the blacklist and can n
 Revoke the current token immediately:
 
 ```bash
-curl -X POST http://localhost:8000/auth/logout \
+curl -X POST http://localhost:8885/auth/logout \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -198,25 +198,25 @@ npm install @tuvl/client
 ```ts
 import { TuvlAuth, TuvlClient } from "@tuvl/client";
 
-const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8885" });
 
 const { access_token } = await auth.loginWithPassword("admin@example.com", "secret");
 
 // Attach the token to the workflow client
-const client = new TuvlClient({ baseUrl: "http://localhost:8000", token: access_token });
+const client = new TuvlClient({ baseUrl: "http://localhost:8885", token: access_token });
 ```
 
 ### OAuth2 login (browser)
 
 ```ts
 // 1. Redirect the browser to the provider
-const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8885" });
 window.location.href = auth.getOAuthLoginUrl("google");
 
 // 2. After login the server redirects to TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit>
 //    On that landing page, extract the token:
 const token = new URLSearchParams(window.location.search).get("token")!;
-const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+const client = new TuvlClient({ baseUrl: "http://localhost:8885", token });
 ```
 
 !!! info "Configure the redirect"
@@ -247,7 +247,7 @@ await auth.logout(token);
 ```ts
 import { TuvlAuth, TuvlClient } from "@tuvl/client";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://localhost:8885";
 const auth = new TuvlAuth({ baseUrl: BASE_URL });
 
 // Step 1 — on a fresh install: bootstrap the first admin
@@ -481,6 +481,6 @@ user or manage tokens during local development.
 
 ```bash
 # Both of these work in dev mode:
-curl -H "Authorization: Bearer <dev_api_key>" http://localhost:8000/dev/files
-curl -H "Authorization: Bearer <dev_api_key>" http://localhost:8000/auth/admin/users
+curl -H "Authorization: Bearer <dev_api_key>" http://localhost:8885/dev/files
+curl -H "Authorization: Bearer <dev_api_key>" http://localhost:8885/auth/admin/users
 ```

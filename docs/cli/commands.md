@@ -110,7 +110,7 @@ tuvl dev [OPTIONS]
 |--------|---------|-------------|
 | `--project-dir`, `-d` | `.` | Project directory |
 | `--host` | `127.0.0.1` | Bind address |
-| `--port` | `8000` | Port number |
+| `--port` | `8885` | Port number |
 | `--show-key` | `false` | Print the dev session API key to the console |
 | `--auto-login` | `false` | Automatically bypass the Tuvl Insight security screen |
 
@@ -134,7 +134,7 @@ On each startup tuvl generates a secure session API key. By default, this key is
 ```
 🚀  tuvl dev server starting...
 🔑  Dev API key saved to .tuvl/.dev-session
-🌐  UI: http://localhost:8000/ui
+🌐  UI: http://localhost:8885/ui
 ```
 
 If you prefer to bypass the login screen automatically during development, use the `--auto-login` flag:
@@ -170,7 +170,7 @@ tuvl run [OPTIONS]
 |--------|---------|-------------|
 | `--project-dir`, `-d` | `.` | Project directory |
 | `--host` | `0.0.0.0` | Bind address |
-| `--port` | `8000` | Port number |
+| `--port` | `8885` | Port number |
 | `--workers` | `1` | Number of workers |
 
 ### Examples
@@ -187,7 +187,7 @@ tuvl run --host 127.0.0.1 --port 80 --workers 8
 
 ```bash
 # Behind a reverse proxy
-tuvl run --host 127.0.0.1 --port 8000 --workers 4
+tuvl run --host 127.0.0.1 --port 8885 --workers 4
 
 # With environment
 POSTGRES_HOST=prod-db tuvl run --workers 4
@@ -487,7 +487,7 @@ tuvl stream-watch WORKFLOW [OPTIONS]
 |--------|-------|---------|-------------|
 | `--payload` | `-p` | `{}` | JSON string sent as the workflow input payload |
 | `--token` | `-t` | — | Biscuit Bearer token. Falls back to `TUVL_BISCUIT_TOKEN` env var |
-| `--url` | `-u` | `http://localhost:8000` | Base URL of the tuvl server |
+| `--url` | `-u` | `http://localhost:8885` | Base URL of the tuvl server |
 | `--timeout` | — | none | Read timeout in seconds for the SSE stream body. By default there is no timeout, so a quiet workflow (slow agent iterations, a HITL wait) can go arbitrarily long between events without the connection being torn down. Only affects the stream body — the initial manifest fetch always uses its own short timeout |
 
 ### Examples
@@ -550,7 +550,7 @@ The CLI respects these environment variables (typically set in `<project>/.env`)
 ```env
 # Server
 TUVL_HOST=0.0.0.0
-TUVL_PORT=8000
+TUVL_PORT=8885
 
 # Database
 POSTGRES_HOST=localhost
@@ -591,7 +591,7 @@ LOG_LEVEL=DEBUG tuvl dev
 
 ```bash
 # Find process using port
-lsof -i :8000
+lsof -i :8885
 
 # Use different port
 tuvl dev --port 8001
