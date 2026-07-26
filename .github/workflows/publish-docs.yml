@@ -1,0 +1,57 @@
+name: Publish Docs
+
+# Publishes the MkDocs site to https://tuvl.dev — a single, unversioned site
+# served from the gh-pages branch (CNAME below). Deploys from `release`, the
+# production-mirror branch (the same branch the portal's /docs mirror tracks),
+# so tuvl.dev and tuvl.io/docs stay in step.
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One deploy at a time; cancel an in-progress run when a newer push arrives.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build + deploy docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Build (strict)
+        run: uv run mkdocs build --strict
+
+      - name: Deploy to gh-pages (tuvl.dev)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          # tuvl.dev custom domain — written into the published artefact so
+          # GitHub Pages preserves it on every deploy.
+          cname: tuvl.dev
+          # Orphan the branch each deploy so the old mike multi-version
+          # directories (2026.x/, latest/, beta/, versions.json) are wiped —
+          # tuvl.dev is a single unversioned site now.
+          force_orphan: true
