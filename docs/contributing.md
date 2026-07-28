@@ -6,7 +6,7 @@ Thank you for your interest in contributing to tuvl!
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.13 (`>=3.13,<3.14` — 3.14 is not yet supported; see [Installation → Troubleshooting](getting-started/installation.md#troubleshooting))
 - uv package manager
 - PostgreSQL 16+
 - Node.js 20+ and pnpm (for UI development)
