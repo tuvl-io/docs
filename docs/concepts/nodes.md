@@ -13,7 +13,7 @@ tuvl has 8 built-in step kinds. The table below maps each kind to its icon and c
 | Kind | UI colour | Icon | Purpose | Emits |
 |------|-----------|------|---------|-------|
 | `Functional` | :material-circle:{ style="color:#3b82f6" } **Blue** | :material-code-braces: | Run a custom Python `@node()` function | Any string / tuple |
-| `Agent` | :material-circle:{ style="color:#a855f7" } **Purple** | :material-star-four-points: | Call an LLM via LiteLLM or an `llms/` preset | `default` · `error` · `timeout` · `parse_error` · custom from `signal_from` |
+| `Agent` | :material-circle:{ style="color:#a855f7" } **Purple** | :material-star-four-points: | Call an LLM — `mode: completion` (one retried call) or `mode: autonomous` (bounded tool-calling loop) | `default` · custom from `outcome.enum` · reserved exits (`error` · `timeout` · `parse_error` · `max_iterations` · `budget_exceeded` · `aborted` · `guardrail_violation`) |
 | `Router` | :material-circle:{ style="color:#f59e0b" } **Amber** | :material-rhombus: | Evaluate a condition on context, branch true/false | `"true"` · `"false"` · `"error"` |
 | `APICall` | :material-circle:{ style="color:#14b8a6" } **Teal** | :material-web: | Make an outbound HTTP request | `default` · `error` |
 | `MCP` | :material-circle:{ style="color:#ec4899" } **Pink** | :material-connection: | Call a tool on an MCP server (SSE or stdio) | `default` · `error` |
@@ -57,24 +57,31 @@ async def normalize_email(ctx: dict) -> dict:
 
 **UI colour:** :material-circle:{ style="color:#a855f7" } Purple — `border-purple-600 bg-purple-950`
 
-Call an LLM. Supports any LiteLLM model string or a named preset from `llms/<name>.yaml`.
+Call an LLM. Supports any LiteLLM model string or a named preset from `llms/<name>.yaml`. Every `Agent` step **must** declare a `mode:` — there is no default:
+
+- **`mode: completion`** — one retried LLM call driven by `system` / `prompt`.
+- **`mode: autonomous`** — a bounded tool-calling loop driven by `steering` and a declared `tools` set.
+
+Both modes share the unified `agent.outcome` contract: declare `enum` for a closed set of route signals, `format` for `json | text` (completion), `map` to rename parsed JSON fields (completion), and `write` for the context key that receives the result payload. `system`, `prompt`, `steering`, and `skills[]` entries take inline text or an `artifact://` reference — see [Artifacts](../internals/tuvl-agentic-manual.md#211-artifacts-artifacts-kind-artifact).
+
+### `mode: completion`
 
 ```yaml
 - id: "evaluate"
   kind: "Agent"
+  mode: "completion"
   agent:
     model: "default"              # llms/default.yaml — or "gpt-4o-mini", "ollama/llama3" etc.
-    system: "You are an HR evaluator."
+    system: "You are an HR evaluator."   # inline text or artifact://<prompt artifact>
     prompt: |
       Evaluate {{ name }}'s application.
       Experience: {{ experience_years }} years.
-      Return JSON: {"score": <0-100>, "recommendation": "<hire|reject|maybe>"}
-    output:
+      Return JSON: {"score": <0-100>, "outcome": "<hire|reject|maybe>"}
+    outcome:
       format: json
+      enum: ["hire", "reject", "maybe"]   # closed set — the returned "outcome" field routes
       map:
         score: score
-        recommendation: recommendation
-      signal_from: recommendation   # route by LLM output
     retry:
       attempts: 3
       on: [parse_error, timeout]
@@ -84,9 +91,48 @@ Call an LLM. Supports any LiteLLM model string or a named preset from `llms/<nam
     reject: "send_rejection"
     maybe:  "manual_review"
     error:  "handle_error"
+    parse_error: "handle_error"
 ```
 
-**Signals:** `default`, `error`, `timeout`, `parse_error`, or any value from `signal_from`.
+**Signals:** any value from `outcome.enum` (or `default` when no `enum` is declared), plus the reserved exits `error`, `timeout`, `parse_error`, and `guardrail_violation` (when guardrails are attached).
+
+### `mode: autonomous`
+
+Where `mode: completion` is a single LLM call, `mode: autonomous` runs a **bounded tool-calling loop**: the model is given its steering and a closed set of declared tools, picks which to call, observes results, and re-decides until it emits one of `outcome.enum`. Each tool's `ref` names **another step** in the same workflow. The loop is capped by `max_iterations` / `token_budget`.
+
+```yaml
+- id: "triage"
+  kind: "Agent"
+  mode: "autonomous"
+  agent:
+    model: "default"
+    steering: "Resolve the support ticket using the available tools."
+    max_iterations: 8                # hard cap (default 8)
+    token_budget: 50000              # optional cap on cumulative tokens
+    skills:                          # when-relevant capabilities — inline text or artifact refs
+      - "artifact://support-policy"
+    tools:                           # REQUIRED in this mode
+      - ref: "lookup_order"          # names another step in this workflow;
+                                     # its description comes from that step's own description:
+        parameters:
+          type: object
+          properties: { order_id: { type: string } }
+          required: [order_id]
+      - ref: "issue_refund"
+    outcome:
+      enum: ["resolved", "escalate", "needs_human"]   # closed set of exits
+      write: "agent_result"          # context key receiving the final payload
+  routes:
+    resolved:        "format_reply"
+    escalate:        "notify_manager"
+    needs_human:     "hitl_review"
+    max_iterations:  "fallback_summary"   # reserved abnormal exits
+    budget_exceeded: "fallback_summary"
+    error:           "alert_ops"
+    aborted:         "alert_ops"
+```
+
+**Signals:** any value from `outcome.enum`, plus the reserved abnormal exits `max_iterations`, `budget_exceeded`, `error`, `aborted`, and `guardrail_violation` (when guardrails are attached). See [Workflows → Autonomous Agent Steps](workflows.md#autonomous-agent-steps) for the full schema.
 
 ---
 
@@ -149,44 +195,38 @@ On HTTP errors: sets `_last_error` and `_api_status_code` in context, emits `"er
 
 **UI colour:** :material-circle:{ style="color:#ec4899" } Pink — `border-pink-600 bg-pink-950`
 
-Call a tool on any [Model Context Protocol](https://modelcontextprotocol.io) server. Supports SSE and stdio transports.
+Call a tool on any [Model Context Protocol](https://modelcontextprotocol.io) server. The connection (SSE or stdio transport) lives **only** in a `type: mcp` artifact — one server, one definition, any number of steps. Inline transport config on the step is rejected.
 
-=== "SSE"
+```yaml title="artifacts/github_mcp.yaml"
+kind: "Artifact"
+metadata: { name: "github-mcp", version: 1 }
+spec:
+  type: "mcp"
+  transport: "stdio"               # sse | stdio (default sse)
+  command: "npx"
+  args: ["@modelcontextprotocol/server-github"]
+  env:
+    GITHUB_TOKEN: "${GITHUB_TOKEN}"
+```
 
-    ```yaml
-    - id: "search_kb"
-      kind: "MCP"
-      mcp:
-        transport: "sse"                         # default
-        url: "http://localhost:3001/sse"
-        tool: "search"
-        arguments:
-          query: "{{ user_query }}"
-      response:
-        output_key: "kb_results"
-        extract:
-          - path: "0.content"
-            as: "top_result"
-    ```
+The step carries only the call:
 
-=== "stdio"
-
-    ```yaml
-    - id: "list_prs"
-      kind: "MCP"
-      mcp:
-        transport: "stdio"
-        command: "npx"
-        args: ["@modelcontextprotocol/server-github"]
-        env:
-          GITHUB_TOKEN: "{{ github_token }}"
-        tool: "list_pull_requests"
-        arguments:
-          owner: "{{ repo_owner }}"
-          repo:  "{{ repo_name }}"
-      response:
-        output_key: "pull_requests"
-    ```
+```yaml
+- id: "list_prs"
+  kind: "MCP"
+  mcp:
+    server: "artifact://github-mcp"   # REQUIRED — ref to a type: mcp artifact
+    tool: "list_pull_requests"
+    timeout: 30
+    arguments:
+      owner: "{{ repo_owner }}"
+      repo:  "{{ repo_name }}"
+  response:
+    output_key: "pull_requests"
+    extract:
+      - path: "0.title"
+        as: "first_title"
+```
 
 **Signals:** `default`, `error`.
 
@@ -292,10 +332,10 @@ Suspend the workflow and hand off to a human reviewer. The engine persists a `Sy
 Resume endpoint:
 
 ```http
-POST /hitl/{instance_id}/respond
+POST /api/workflows/resume
 Content-Type: application/json
 
-{ "approved": true, "notes": "Strong candidate." }
+{ "instance_id": "<from hitl_request>", "human_input": { "approved": true, "notes": "Strong candidate." } }
 ```
 
 **Signals:** *(suspends — does not pass through routes)*

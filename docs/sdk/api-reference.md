@@ -11,7 +11,7 @@ Authentication helper. Wraps all `/auth/*` endpoints. Create one instance per ap
 ```ts
 import { TuvlAuth } from "@tuvl/client";
 
-const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8885" });
 ```
 
 ### Constructor options
@@ -363,7 +363,7 @@ interface Candidate {
   email: string;
 }
 
-const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+const client = new TuvlClient({ baseUrl: "http://localhost:8885", token });
 
 // List with filters + pagination + relations
 const candidates = await client.crud<Candidate>("candidate").list({
@@ -445,11 +445,32 @@ interface StepEvent {
 |---|---|
 | `event_type` | `"step"` during execution, `"done"` on success, `"error"` on failure |
 | `step_id` | The step's `id` field from the workflow YAML |
-| `kind` | Step kind: `Functional`, `Agent`, `MCP`, `APICall`, `Router`, `Response`, `ModelOp` |
+| `kind` | Step kind: `Functional`, `Agent`, `MCP`, `APICall`, `Router`, `Response`, `ModelOp`, `HumanInTheLoop` |
 | `signal` | Routing signal emitted by the step (e.g. `"default"`, `"true"`, `"false"`, custom) |
 | `snapshot` | All public context keys (no `_` prefix) after this step completed |
 | `duration_ms` | Wall time for this step in milliseconds |
 | `error_detail` | Error message when `event_type === "error"` |
+
+---
+
+### `AgentProgress` / `agentProgress()`
+
+An autonomous-mode `Agent` step streams live loop progress mid-step as ordinary `StepEvent`s with `kind: "Agent"`, `signal: "running"`, and the payload under `snapshot.agent_progress`. The frames carry loop metadata only (no context values); the terminating frame is a normal `StepEvent` whose `signal` is the agent's outcome or a reserved exit (`max_iterations` | `budget_exceeded` | `error` | `aborted` | `guardrail_violation`).
+
+```ts
+interface AgentProgress {
+  type:        "iteration" | "tool_call" | "outcome";
+  iteration:   number;      // 1-based loop iteration index
+  tool_calls?: number;      // iteration frames: tools requested this turn
+  tokens_used?: number;     // iteration frames: cumulative tokens so far
+  tool?:       string;      // tool_call frames: the tool (component ref) invoked
+  signal?:     string;      // tool_call / outcome frames: the signal produced
+}
+
+function agentProgress(event: StepEvent): AgentProgress | null;
+```
+
+Use the `agentProgress()` helper to read the payload off a streamed event — it returns `null` for anything that is not an agent progress frame, and works for both the SSE `StepEvent` and the gRPC `GrpcStepEvent`.
 
 ---
 
@@ -491,10 +512,9 @@ interface WorkflowManifest {
   name:               string;
   trigger_path:       string;
   trigger_method:     string;
+  public:             boolean;
   has_slow_steps:     boolean;
   slow_kinds_present: string[];
-  required_scope:     string | null;
-  required_group:     string | null;
   steps:              Array<{ id: string; kind: string }>;
 }
 ```
@@ -503,11 +523,15 @@ interface WorkflowManifest {
 |---|---|
 | `trigger_path` | The HTTP path the workflow is mounted at (e.g. `/api/hello`) |
 | `trigger_method` | HTTP verb (`POST`, `GET`, etc.) |
+| `public` | The workflow's declared `spec.trigger.public` flag — `true` means the route accepts anonymous calls |
 | `has_slow_steps` | `true` if the workflow has `Agent`, `MCP`, or `APICall` steps |
 | `slow_kinds_present` | List of slow step kinds found (e.g. `["Agent", "MCP"]`) |
-| `required_scope` | Biscuit scope required to call this workflow, or `null` |
-| `required_group` | IAM group required to call this workflow, or `null` |
 | `steps` | Ordered list of `{id, kind}` for each step |
+
+!!! note "No `required_scope` / `required_group` here"
+    The manifest deliberately omits the enforced scope/group — exposing them would
+    let an anonymous caller reconnoiter exactly which credential to forge. Learn a
+    workflow's authorization requirement from the 401/403 it returns at call time.
 
 ---
 
@@ -566,7 +590,7 @@ Async generator for gRPC-Web streaming. Dynamically imports `@protobuf-ts/grpcwe
 import { openGrpcStream } from "@tuvl/client";
 
 for await (const event of openGrpcStream({
-  baseUrl:      "http://localhost:8000",
+  baseUrl:      "http://localhost:8885",
   workflowName: "screen-candidate",
   payloadJson:  JSON.stringify({ candidate_id: 42 }),
   token:        "...",

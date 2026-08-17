@@ -119,6 +119,7 @@ spec:
 
     - id: "ai_vetting"
       kind: "Agent"
+      mode: "completion"
       agent:
         model: "ollama/llama3"
         system: |
@@ -137,13 +138,15 @@ spec:
           - "needs_review" for everything in between
           
           Return ONLY valid JSON:
-          {"decision": "senior" | "unqualified" | "needs_review", "reasoning": "brief explanation"}
-        output:
+          {"outcome": "senior" | "unqualified" | "needs_review",
+           "decision": "<same value as outcome>",
+           "reasoning": "brief explanation"}
+        outcome:
           format: json
+          enum: ["senior", "unqualified", "needs_review"]   # "outcome" routes the workflow
           map:
             decision: vetting_decision
             reasoning: vetting_reasoning
-          signal_from: decision
         retry:
           attempts: 3
           on: [parse_error, timeout]
@@ -263,7 +266,7 @@ tuvl dev
 ### Submit a senior candidate
 
 ```bash
-curl -X POST http://localhost:8000/api/candidates/onboard \
+curl -X POST http://localhost:8885/api/candidates/onboard \
   -H "Content-Type: application/json" \
   -d '{
     "email": "senior@example.com",
@@ -295,7 +298,7 @@ Expected response:
 ### Submit a junior candidate
 
 ```bash
-curl -X POST http://localhost:8000/api/candidates/onboard \
+curl -X POST http://localhost:8885/api/candidates/onboard \
   -H "Content-Type: application/json" \
   -d '{
     "email": "junior@example.com",

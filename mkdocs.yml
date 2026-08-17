@@ -94,9 +94,6 @@ markdown_extensions:
   - pymdownx.tilde
 
 extra:
-  version:
-    provider: mike
-    default: latest
   analytics:
     provider: google
     property: G-7NBSPKBZSP
@@ -130,12 +127,15 @@ extra_javascript:
 nav:
   - Home: index.md
   - Main Website: https://tuvl.io
+  - Try it Live ↗: https://try.tuvl.online
   - Getting Started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
       - Project Structure: getting-started/project-structure.md
+      - Build with Coding Agents: getting-started/coding-agents.md
   - Concepts:
       - Architecture: concepts/architecture.md
+      - The Agentic Contract: concepts/agentic-contract.md
       - Workflows: concepts/workflows.md
       - Nodes: concepts/nodes.md
       - Models: concepts/models.md
@@ -148,6 +148,16 @@ nav:
       - Agents: configuration/agents.md
       - Telemetry: configuration/telemetry.md
       - LLM Judge: configuration/llm-judge.md
+  - Engine Internals:
+      - Agentic Manual: internals/tuvl-agentic-manual.md
+      - Authentication & Authorization: internals/auth.md
+      - Autonomous Agent Mode: internals/autonomous-agent.md
+      - Supervisor & Orchestrator: internals/supervisor.md
+      - Human-in-the-Loop: internals/human-in-the-loop.md
+      - Functional Nodes: internals/functional-node.md
+      - ModelOp: internals/model-op.md
+      - Response: internals/response.md
+      - Observability: internals/observability.md
   - Security:
       - IAM: security/iam.md
       - Federation: security/federation.md
@@ -180,6 +190,7 @@ nav:
       - Endpoints: api/endpoints.md
       - Schemas: api/schemas.md
   - Examples:
+      - Example Projects: examples/example-projects.md
       - Candidate Onboarding: examples/candidate-onboarding.md
       - Custom Nodes: examples/custom-nodes.md
   - Contributing: contributing.md

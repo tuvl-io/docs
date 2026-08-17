@@ -110,7 +110,7 @@ tuvl dev [OPTIONS]
 |--------|---------|-------------|
 | `--project-dir`, `-d` | `.` | Project directory |
 | `--host` | `127.0.0.1` | Bind address |
-| `--port` | `8000` | Port number |
+| `--port` | `8885` | Port number |
 | `--show-key` | `false` | Print the dev session API key to the console |
 | `--auto-login` | `false` | Automatically bypass the Tuvl Insight security screen |
 
@@ -134,7 +134,7 @@ On each startup tuvl generates a secure session API key. By default, this key is
 ```
 🚀  tuvl dev server starting...
 🔑  Dev API key saved to .tuvl/.dev-session
-🌐  UI: http://localhost:8000/ui
+🌐  UI: http://localhost:8885/ui
 ```
 
 If you prefer to bypass the login screen automatically during development, use the `--auto-login` flag:
@@ -170,7 +170,7 @@ tuvl run [OPTIONS]
 |--------|---------|-------------|
 | `--project-dir`, `-d` | `.` | Project directory |
 | `--host` | `0.0.0.0` | Bind address |
-| `--port` | `8000` | Port number |
+| `--port` | `8885` | Port number |
 | `--workers` | `1` | Number of workers |
 
 ### Examples
@@ -187,10 +187,98 @@ tuvl run --host 127.0.0.1 --port 80 --workers 8
 
 ```bash
 # Behind a reverse proxy
-tuvl run --host 127.0.0.1 --port 8000 --workers 4
+tuvl run --host 127.0.0.1 --port 8885 --workers 4
 
 # With environment
 POSTGRES_HOST=prod-db tuvl run --workers 4
+```
+
+!!! warning "Signing key required"
+    `tuvl run` fails to start unless a persistent `TUVL_BISCUIT_PRIVATE_KEY` is set — it
+    will **not** fall back to an ephemeral key the way `tuvl dev` does. Generate one with
+    [`tuvl keys generate`](#tuvl-keys) and add it to your `.env`. See
+    [Tokens → Signing Keys](../security/tokens.md#signing-keys).
+
+---
+
+## `tuvl keys`
+
+Manage the **Ed25519** key used to sign Biscuit authentication tokens.
+
+### `tuvl keys generate`
+
+Generate a persistent private key for `TUVL_BISCUIT_PRIVATE_KEY`. Production mode
+(`tuvl run`) requires this key; `tuvl dev` generates an ephemeral one automatically.
+
+#### Usage
+
+```bash
+tuvl keys generate [OPTIONS]
+```
+
+#### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--write`, `-w` | off | Write the key into the project `.env` instead of only printing it |
+| `--force`, `-f` | off | Overwrite an existing `TUVL_BISCUIT_PRIVATE_KEY` (with `--write`) |
+| `--project-dir`, `-d` | `.` | Project directory whose `.env` to update (with `--write`) |
+
+#### Examples
+
+```bash
+# Print a fresh key + the .env line to paste
+tuvl keys generate
+
+# Write it straight into the project .env (owner-only perms)
+tuvl keys generate --write
+
+# Rotate an existing key
+tuvl keys generate --write --force
+```
+
+!!! danger
+    Keep the key secret and stable. Changing it invalidates every previously issued token.
+
+---
+
+## `tuvl db`
+
+Database maintenance subcommands for multi-tenant Row-Level Security (RLS).
+Both subcommands load the project first — models, datasources, and the
+`tenant_id` column injected under `multi_tenant` mode — so the tenant-scoped
+tables they operate on are the project's actual tables, not just tuvl's
+internal system tables.
+
+### `tuvl db generate-rls`
+
+Print idempotent RLS-enable + tenant-isolation policy SQL for every
+tenant-scoped table. Review the output and apply it through your normal
+migration tool (Alembic, raw `psql`, etc.) — re-running the generator and
+re-applying the SQL is always safe.
+
+```bash
+# Print to stdout
+tuvl db generate-rls
+
+# Write to a file
+tuvl db generate-rls --out deploy/rls.sql
+
+# Against a specific project
+tuvl db generate-rls --project-dir ./my-project
+```
+
+### `tuvl db check-rls`
+
+Connect to the configured primary datasource and verify every tenant-scoped
+table has the `tuvl_tenant_isolation` policy installed. Exits `0` when every
+expected policy is present, and `1` (listing the missing tables) otherwise —
+designed to run in CI before promoting a deployment to a multi-tenant
+environment. In `single_tenant` mode it reports that there's nothing to
+check.
+
+```bash
+tuvl db check-rls
 ```
 
 ---
@@ -241,6 +329,16 @@ tuvl test --tests-dir path/to/tests
 ## `tuvl validate`
 
 Validate configuration files without starting the server.
+
+Discovery is recursive and dispatched purely by each file's `kind:` field —
+the same way the runtime loads a project. Any `*.yaml` or `*.yml` file
+anywhere under the project directory is picked up regardless of which
+folder it lives in (skipping `.tuvl/`, `.git/`, `deploy/`, virtualenvs, and
+other dotdirs). This covers every resource kind, including
+`EmbeddingRegistry`, `EmbeddingConfig`, `CollectionRegistry`,
+`CollectionConfig`, `RedisConfig`, and `FederationProvider` alongside models,
+workflows, and datasources. A file whose `kind:` isn't one tuvl recognizes is
+a validation **error** (the runtime would otherwise silently skip it).
 
 ### Usage
 
@@ -293,6 +391,80 @@ With errors:
 
 ---
 
+## `tuvl ship`
+
+Package a project for production. `ship` validates the project, generates a
+production `Dockerfile` + `.dockerignore` and a Helm chart, then builds the
+container image.
+
+Run from the project root (it reads the project's `pyproject.toml` for the image
+name and version).
+
+### Usage
+
+```bash
+tuvl ship [OPTIONS]
+```
+
+### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--project-dir`, `-d` | `.` | Project directory |
+| `--tag`, `-t` | `<name>:<version>` | Image reference to build |
+| `--no-build` | `false` | Write the Dockerfile and Helm chart but skip the build |
+| `--push` | `false` | Push the image after a successful build |
+| `--force` | `false` | Overwrite existing generated files (`deploy/`, `.dockerignore`) |
+| `--strict` | `false` | Treat validation warnings as errors |
+
+### What it does
+
+1. **Validate** — runs the full `tuvl validate` pass. Any error aborts the ship
+   before anything is written; `--strict` also aborts on warnings.
+2. **Generate artifacts** — writes `deploy/Dockerfile`, a root `.dockerignore`,
+   and a Helm chart under `deploy/chart/<name>/` (`Chart.yaml`, `values.yaml`,
+   and templates for the Deployment, Service, and helpers). Existing files are
+   left untouched unless you pass `--force`, so you can hand-edit them and
+   re-run `ship` safely. If a kept `Chart.yaml`'s `appVersion` no longer
+   matches the version being built, `ship` warns that the deployed image tag
+   won't match — re-run with `--force` or bump `appVersion` by hand.
+3. **Build the image** — runs `docker build` (skip with `--no-build`, publish
+   with `--push`).
+
+The generated image runs `tuvl run` as a non-root user with
+`TUVL_ENV=production` — no dev routes, no Insight UI, JSON logs, telemetry on —
+and a `/health` HEALTHCHECK.
+
+### Examples
+
+```bash
+# Validate, containerize, and emit a Helm chart
+tuvl ship
+
+# Build and push a tagged image to a registry
+tuvl ship --tag ghcr.io/acme/my-app:1.0.0 --push
+
+# Generate deploy artifacts only (no docker build)
+tuvl ship --no-build
+```
+
+### Deploying the chart
+
+```bash
+# Secrets the engine needs at runtime (Biscuit key, DB password, LLM keys)
+kubectl create secret generic my-app-env --from-env-file=.env
+
+helm install my-app deploy/chart/my-app \
+  --set image.repository=ghcr.io/acme/my-app
+```
+
+!!! note
+    `tuvl run` (and therefore the container) requires a persistent
+    `TUVL_BISCUIT_PRIVATE_KEY` — generate one with `tuvl keys generate` and
+    include it in the referenced Secret.
+
+---
+
 ## `tuvl stream-watch`
 
 Trigger a workflow and stream step events to the terminal over SSE. Useful for debugging long-running workflows without writing any code.
@@ -315,7 +487,8 @@ tuvl stream-watch WORKFLOW [OPTIONS]
 |--------|-------|---------|-------------|
 | `--payload` | `-p` | `{}` | JSON string sent as the workflow input payload |
 | `--token` | `-t` | — | Biscuit Bearer token. Falls back to `TUVL_BISCUIT_TOKEN` env var |
-| `--url` | `-u` | `http://localhost:8000` | Base URL of the tuvl server |
+| `--url` | `-u` | `http://localhost:8885` | Base URL of the tuvl server |
+| `--timeout` | — | none | Read timeout in seconds for the SSE stream body. By default there is no timeout, so a quiet workflow (slow agent iterations, a HITL wait) can go arbitrarily long between events without the connection being torn down. Only affects the stream body — the initial manifest fetch always uses its own short timeout |
 
 ### Examples
 
@@ -377,7 +550,7 @@ The CLI respects these environment variables (typically set in `<project>/.env`)
 ```env
 # Server
 TUVL_HOST=0.0.0.0
-TUVL_PORT=8000
+TUVL_PORT=8885
 
 # Database
 POSTGRES_HOST=localhost
@@ -418,7 +591,7 @@ LOG_LEVEL=DEBUG tuvl dev
 
 ```bash
 # Find process using port
-lsof -i :8000
+lsof -i :8885
 
 # Use different port
 tuvl dev --port 8001

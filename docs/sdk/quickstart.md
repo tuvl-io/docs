@@ -37,7 +37,7 @@ Get `@tuvl/client` installed and making live calls in under 5 minutes.
 import { TuvlClient } from "@tuvl/client";
 
 const client = new TuvlClient({
-  baseUrl: "http://localhost:8000",
+  baseUrl: "http://localhost:8885",
   token: process.env.TUVL_TOKEN, // (1)
 });
 ```
@@ -137,7 +137,7 @@ Every tuvl model gets auto-generated REST endpoints. Access them with `client.cr
 ```ts
 import { TuvlClient } from "@tuvl/client";
 
-const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+const client = new TuvlClient({ baseUrl: "http://localhost:8885", token });
 
 // List all candidates
 const candidates = await client.crud("candidate").list();
@@ -167,11 +167,15 @@ await client.crud("candidate").delete(created.id);
 ```
 
 !!! info "Scopes"
-    CRUD endpoints enforce `{modelname}:read`, `:write`, and `:delete` Biscuit scopes. Check `me.scopes` from `auth.getMe(token)` before calling CRUD methods if you need to gate UI features.
+    CRUD endpoints enforce `{modelname}:read`, `:write`, and `:delete` Biscuit scopes (plus any
+    `spec.access.{read,write,delete}_groups` the model declares). Check `me.scopes` from
+    `auth.getMe(token)` before calling CRUD methods if you need to gate UI features. A project can
+    also disable the entire CRUD surface with `spec.api.expose_model_crud: false`, in which case
+    these routes are absent (404) rather than scope-denied.
 
 ---
 
-## 8. Force a transport
+## 7. Force a transport
 
 ```ts
 // Always SSE regardless of workflow hints
@@ -190,7 +194,7 @@ await client.execute("screen-candidate", {
 
 ---
 
-## 9. Cancellation
+## 8. Cancellation
 
 ```ts
 const controller = new AbortController();

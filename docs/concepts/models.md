@@ -96,7 +96,7 @@ spec:
     When you create your own model from the template, change this to `schema: true` (or remove the
     line entirely — `true` is the default) to have CRUD endpoints generated automatically.
 
-At the model level, `spec.datasource` routes the model to a named datasource (defaults to `"main_postgres"`):
+At the model level, `spec.datasource` routes the model to a named datasource. When omitted, the model binds to the primary DataSource — the one with `metadata.primary: true`:
 
 ```yaml
 spec:
@@ -268,19 +268,19 @@ Each model automatically gets CRUD endpoints:
 
 **Create:**
 ```bash
-curl -X POST http://localhost:8000/api/contact \
+curl -X POST http://localhost:8885/api/contact \
   -H "Content-Type: application/json" \
   -d '{"email": "jane@example.com", "name": "Jane Doe"}'
 ```
 
 **List with filters:**
 ```bash
-curl "http://localhost:8000/api/contact?company=Acme&limit=10"
+curl "http://localhost:8885/api/contact?company=Acme&limit=10"
 ```
 
 **Update:**
 ```bash
-curl -X PATCH http://localhost:8000/api/contact/uuid-here \
+curl -X PATCH http://localhost:8885/api/contact/uuid-here \
   -H "Content-Type: application/json" \
   -d '{"company": "New Company"}'
 ```

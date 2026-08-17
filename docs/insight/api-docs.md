@@ -15,7 +15,7 @@ The Swagger UI at `/insight/api-docs` proxies the OpenAPI schema from `/docs` an
 | **Auth** | `/auth/token`, `/auth/bootstrap`, `/auth/admin/*`, `/auth/callback/*` |
 | **System** | `/health`, `/registry`, `/` |
 | **Workflow execution** | `/api/workflows/{name}/run`, `/api/workflows/{name}/stream` |
-| **HITL** | `/hitl/tasks`, `/hitl/tasks/{id}/respond` |
+| **HITL** | `/api/workflows/resume` |
 | **Model CRUD** | `/api/{table}/` — auto-generated for each enabled `ModelDefinition` |
 | **Vector collections** | `/api/collections/{name}/index`, `/api/collections/{name}/search` |
 
