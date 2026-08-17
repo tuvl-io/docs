@@ -1,0 +1,3939 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A lightweight, local-first workflow orchestration engine for AI-powered business automation">
+      
+      
+        <meta name="author" content="tuvl Team">
+      
+      
+        <link rel="canonical" href="https://tuvl.dev/internals/autonomous-agent/">
+      
+      
+        <link rel="prev" href="../auth/">
+      
+      
+        <link rel="next" href="../supervisor/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Autonomous Agent Mode - tuvl</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-7NBSPKBZSP"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-7NBSPKBZSP",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-7NBSPKBZSP",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="cyan" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#agent-mode-autonomous-internals-of-the-bounded-tool-loop" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="tuvl" class="md-header__button md-logo" aria-label="tuvl" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            tuvl
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Autonomous Agent Mode
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="cyan" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="cyan" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tuvl-io/tuvl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tuvl-io/tuvl
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://tuvl.io" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Main Website
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://try.tuvl.online" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Try it Live ↗
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/overview/" class="md-tabs__link">
+          
+  
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../tuvl-agentic-manual/" class="md-tabs__link">
+          
+  
+  
+  Engine Internals
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../security/iam/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../insight/overview/" class="md-tabs__link">
+          
+  
+  
+  Insight Portal
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tools/spectrum/" class="md-tabs__link">
+          
+  
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sdk/overview/" class="md-tabs__link">
+          
+  
+  
+  TypeScript SDK
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli/overview/" class="md-tabs__link">
+          
+  
+  
+  CLI Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/endpoints/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../examples/example-projects/" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="tuvl" class="md-nav__button md-logo" aria-label="tuvl" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    tuvl
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tuvl-io/tuvl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tuvl-io/tuvl
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://tuvl.io" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main Website
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://try.tuvl.online" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Try it Live ↗
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/coding-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build with Coding Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/agentic-contract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Agentic Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nodes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/repositories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Repositories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Object
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/datasources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/redis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/llm-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine Internals
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Engine Internals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tuvl-agentic-manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agentic Manual
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication & Authorization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autonomous Agent Mode
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autonomous Agent Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-mental-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Mental Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-turn-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The Turn Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-how-tools-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. How Tools Work
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. How Tools Work">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-schema-derivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Schema derivation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Dispatch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-steering-and-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Steering and Skills
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-exits-and-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Exits and Routing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-guardrail-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Guardrail Gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-hook-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Hook Events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-live-progress-streaming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Live Progress Streaming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-supervision-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Supervision Hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-reading-the-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Reading the Code
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../supervisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supervisor & Orchestrator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../human-in-the-loop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Human-in-the-Loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../functional-node/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functional Nodes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model-op/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ModelOp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../response/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Response
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/iam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IAM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/federation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Federation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tokens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Insight Portal
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Insight Portal
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/datasources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/ai-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/embeddings-collections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embeddings & Collections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/iam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IAM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/federation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Federation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/api-docs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/spectrum/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../insight/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/spectrum/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/workflow-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Canvas Test Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/hitl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Human-in-the-Loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeScript SDK
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    TypeScript SDK
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/schemas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schemas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/example-projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Example Projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/candidate-onboarding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Candidate Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/custom-nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Nodes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-mental-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Mental Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-turn-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The Turn Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-how-tools-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. How Tools Work
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. How Tools Work">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-schema-derivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Schema derivation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Dispatch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-steering-and-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Steering and Skills
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-exits-and-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Exits and Routing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-guardrail-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Guardrail Gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-hook-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Hook Events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-live-progress-streaming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Live Progress Streaming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-supervision-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Supervision Hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-reading-the-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Reading the Code
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="agent-mode-autonomous-internals-of-the-bounded-tool-loop">Agent (<code>mode: autonomous</code>) — Internals of the Bounded Tool-Loop<a class="headerlink" href="#agent-mode-autonomous-internals-of-the-bounded-tool-loop" title="Permanent link">&para;</a></h1>
+<p><code>kind: Agent</code> with <code>mode: autonomous</code> is tuvl's bounded ReAct step: an LLM that chooses among author-declared tools, observes results, and re-decides — inside a loop the workflow contract caps on every axis. This document explains how the mode works internally, end to end. For the authoring reference (the YAML contract, field by field), see <code>tuvl-agentic-manual.md</code> §4.4 and §4.13.</p>
+<p>Both agent modes share <strong>one runtime</strong>: <code>src/tuvl/core/engine/agent_core.py</code> (<code>AgentStepRunner</code>) — one runner class, two execution strategies, selected by the required step-level <code>mode:</code> discriminator. Message assembly, call-parameter resolution (<code>resolve_call_params</code>), retry, guardrail gating, and the <code>outcome</code> routing contract (<code>OutcomeContract</code>) are shared; this document covers the autonomous strategy.</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#1-mental-model">Mental Model</a></li>
+<li><a href="#2-the-turn-lifecycle">The Turn Lifecycle</a></li>
+<li><a href="#3-how-tools-work">How Tools Work</a></li>
+<li><a href="#4-steering-and-skills">Steering and Skills</a></li>
+<li><a href="#5-exits-and-routing">Exits and Routing</a></li>
+<li><a href="#6-guardrail-gates">Guardrail Gates</a></li>
+<li><a href="#7-hook-events">Hook Events</a></li>
+<li><a href="#8-live-progress-streaming">Live Progress Streaming</a></li>
+<li><a href="#9-supervision-hooks">Supervision Hooks</a></li>
+<li><a href="#10-validation">Validation</a></li>
+<li><a href="#11-observability">Observability</a></li>
+<li><a href="#12-reading-the-code">Reading the Code</a></li>
+</ol>
+<hr />
+<h2 id="1-mental-model">1. Mental Model<a class="headerlink" href="#1-mental-model" title="Permanent link">&para;</a></h2>
+<p>An autonomous-mode <code>Agent</code> step is autonomous only <em>inside</em> a closed contract. The model decides <em>which tool to call, with what arguments, and when to stop</em> — nothing else. Everything around that decision loop is declared in YAML and enforced by the engine:</p>
+<table>
+<thead>
+<tr>
+<th>Axis</th>
+<th>Bound</th>
+<th>Enforced by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Actions</td>
+<td><code>agent.tools[]</code> — a closed set of refs to other steps in the same workflow (REQUIRED in this mode)</td>
+<td><code>build_tool_specs</code> + the dispatch callback</td>
+</tr>
+<tr>
+<td>Exits</td>
+<td><code>agent.outcome.enum</code> — a closed set, plus five reserved abnormal exits</td>
+<td><code>OutcomeContract.finalize_autonomous</code> + <code>routes:</code> validation</td>
+</tr>
+<tr>
+<td>Iterations</td>
+<td><code>agent.max_iterations</code> (default 8)</td>
+<td>the loop itself</td>
+</tr>
+<tr>
+<td>Tokens</td>
+<td><code>agent.token_budget</code> (optional, cumulative)</td>
+<td>checked at the top of every turn</td>
+</tr>
+<tr>
+<td>Wall clock per tool</td>
+<td><code>TUVL_AGENT_TOOL_TIMEOUT_S</code> (default 300s)</td>
+<td><code>asyncio.wait_for</code> around each dispatch</td>
+</tr>
+<tr>
+<td>Content</td>
+<td><code>agent.guardrails</code> — <code>input</code> / <code>output</code> / <code>tools</code> gates (§6)</td>
+<td><code>run_guardrails</code> inside the shared core</td>
+</tr>
+<tr>
+<td>Context writes</td>
+<td>only <code>outcome.write</code>; tools need <code>writes_context: true</code> to write</td>
+<td><code>_dispatch_tool</code> merge policy</td>
+</tr>
+</tbody>
+</table>
+<p>Compare <code>mode: completion</code> (a single retried call, no tools): the difference is the loop, and the loop is why every bound above exists. The step never mutates shared context mid-run except through explicitly opted-in tools; its one guaranteed write is the final <code>outcome.write</code> key (default <code>&lt;step_id&gt;_result</code>).</p>
+<p>Note: the persistent instruction field is <code>steering</code> — inline text or an <code>artifact://</code> reference. <code>system</code> / <code>prompt</code> are completion-mode fields and are rejected by <code>tuvl validate</code> on an autonomous step; <code>mode:</code> itself is required, with no default.</p>
+<hr />
+<h2 id="2-the-turn-lifecycle">2. The Turn Lifecycle<a class="headerlink" href="#2-the-turn-lifecycle" title="Permanent link">&para;</a></h2>
+<p>The loop lives in <code>src/tuvl/core/engine/agent_core.py</code> (<code>AgentStepRunner._run_autonomous</code>). Each pass through the <code>for iteration in range(1, max_iterations + 1)</code> loop is one <em>turn</em>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                ┌─────────────────────────────────────────────┐
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                │ control checkpoint (pause / abort / steer)  │  ← cooperative,
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                ├─────────────────────────────────────────────┤    turn boundary only
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                │ token budget check (tokens_used &gt;= budget?) │──── budget_exceeded ──▶ exit
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                ├─────────────────────────────────────────────┤
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                │ LLM call (transport-retried per agent.retry)│──── LLM exception ───▶ error exit
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                ├─────────────────────────────────────────────┤
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        ┌──────▶│ tool_calls in the response?                 │
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        │       └──────────────┬───────────────┬──────────────┘
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        │             yes      │               │ no
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        │                      ▼               ▼
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        │       ┌────────────────────────┐   ┌────────────────────────────┐
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        │       │ dispatch each tool     │   │ output guardrail gate      │
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        │       │ SEQUENTIALLY, in order │   │ finalize_autonomous:       │
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>        │       │ (tools gate on each    │   │ parse {&quot;outcome&quot;,&quot;result&quot;} │
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>        │       │  observation; abort    │   │ write outcome.write        │
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        │       │  checked between calls;│   │ return outcome signal      │
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>        │       │  timeout fatal)        │   └────────────────────────────┘
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        │       └───────────┬────────────┘
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>        │                   │
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        └── next iteration ◀┘        loop exhausted ──▶ max_iterations exit
+</span></code></pre></div>
+<p>Details that matter:</p>
+<ul>
+<li><strong>Message assembly</strong> (<code>_assemble_autonomous_messages</code>): the system prompt is built from the steering block (inline text or a resolved <code>steering</code> artifact, always injected), the skills block (each entry inline or a resolved <code>skill</code> artifact, injected as "apply when relevant"), a fixed autonomous-agent instruction, and — when <code>outcome.enum</code> is declared — a strict final-answer format: <code>{"outcome": &lt;enum value&gt;, "result": &lt;payload&gt;}</code>, no markdown fences. The first user message is the <em>public</em> context (keys not starting with <code>_</code>) serialized as a JSON block, or <code>"Begin."</code> when the context is empty; <code>context_injection</code> keys are appended as a delimited untrusted-content message.</li>
+<li><strong>Input gate</strong>: before anything is sent to the model, the assembled user text passes the <code>input</code> guardrail gate (§6).</li>
+<li><strong>Transport retry</strong> (<code>_acompletion_with_transport_retry</code>): each LLM turn is retried on transport failures per <code>agent.retry</code> — only <code>timeout</code> / <code>error</code> in <code>retry.on</code> trigger a retried call (with exponential backoff); parse-level issues are handled by the loop itself. Exhausted attempts raise the last exception, which becomes the <code>error</code> exit.</li>
+<li><strong>Token accounting</strong>: <code>usage.total_tokens</code> from each response is accumulated into <code>tokens_used</code>. The budget check runs at the <em>top</em> of every turn, so it also bounds the final no-tool answer turn, not only tool-calling turns.</li>
+<li><strong>Tool calls are sequential, not concurrent.</strong> All tools in a turn share the request's single SQLAlchemy <code>AsyncSession</code> (through a shallow context copy); concurrent statements on one <code>AsyncSession</code> raise <code>IllegalStateChangeError</code> and can poison the request-final commit. Sequential dispatch also keeps each <code>role: "tool"</code> message aligned with its <code>tool_call_id</code>, and lets an abort directive land between calls so a multi-tool turn cannot outlive it.</li>
+<li><strong>Tool failure is not loop failure.</strong> A tool that raises is captured as <code>{"error": ...}</code> with signal <code>error</code> and fed back to the model, which may retry or route around it. Two fatal cases: <code>ToolTimeoutError</code> (the cancelled coroutine may have interrupted a statement on the shared session, so the run ends on the <code>error</code> exit rather than continuing on a possibly-poisoned connection) and a <code>GuardrailViolationError</code> from the <code>tools</code> gate (routed as <code>guardrail_violation</code>).</li>
+<li><strong>Tool results are truncated</strong> to 8000 characters (<code>_MAX_TOOL_RESULT_CHARS</code>), then passed through the <code>tools</code> guardrail gate, before being appended as the tool message.</li>
+<li><strong>Termination</strong>: a response with no tool calls means the agent is done — the content passes the <code>output</code> guardrail gate, then <code>OutcomeContract.finalize_autonomous</code> strips code fences, parses the JSON, writes the <code>result</code> payload (or the whole parsed object, or the raw text) to <code>outcome.write</code> (default <code>&lt;stepId&gt;_result</code>), and returns the outcome signal. Exhausting the loop returns <code>max_iterations</code>.</li>
+</ul>
+<hr />
+<h2 id="3-how-tools-work">3. How Tools Work<a class="headerlink" href="#3-how-tools-work" title="Permanent link">&para;</a></h2>
+<p>A tool is another declared step in the same workflow. There is no separate tool registry: <code>agent.tools[].ref</code> names a step <code>id</code>, and the engine reuses the existing step runners to execute it.</p>
+<h3 id="31-schema-derivation">3.1 Schema derivation<a class="headerlink" href="#31-schema-derivation" title="Permanent link">&para;</a></h3>
+<p><code>src/tuvl/core/engine/agent_tools.py</code> (<code>build_tool_specs</code>) converts each tool entry into an OpenAI/Anthropic function-calling spec, forwarded by LiteLLM as <code>tools=</code>:</p>
+<ul>
+<li><strong>name</strong> — the <code>ref</code> itself.</li>
+<li><strong>description</strong> — sourced from the referenced step's top-level <code>description:</code> when set, otherwise the tool entry's <code>description:</code>, otherwise the generic fallback <code>"Invoke the '&lt;ref&gt;' component."</code>. Validation errors when neither is set (§10).</li>
+<li><strong>parameters</strong> — the tool entry's <code>parameters</code> (a JSON Schema object) when declared. When omitted, <code>_derive_parameters</code> builds a best-effort schema offline from what the component already declares: <code>MCP</code> → the keys of its <code>mcp.arguments</code> map (as strings); <code>APICall</code> → the <code>{{ var }}</code> placeholders found in its <code>http</code> block; <code>ModelOp</code> → a free-form <code>payload</code> object. Anything else falls back to a permissive empty object. Declare explicit <code>parameters</code> for a precise contract; derivation is the convenience path.</li>
+</ul>
+<h3 id="32-dispatch">3.2 Dispatch<a class="headerlink" href="#32-dispatch" title="Permanent link">&para;</a></h3>
+<p><code>_run_autonomous_agent_step</code> in <code>src/tuvl/core/engine/runner.py</code> resolves every <code>ref</code> against the workflow's step index up front (an unknown ref raises before the loop starts), then wires a dispatch callback into the runner. When the model calls a tool, <code>_dispatch_tool</code>:</p>
+<ol>
+<li>Makes a <strong>shallow copy</strong> of the live context and merges the LLM-generated arguments into it, so the component's <code>{{ }}</code> templates resolve from them. The copy shares the request's <code>_session</code> / <code>_db</code> handles — ModelOp IAM scope checks, masking, and OTel spans all apply exactly as on the spine.</li>
+<li>Dispatches by the component's <code>kind</code> through the matching runner: <code>APICall</code>, <code>MCP</code>, <code>ModelOp</code>, <code>Router</code>, or <code>Functional</code> (the default). Any other kind returns an error result.</li>
+<li>Ignores the tool step's own <code>routes:</code> — the returned signal goes back to the agent (and onto the <code>tool_call</code> span/progress event), it never routes the workflow.</li>
+<li>Computes the <strong>delta</strong>: public context keys the tool changed. The delta is what the model sees as the tool result (falling back to the component's declared output key when there is no delta). Only when the tool entry set <code>writes_context: true</code> (default <code>false</code>) is the delta merged back into the real workflow context.</li>
+</ol>
+<p>So the context policy is: the agent reads the full public context once (turn 1), tool results flow back to the <em>model</em> by default, and shared context changes only through <code>writes_context: true</code> tools and the final <code>outcome.write</code> write.</p>
+<h3 id="33-timeout">3.3 Timeout<a class="headerlink" href="#33-timeout" title="Permanent link">&para;</a></h3>
+<p>Every dispatch runs under <code>asyncio.wait_for</code> with <code>TUVL_AGENT_TOOL_TIMEOUT_S</code> (default 300s, <code>settings.tuvl_agent_tool_timeout_s</code>). Without it a hung tool would make the run unkillable, because control directives land only between calls. A timeout is fatal for the run (§2).</p>
+<hr />
+<h2 id="4-steering-and-skills">4. Steering and Skills<a class="headerlink" href="#4-steering-and-skills" title="Permanent link">&para;</a></h2>
+<p>Two instruction channels, one injection point (<code>_assemble_autonomous_messages</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>YAML key</th>
+<th>Injection</th>
+<th>Framing in the system prompt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Steering</td>
+<td><code>agent.steering</code></td>
+<td>always</td>
+<td>"persistent operating context — always follow it"</td>
+</tr>
+<tr>
+<td>Skills</td>
+<td><code>agent.skills[]</code></td>
+<td>always present, but framed as conditional</td>
+<td>"apply the following skills/instructions when relevant"</td>
+</tr>
+</tbody>
+</table>
+<p>Steering is the contract; skills are capabilities the model applies when the task calls for them.</p>
+<p>Both fields take <strong>inline text or <code>artifact://</code> references</strong> — resolved through the artifact registry (<code>resolve_prose</code>) with site type-compatibility enforced: <code>steering</code> accepts <code>steering</code> and <code>prompt</code> artifacts; each <code>skills[]</code> entry accepts <code>skill</code> artifacts. The old per-agent directory scheme (<code>agent.steering_files</code>, <code>agents/&lt;workflow&gt;__&lt;stepId&gt;/{steering,skills}/</code>, the <code>.agents/skills/</code> library) is <strong>gone</strong> — artifacts are the single mechanism, shared and versioned project-wide (see <code>tuvl-agentic-manual.md</code> §2.11). An unresolvable ref fails startup in production and produces a precise runtime error in dev; in dev mode, edits to a file-source <code>.md</code> artifact apply on the next run without a restart (mtime refresh).</p>
+<p>Supervisor steer messages (§9) arrive through a different channel — appended system messages at the turn boundary — and are explicitly templated as guidance that "does not change your tools, your outcome contract, or the task itself."</p>
+<hr />
+<h2 id="5-exits-and-routing">5. Exits and Routing<a class="headerlink" href="#5-exits-and-routing" title="Permanent link">&para;</a></h2>
+<p>Every run ends on exactly one signal, drawn from a closed set:</p>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Source</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>one of <code>outcome.enum</code></td>
+<td><code>finalize_autonomous</code></td>
+<td>normal completion; the model chose this exit</td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td><code>finalize_autonomous</code></td>
+<td>normal completion when no <code>outcome.enum</code> is declared</td>
+</tr>
+<tr>
+<td><code>max_iterations</code></td>
+<td>loop exhaustion</td>
+<td>the cap was reached without a final answer</td>
+</tr>
+<tr>
+<td><code>budget_exceeded</code></td>
+<td>top-of-turn check</td>
+<td>cumulative <code>total_tokens</code> reached <code>token_budget</code></td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>several paths</td>
+<td>LLM call failed, a tool timed out, or the model returned an outcome not in the enum</td>
+</tr>
+<tr>
+<td><code>aborted</code></td>
+<td>control channel</td>
+<td>a supervisor rule/judge or the operator API aborted the run, or a pause outlived <code>TUVL_AGENT_PAUSE_MAX_S</code></td>
+</tr>
+<tr>
+<td><code>guardrail_violation</code></td>
+<td>any guardrail gate</td>
+<td>a declared check failed on input, a tool observation, or the final output (§6)</td>
+</tr>
+</tbody>
+</table>
+<p><code>max_iterations</code>, <code>budget_exceeded</code>, <code>error</code>, <code>aborted</code>, and <code>guardrail_violation</code> are the reserved exits (<code>RESERVED_EXITS</code> in <code>src/tuvl/core/engine/agent_core.py</code>); they are emitted by the engine, so do not reuse them as <code>outcome.enum</code> values. Every abnormal exit also writes <code>_last_error</code> and <code>_last_error_type</code> into context so the fallback step can report what happened.</p>
+<p>Routing follows the engine's normal <code>_advance</code> rules, which for this step mean:</p>
+<ul>
+<li>Every <code>outcome.enum</code> value <strong>must</strong> be mapped in <code>routes:</code> — <code>tuvl validate</code> errors otherwise, and an unmapped non-default signal raises <code>RuntimeError</code> at runtime.</li>
+<li>An unmapped <code>error</code> or <code>aborted</code> stops the workflow cleanly with a warning (an abort is an out-of-band stop, not an authoring bug). Map them anyway when you want a routed fallback.</li>
+<li>An unmapped <code>max_iterations</code>, <code>budget_exceeded</code>, or <code>guardrail_violation</code> <strong>raises</strong> at runtime; validation warns when they are missing.</li>
+<li>A model answer whose <code>outcome</code> is not in the enum routes through <code>error</code>, never through an invented signal — the exit set stays closed even against a misbehaving model.</li>
+</ul>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">routes</span><span class="p">:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">resolved</span><span class="p">:</span><span class="w">            </span><span class="l l-Scalar l-Scalar-Plain">format_reply</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">escalate</span><span class="p">:</span><span class="w">            </span><span class="l l-Scalar l-Scalar-Plain">notify_manager</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">max_iterations</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">fallback_summary</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">budget_exceeded</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">fallback_summary</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nt">error</span><span class="p">:</span><span class="w">               </span><span class="l l-Scalar l-Scalar-Plain">alert_ops</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="nt">aborted</span><span class="p">:</span><span class="w">             </span><span class="l l-Scalar l-Scalar-Plain">alert_ops</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="nt">guardrail_violation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">alert_ops</span>
+</span></code></pre></div>
+<hr />
+<h2 id="6-guardrail-gates">6. Guardrail Gates<a class="headerlink" href="#6-guardrail-gates" title="Permanent link">&para;</a></h2>
+<p>Guardrails (<code>type: guardrail</code> artifacts — see <code>tuvl-agentic-manual.md</code> §4.15) attach to the step as <code>agent.guardrails: {input: […], output: […], tools: […]}</code>. The gates run <strong>inside the shared agent core</strong> (<code>AgentStepRunner._gate</code> → <code>run_guardrails</code>), not in the engine's step dispatch — so every execution surface (engine, streaming, Spectrum, test runner) is correct by construction:</p>
+<ul>
+<li><strong><code>input</code></strong> — on the assembled user text, before anything is sent to the model.</li>
+<li><strong><code>tools</code></strong> — on every serialized tool observation (after the 8000-char truncation), before it reaches the model. Autonomous-mode only.</li>
+<li><strong><code>output</code></strong> — on the model's final no-tool content, before <code>finalize_autonomous</code> merges anything into context.</li>
+</ul>
+<p>A failing check raises <code>GuardrailViolationError</code> inside the core and exits the run on the reserved <code>guardrail_violation</code> signal, with <code>_last_error</code> naming the artifact and check. <code>pii_mask</code> is the exception — a transform that masks declared <code>secure</code> fields and never fails; the (possibly transformed) content continues through the gate. <code>llm_judge</code> is the only check that costs an LLM call and is fail-open on judge outage unless <code>on_judge_error: violation</code>.</p>
+<hr />
+<h2 id="7-hook-events">7. Hook Events<a class="headerlink" href="#7-hook-events" title="Permanent link">&para;</a></h2>
+<p>Observe-only hooks (<code>type: hook</code> artifacts — see <code>tuvl-agentic-manual.md</code> §4.16) fire around the loop when attached per step (<code>hooks: […]</code>) or workflow-wide (<code>spec.hooks:</code>):</p>
+<ul>
+<li><code>before_step</code> / <code>after_step</code> / <code>on_error</code> fire in the engine's single per-kind dispatch (<code>WorkflowEngine._run_kind</code>), like every other kind.</li>
+<li><code>before_tool</code> / <code>after_tool</code> fire inside <code>_invoke_tool</code>, around each tool dispatch, with <code>{tool}</code> / <code>{tool, signal}</code> detail.</li>
+</ul>
+<p>Hooks never mutate context and never affect flow control; a failing hook is logged and swallowed. <code>action: metric</code> increments the <code>tuvl.hook.events</code> counter; <code>action: notify</code> runs a declared <code>APICall</code> step on a private payload copy (<code>WorkflowEngine._notify_hook</code>).</p>
+<hr />
+<h2 id="8-live-progress-streaming">8. Live Progress Streaming<a class="headerlink" href="#8-live-progress-streaming" title="Permanent link">&para;</a></h2>
+<p>On the streaming execution path, <code>_stream_autonomous_agent</code> in <code>src/tuvl/core/engine/runner.py</code> runs the step as a background task and bridges its progress events through an <code>asyncio.Queue</code>. The runner emits three event types via its progress sink:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Payload</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>iteration</code></td>
+<td><code>iteration</code>, <code>tool_calls</code> (count requested this turn), <code>tokens_used</code></td>
+</tr>
+<tr>
+<td><code>tool_call</code></td>
+<td><code>iteration</code>, <code>tool</code> (name), <code>signal</code></td>
+</tr>
+<tr>
+<td><code>outcome</code></td>
+<td><code>iteration</code>, <code>signal</code></td>
+</tr>
+</tbody>
+</table>
+<p>Each one is wrapped in a <code>StepEvent</code> with <code>signal="running"</code> and the payload under <code>snapshot.agent_progress</code>, then serialized to the wire by <code>src/tuvl/core/engine/streaming.py</code> (SSE, gRPC, and the CLI stream watcher share the same serializers). The snapshot carries <strong>loop metadata only</strong> — no context values, no tool arguments, no results — so it adds no PII surface beyond the masked final frame.</p>
+<p>Two hardening properties: a broken sink never breaks the loop (emit failures are swallowed), and a client disconnect (<code>GeneratorExit</code> on the generator) cancels the background agent task instead of leaving it running against a tearing-down session and burning tokens.</p>
+<p>On non-streaming paths no sink is wired and the loop runs identically without emitting. Everything else about step execution — including hooks — funnels through the one per-kind dispatch (<code>WorkflowEngine._run_kind</code>) shared by engine run/streaming, Spectrum, and the test runner; there are no per-surface dispatch forks to keep in sync.</p>
+<hr />
+<h2 id="9-supervision-hooks">9. Supervision Hooks<a class="headerlink" href="#9-supervision-hooks" title="Permanent link">&para;</a></h2>
+<p>Every autonomous-mode <code>Agent</code> run registers a <code>RunHandle</code> in the orchestrator registry (mirrored to Redis when available, so other workers can see and address it), and — when the workflow declares <code>spec.supervisor</code> — spawns a <code>Supervisor</code> watcher task for the run's lifetime. With no supervisor and no operator, the control channel is never touched and costs nothing.</p>
+<p>Control is <strong>cooperative</strong>, applied through an <code>AgentControl</code> checkpoint at the top of every turn — never mid-LLM-call, never mid-tool:</p>
+<ul>
+<li><strong>pause</strong> — the loop parks in <code>wait_if_paused</code>. A paused run pins its request-scoped DB session/transaction, so the dwell is capped by <code>TUVL_AGENT_PAUSE_MAX_S</code> (default 300s) and escalates to an abort at the deadline.</li>
+<li><strong>steer</strong> — queued messages are drained and appended as templated system messages before the next LLM call. Steer text is free-form operator/judge input; the template frames it as guidance, not a new operating contract.</li>
+<li><strong>abort</strong> — the run returns on the <code>aborted</code> exit. The abort directive is also checked between tool calls within a turn, so a multi-tool turn cannot outlive it.</li>
+</ul>
+<p>The supervisor itself — deterministic rules, the LLM judge, cadence, fail-open behavior, and the <code>/api/agents/*</code> operator API — is documented in <code>docs/supervisor.md</code>.</p>
+<hr />
+<h2 id="10-validation">10. Validation<a class="headerlink" href="#10-validation" title="Permanent link">&para;</a></h2>
+<p><code>tuvl validate</code> (<code>src/tuvl/cli/commands/validate.py</code>) checks the step's contract statically:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mode</code> missing or not <code>completion</code> / <code>autonomous</code></td>
+<td>error</td>
+</tr>
+<tr>
+<td><code>agent.model</code> missing</td>
+<td>error</td>
+</tr>
+<tr>
+<td><code>agent.model</code> names an <code>llms/&lt;name&gt;.yaml</code> that does not exist</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>removed contracts present (<code>agent.output</code>, <code>agent.steering_files</code>, <code>outcome.output_key</code>, <code>outcome.signal_from</code>)</td>
+<td>error (pointed message naming the replacement)</td>
+</tr>
+<tr>
+<td>completion-only fields (<code>system</code> / <code>prompt</code>) on an autonomous step</td>
+<td>error</td>
+</tr>
+<tr>
+<td><code>agent.steering</code> missing</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>no <code>tools</code> declared (<code>mode: autonomous</code> requires them)</td>
+<td>error</td>
+</tr>
+<tr>
+<td>tool entry missing <code>ref</code>, <code>ref</code> not a declared step, or <code>ref</code> is the agent itself</td>
+<td>error</td>
+</tr>
+<tr>
+<td>tool has no description (neither on the referenced step nor on the tool entry)</td>
+<td>error</td>
+</tr>
+<tr>
+<td>an <code>outcome.enum</code> value unmapped in <code>routes:</code></td>
+<td>error</td>
+</tr>
+<tr>
+<td><code>steering</code> / <code>skills</code> / <code>guardrails</code> artifact ref unknown, wrong type for the site, or pinned to a missing version</td>
+<td>error</td>
+</tr>
+<tr>
+<td>a floating (unpinned) artifact ref</td>
+<td>warning (<code>tuvl ship --strict</code> fails on it)</td>
+</tr>
+<tr>
+<td>guardrails gate not <code>input</code> / <code>output</code> / <code>tools</code>, or a non-artifact entry</td>
+<td>error</td>
+</tr>
+<tr>
+<td><code>tools</code> guardrail gate on a completion step</td>
+<td>error</td>
+</tr>
+<tr>
+<td>guardrails attached but <code>guardrail_violation</code> unmapped in <code>routes:</code></td>
+<td>warning (raises at runtime if hit)</td>
+</tr>
+<tr>
+<td><code>max_iterations</code> / <code>budget_exceeded</code> unmapped in <code>routes:</code></td>
+<td>warning (raises at runtime if hit)</td>
+</tr>
+<tr>
+<td><code>aborted</code> unmapped in <code>routes:</code></td>
+<td>warning (an abort stops the workflow without a routed exit)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="11-observability">11. Observability<a class="headerlink" href="#11-observability" title="Permanent link">&para;</a></h2>
+<p>The loop is instrumented at both granularities; <code>docs/observability.md</code> is the full reference. The step's own span is <code>node.Agent</code> — autonomous agents appear under the same span name as completion agents, distinguished by their child spans.</p>
+<ul>
+<li><strong>Spans</strong> — <code>agent.iteration</code> (attributes <code>tuvl.agent.step_id</code>, <code>tuvl.agent.iteration</code>, <code>tuvl.agent.tokens_used</code>, <code>tuvl.agent.tool_calls</code>) wraps each turn including its tool dispatches; <code>agent.tool_call</code> (<code>tuvl.agent.tool</code>, <code>tuvl.agent.tool_signal</code>) nests inside it, and the dispatched step's own spans (LiteLLM <code>gen_ai.*</code>, HTTP, DB) nest inside that.</li>
+<li><strong>Counters</strong> — meter <code>tuvl.agent</code>: <code>tuvl.agent.iterations</code>, <code>tuvl.agent.tool_calls</code>, <code>tuvl.agent.aborts</code>, <code>tuvl.agent.budget_exceeded</code> (plus the supervisor counters) — unchanged names. Hooks add <code>tuvl.hook.events</code>. See <code>docs/observability.md</code> §6 for attributes and export behavior.</li>
+<li><strong>Structured logs</strong> — <code>agent.turn</code>, <code>agent.tool_call</code>, and the exit events (<code>agent.max_iterations</code>, <code>agent.budget_exceeded</code>, <code>agent.llm_error</code>, <code>agent.tool_timeout</code>, <code>agent.aborted</code>, <code>agent.invalid_outcome</code>, <code>agent.guardrail_violation</code>), all carrying <code>step_id</code> and iteration fields, correlated to spans via <code>trace_id</code>/<code>span_id</code>.</li>
+</ul>
+<hr />
+<h2 id="12-reading-the-code">12. Reading the Code<a class="headerlink" href="#12-reading-the-code" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What lives there</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/tuvl/core/engine/agent_core.py</code></td>
+<td><code>AgentStepRunner</code> — both strategies: message assembly, budget check, control checkpoint, transport retry, tool invocation, guardrail gates, <code>OutcomeContract</code>, <code>RESERVED_EXITS</code></td>
+</tr>
+<tr>
+<td><code>src/tuvl/core/engine/agent_tools.py</code></td>
+<td><code>build_tool_specs</code> / <code>_derive_parameters</code> — declared tools → provider function-calling schemas</td>
+</tr>
+<tr>
+<td><code>src/tuvl/core/engine/guardrails.py</code></td>
+<td><code>run_guardrails</code>, the closed check set, <code>GuardrailViolationError</code></td>
+</tr>
+<tr>
+<td><code>src/tuvl/core/engine/hooks.py</code></td>
+<td><code>emit_hooks</code>, the closed event/action sets, <code>tuvl.hook.events</code></td>
+</tr>
+<tr>
+<td><code>src/tuvl/core/engine/runner.py</code></td>
+<td><code>_run_kind</code> (the single per-kind dispatch), <code>_run_agent_step</code> (mode gate), <code>_run_autonomous_agent_step</code> (setup, run registration, supervisor spawn), <code>_dispatch_tool</code> (kind dispatch, context-delta policy), <code>_stream_autonomous_agent</code> (progress bridging), <code>_notify_hook</code>, <code>_advance</code> (signal routing)</td>
+</tr>
+<tr>
+<td><code>src/tuvl/core/artifacts/</code></td>
+<td>the artifact registry, loaders, and <code>artifact://</code> resolution used by <code>steering</code> / <code>skills</code> / <code>guardrails</code></td>
+</tr>
+<tr>
+<td><code>src/tuvl/core/engine/streaming.py</code></td>
+<td><code>StepEvent</code> wire serialization shared by SSE, gRPC, and the CLI</td>
+</tr>
+<tr>
+<td><code>src/tuvl/core/engine/orchestrator/</code></td>
+<td><code>RunHandle</code> / registry / <code>AgentControl</code>, Redis mirror, <code>Supervisor</code>, agent metrics</td>
+</tr>
+<tr>
+<td><code>src/tuvl/cli/commands/validate.py</code></td>
+<td>the static checks in §10</td>
+</tr>
+<tr>
+<td><code>docs/tuvl-agentic-manual.md</code> §4.4, §4.13–4.16</td>
+<td>the authoring contract this document sits beneath</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="True" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 9v12H1V9zm4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21zm0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03z"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="False" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 15V3h4v12zM15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3zm0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97z"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback!
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks — we'll work on improving this page.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../auth/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Authentication &amp; Authorization">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Authentication & Authorization
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../supervisor/" class="md-footer__link md-footer__link--next" aria-label="Next: Supervisor &amp; Orchestrator">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Supervisor & Orchestrator
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://tuvl.io" target="_blank" rel="noopener" title="tuvl.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M351.9 280H161c2.9 64.5 17.2 123.9 37.5 167.4 11.4 24.5 23.7 41.8 35.1 52.4 11.2 10.5 18.9 12.2 22.9 12.2s11.7-1.7 22.9-12.2c11.4-10.6 23.7-28 35.1-52.4 20.3-43.5 34.6-102.9 37.5-167.4zm-191-48h190.9c-2.8-64.5-17.1-123.9-37.4-167.4-11.4-24.4-23.7-41.8-35.1-52.4C268.1 1.7 260.4 0 256.4 0s-11.7 1.7-22.9 12.2c-11.4 10.6-23.7 28-35.1 52.4-20.3 43.5-34.6 102.9-37.5 167.4m-48 0c3.5-85.6 25.6-165.1 57.9-217.3C78.7 47.3 10.9 131.2 1.5 232zM1.5 280c9.4 100.8 77.2 184.7 169.3 217.3-32.3-52.2-54.4-131.7-57.9-217.3zm398.4 0c-3.5 85.6-25.6 165.1-57.9 217.3 92.1-32.7 159.9-116.5 169.3-217.3zm111.4-48C501.9 131.2 434.1 47.3 342 14.7c32.3 52.2 54.4 131.7 57.9 217.3z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/tuvl-io/tuvl" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://discord.gg/tuvl" target="_blank" rel="noopener" title="discord.gg" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M492.5 69.8c-.2-.3-.4-.6-.8-.7-38.1-17.5-78.4-30-119.7-37.1-.4-.1-.8 0-1.1.1s-.6.4-.8.8c-5.5 9.9-10.5 20.2-14.9 30.6-44.6-6.8-89.9-6.8-134.4 0-4.5-10.5-9.5-20.7-15.1-30.6-.2-.3-.5-.6-.8-.8s-.7-.2-1.1-.2C162.5 39 122.2 51.5 84.1 69c-.3.1-.6.4-.8.7C7.1 183.5-13.8 294.6-3.6 404.2c0 .3.1.5.2.8s.3.4.5.6c44.4 32.9 94 58 146.8 74.2.4.1.8.1 1.1 0s.7-.4.9-.7c11.3-15.4 21.4-31.8 30-48.8.1-.2.2-.5.2-.8s0-.5-.1-.8-.2-.5-.4-.6-.4-.3-.7-.4c-15.8-6.1-31.2-13.4-45.9-21.9-.3-.2-.5-.4-.7-.6s-.3-.6-.3-.9 0-.6.2-.9.3-.5.6-.7c3.1-2.3 6.2-4.7 9.1-7.1.3-.2.6-.4.9-.4s.7 0 1 .1c96.2 43.9 200.4 43.9 295.5 0 .3-.1.7-.2 1-.2s.7.2.9.4c2.9 2.4 6 4.9 9.1 7.2.2.2.4.4.6.7s.2.6.2.9-.1.6-.3.9-.4.5-.6.6c-14.7 8.6-30 15.9-45.9 21.8-.2.1-.5.2-.7.4s-.3.4-.4.7-.1.5-.1.8.1.5.2.8c8.8 17 18.8 33.3 30 48.8.2.3.6.6.9.7s.8.1 1.1 0c52.9-16.2 102.6-41.3 147.1-74.2.2-.2.4-.4.5-.6s.2-.5.2-.8c12.3-126.8-20.5-236.9-86.9-334.5zm-302 267.7c-29 0-52.8-26.6-52.8-59.2s23.4-59.2 52.8-59.2c29.7 0 53.3 26.8 52.8 59.2 0 32.7-23.4 59.2-52.8 59.2m195.4 0c-29 0-52.8-26.6-52.8-59.2s23.4-59.2 52.8-59.2c29.7 0 53.3 26.8 52.8 59.2 0 32.7-23.2 59.2-52.8 59.2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/analytics.js"></script>
+      
+    
+  </body>
+</html>
