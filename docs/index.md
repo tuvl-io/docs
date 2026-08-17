@@ -3,7 +3,7 @@
 **A lightweight, local-first workflow orchestration engine for AI-powered business automation.**
 
 !!! note "Stable release"
-    tuvl **1.0.0** is production-ready: the API and YAML schemas are stable and
+    tuvl **1.0.1** is production-ready: the API and YAML schemas are stable and
     versioned under [SemVer](https://semver.org) — breaking changes bump the
     major version.
 
