@@ -7,6 +7,12 @@
     versioned under [SemVer](https://semver.org) — breaking changes bump the
     major version.
 
+!!! tip "Try it live — no install"
+    Run any [example](https://github.com/tuvl-io/examples) in a throwaway browser
+    sandbox at **[try.tuvl.online](https://try.tuvl.online)**. Pick an example, get a
+    private live instance with the **Insight** editor, and explore the workflows
+    hands-on — each sandbox resets automatically after a few minutes.
+
 <p align="center">
   <em>Pronounced "Thoo-val" (തൂവൽ) in Malayalam means a feather. It refers specifically to the soft feathers or plumage of a bird. </em>
 </p>
