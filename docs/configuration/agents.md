@@ -123,6 +123,7 @@ Reference the agent model or specify inline:
 ```yaml
 - id: "classify"
   kind: "Agent"
+  mode: "completion"
   agent:
     model: "default"    # Uses agents/default.yaml
     prompt: "..."
@@ -133,6 +134,7 @@ Reference the agent model or specify inline:
 ```yaml
 - id: "classify"
   kind: "Agent"
+  mode: "completion"
   agent:
     model: "ollama/llama3"    # LiteLLM format
     prompt: "..."
@@ -151,34 +153,37 @@ tuvl uses LiteLLM format for model identifiers:
 
 ## Agent Step Configuration
 
-Full agent step specification:
+Every `Agent` step declares a `mode:` — `completion` for a single retried call, `autonomous` for a bounded tool loop (next section). Full completion-mode specification:
 
 ```yaml
 - id: "analyze"
   kind: "Agent"
+  mode: "completion"
   agent:
     model: "ollama/llama3"
-    
-    # Prompts
+
+    # Prompts — inline text or artifact://<prompt artifact>
     system: |
       You are a helpful assistant that analyzes data.
       Always respond with valid JSON.
-    
+
     prompt: |
       Analyze this customer:
       Name: {{ name }}
       Company: {{ company }}
-      
+
       Return JSON: {"score": 1-100, "tags": ["tag1", "tag2"]}
-    
-    # Output handling
-    output:
-      format: json              # json | text | signal
+
+    # Outcome handling (unified contract, both modes)
+    outcome:
+      format: json              # json | text
       map:
-        score: customer_score   # Map LLM keys to context
+        score: customer_score   # Rename LLM keys in context
         tags: customer_tags
-      signal_from: score        # Use for routing
-    
+      # enum: [approve, reject] # optional closed signal set — the returned
+      #                         # "outcome" field routes the workflow
+      # write: analyze_result   # optional key capturing the full payload
+
     # Error handling
     retry:
       attempts: 3
@@ -188,44 +193,159 @@ Full agent step specification:
     timeout: 30
 ```
 
-## Output Formats
+## Autonomous Agent Step Configuration
+
+An `Agent` step with `mode: autonomous` reuses the same `agent:` model configuration but runs a **bounded tool-calling loop** instead of a single completion. The model is given its `steering` and a closed set of `tools` (each referencing another step in the workflow), and keeps calling them until it emits one of `outcome.enum`. The loop is capped by `max_iterations` and an optional `token_budget`.
+
+```yaml
+- id: "triage"
+  kind: "Agent"
+  mode: "autonomous"
+  agent:
+    model: "default"                 # same presets / LiteLLM strings as completion mode
+    steering: "Resolve the support ticket using the available tools."
+    max_iterations: 8                # hard cap on loop turns (default 8)
+    token_budget: 50000              # optional cap on cumulative tokens
+    skills:                          # when-relevant capabilities — inline text or artifact refs
+      - "artifact://support-policy"
+    tools:                           # REQUIRED in this mode
+      - ref: "lookup_order"          # the id of another step in this workflow;
+                                     # description comes from that step's own description:
+        parameters:                  # JSON Schema for the tool's arguments
+          type: object
+          properties: { order_id: { type: string } }
+          required: [order_id]
+        writes_context: false        # default: tool result returns to the agent only
+      - ref: "issue_refund"
+    outcome:
+      enum: ["resolved", "escalate", "needs_human"]   # closed set of exits
+      write: "agent_result"          # context key receiving the final payload
+  routes:
+    resolved:        "format_reply"
+    escalate:        "notify_manager"
+    needs_human:     "hitl_review"
+    max_iterations:  "fallback_summary"   # reserved abnormal exits — map these too
+    budget_exceeded: "fallback_summary"
+    error:           "alert_ops"
+    aborted:         "alert_ops"
+```
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `steering` | Required | The agent's persistent instruction, always injected — inline text or `artifact://<steering artifact>` |
+| `skills` | `[]` | When-relevant capabilities — inline text or `artifact://<skill artifact>` refs |
+| `tools` | Required | Tools the agent may call; each `ref` names another step (`APICall` / `MCP` / `ModelOp` / `Functional`) with JSON-Schema `parameters`. The tool description is sourced from the referenced step's own `description:` (required); a `description` here is only a fallback |
+| `tools[].writes_context` | `false` | When `true`, the tool's public output merges back into the shared context |
+| `guardrails` | none | `input` / `output` / `tools` gates backed by `type: guardrail` artifacts — see [Guardrails](../internals/tuvl-agentic-manual.md#415-guardrails-type-guardrail-artifacts) |
+| `outcome.enum` | `[]` | Closed set of exit signals — **every value must be mapped in `routes:`** |
+| `outcome.write` | `<id>_result` | Context key that receives the agent's final result payload |
+| `max_iterations` | `8` | Hard cap on loop turns |
+| `token_budget` | `null` | Optional hard cap on cumulative tokens |
+
+!!! warning "Bound the loop and route every exit"
+    Map every `outcome.enum` value **and** the reserved abnormal exits `max_iterations`, `budget_exceeded`, `error`, `aborted` (emitted when a supervisor/operator breaks the run), and `guardrail_violation` (when guardrails are attached) in `routes:`. For data-driven branching after an outcome (by country, tier, region…), route into a [`Router` with `match:`](../concepts/workflows.md#router-steps) — never push deterministic logic into the model. See [Workflows → Autonomous Agent Steps](../concepts/workflows.md#autonomous-agent-steps) for the complete reference.
+
+## Supervising an Autonomous Agent
+
+An optional per-workflow **`spec.supervisor`** block watches this workflow's
+autonomous-mode `Agent` runs **live** and can **pause, steer, or abort** them mid-loop
+(at the cooperative iteration boundary — never mid-call). It is authored in-band
+(a sibling of `steps:`, **not** a step) and executed out-of-band as a concurrent
+watcher for each run.
+
+```yaml
+spec:
+  # context / trigger / steps ...
+  supervisor:
+    model: default              # omit → rule-only; set → LLM supervisor
+    watches: [agents]           # monitor autonomous Agent iterations (default)
+    criteria: |                 # natural-language policy for the LLM path
+      Abort if the agent calls the same tool 3× with no new information,
+      or drifts away from the user's actual request.
+    # criteria: artifact://escalation-policy
+    #                            ↑ alternative to inline text — a steering artifact ref
+    on_violation: pause         # abort | pause | steer   (default action)
+    every_n_iterations: 2       # LLM cost gate (rules below run every turn)
+    steer_message: |            # sent when the action is `steer` (rules path)
+      Refocus on the task; stop repeating actions that add no new information.
+    rules:                      # cheap deterministic pre-filters (no LLM)
+      - { when: tool_repeated,    count: 3, then: pause }
+      - { when: budget_fraction,  gt: 0.8,  then: steer }
+      - { when: iteration_reached, gte: 12, then: abort }
+```
+
+| Field | Description |
+|-------|-------------|
+| `model` + `criteria` | Enable the LLM supervisor — judged every `every_n_iterations` turns; a fail verdict applies `on_violation` with the reason surfaced (and used as the steer message) |
+| `criteria` | Inline policy text **or** an `artifact://` ref to a `type: steering` artifact (resolved per judge pass, so dev-mode `.md` edits apply live). The old `criteria_file` field was removed — `tuvl validate` rejects it |
+| `rules` | Deterministic checks run **every** turn: `tool_repeated {tool?, count}`, `budget_fraction {gt}`, `iteration_reached {gte}`. Each rule's `then` overrides `on_violation` |
+| `on_violation` | Default action when a check fails: `abort` \| `pause` \| `steer` |
+| `every_n_iterations` | Cost gate for the LLM path (default 1) |
+| `steer_message` | Message injected on a `steer` action from a **rule** (the LLM path uses the verdict's reason instead) |
+| `watches` | `[agents]` (default) monitors autonomous `Agent` iterations |
+
+`abort` exits the agent via the reserved **`aborted`** signal — map it in the
+step's `routes:` for a specific downstream path (otherwise it routes as `error`).
+
+### Authoring it visually in Insight
+
+You don't have to hand-write the block. In the Insight workflow canvas the
+supervisor is a first-class **off-spine node**: add **Supervisor** from the node
+palette (one per workflow) and it attaches as a watcher — no flow edges, since it
+observes rather than runs in the sequence. Double-click it to configure inline:
+
+- **Judge model** — a dropdown of your configured models (blank = rule-only)
+- **Criteria** — inline natural-language policy, or an `artifact://` reference to
+  a `type: steering` artifact
+- **On violation** (pause / steer / abort), **Judge every N iterations**, and the
+  **Rules** JSON
+
+Every field is written straight into `spec.supervisor` in the workflow YAML, and
+the block round-trips back onto the node when you reopen the workflow.
+
+Operators can also observe and control runs live from the Insight **Agents**
+dashboard or the API — `GET /api/agents/runs`, `POST /api/agents/runs/{id}/{abort,pause,resume,steer}`
+(scopes `agent:observe` / `agent:control`). Supervision is optional and additive:
+no `spec.supervisor` means no watcher and zero cost.
+
+## Outcome Formats
 
 ### JSON Format
 
 ```yaml
 agent:
   prompt: 'Return JSON: {"decision": "approve" | "reject"}'
-  output:
+  outcome:
     format: json
     map:
       decision: approval_decision
 ```
 
-The LLM response is parsed as JSON and mapped to context keys.
+The LLM response is parsed as JSON; all fields merge into context, with `map` as a rename layer.
 
 ### Text Format
 
 ```yaml
 agent:
   prompt: "Summarize this document in one paragraph."
-  output:
+  outcome:
     format: text
-    map:
-      response: summary
+    write: summary
 ```
 
-Raw text response is stored in the specified key.
+The trimmed raw text response is stored at the `write` key.
 
-### Signal Format
+### Routing by Outcome
 
 ```yaml
 agent:
-  prompt: "Respond with one word: approve, reject, or review"
-  output:
-    format: signal
+  prompt: "Decide what to do with the request."
+  outcome:
+    format: json
+    enum: [approve, reject, review]
 ```
 
-The response is used directly as the routing signal.
+With `enum` declared, the model returns an `"outcome"` field validated against the closed set — that value becomes the routing signal, and every enum value must be mapped in `routes:`. An arbitrary LLM string can never route the workflow.
 
 ## Retry Configuration
 
@@ -344,8 +464,8 @@ prompt: |
 
 ```yaml
 agent:
-  output:
-    signal_from: decision
+  outcome:
+    enum: [approve, reject]
 routes:
   approve: "process"
   reject: "notify"

@@ -22,8 +22,10 @@ tuvl --version
 |---------|-------------|
 | `tuvl init` | Create a new project |
 | `tuvl dev` | Start development server |
-| `tuvl run` | Run production server |
+| `tuvl run` | Run production server (requires `TUVL_BISCUIT_PRIVATE_KEY`) |
 | `tuvl validate` | Validate configuration files |
+| `tuvl ship` | Package the project for production (container image + Helm chart) |
+| `tuvl keys generate` | Generate the production Biscuit signing key |
 
 ## Global Options
 

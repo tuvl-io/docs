@@ -169,6 +169,7 @@ steps:
       
   - id: "process"
     kind: "Agent"
+    mode: "completion"
     agent:
       model: "ollama/llama3"
       prompt: "..."
@@ -185,6 +186,7 @@ steps:
 | `id` | Yes | Unique identifier within the workflow |
 | `kind` | Yes | Step type: `Functional`, `Agent`, `Router`, `APICall`, `MCP`, `ModelOp`, `Response`, `HumanInTheLoop` |
 | `runner` | For functional | Node name from `NODE_REGISTRY` |
+| `mode` | For agent | `completion` (one retried call) or `autonomous` (bounded tool loop) — required on every `Agent` step, no default |
 | `agent` | For agent | LLM configuration |
 | `routes` | No | Signal-to-step mapping |
 
@@ -214,11 +216,12 @@ async def db_save(ctx: dict[str, Any]) -> dict[str, Any]:
 
 ### Agent Steps
 
-Execute an LLM call with structured output:
+One agent kind, two execution modes, one shared contract. Every `Agent` step **must** declare `mode:` at the step level — `completion` (a single retried LLM call, shown here) or `autonomous` (a bounded tool-calling loop, [below](#autonomous-agent-steps)). There is no default mode.
 
 ```yaml
 - id: "classify"
   kind: "Agent"
+  mode: "completion"
   agent:
     model: "default"                # preset name from llms/default.yaml
     # or use a LiteLLM model string directly:
@@ -228,14 +231,13 @@ Execute an LLM call with structured output:
       You are a customer support classifier.
     prompt: |
       Message: {{ message }}
-      
-      Classify as: urgent, normal, spam
-      Return JSON: {"category": "..."}
-    output:
+
+      Classify the message.
+    outcome:
       format: json
+      enum: ["urgent", "normal", "spam"]   # closed signal set — the returned "outcome" field routes
       map:
-        category: message_category       # LLM key → context key
-      signal_from: category              # Use for routing
+        reason: triage_reason              # LLM key → context key rename
     retry:
       attempts: 3
       on: [parse_error, timeout]
@@ -244,23 +246,84 @@ Execute an LLM call with structured output:
     urgent: "escalate"
     normal: "queue"
     spam: "discard"
+    error: "handle_error"
+    parse_error: "handle_error"
 ```
+
+With `enum` declared, the model returns an `"outcome"` field validated against the closed set — an arbitrary LLM string can never become a routing signal, and every `enum` value must be mapped in `routes:`.
 
 #### Agent Configuration
 
 | Property | Default | Description |
 |----------|---------|-------------|
 | `model` | Required | Preset name from `llms/<name>.yaml` (no `/`) or a LiteLLM model string (e.g. `ollama/llama3`, `gpt-4o`) |
-| `system` | `""` | System prompt |
-| `prompt` | Required | User prompt with Jinja2 templating |
-| `output.format` | `"json"` | Output format: `json`, `text`, `signal` |
-| `output.map` | `{}` | Map LLM response keys to context keys |
-| `output.signal_from` | `null` | Context key to use as route signal |
+| `system` | `""` | System prompt — inline text or `artifact://<prompt artifact>` |
+| `prompt` | Required | User prompt with Jinja2 templating — inline text or an artifact ref |
+| `outcome.format` | `"json"` | Output format: `json`, `text` |
+| `outcome.enum` | none | Optional closed set of route signals; the model's `"outcome"` field is validated against it and **every value must be mapped in `routes:`** |
+| `outcome.map` | `{}` | Rename table for parsed JSON fields (LLM key → context key; `json` format only) |
+| `outcome.write` | `<id>_result` | Context key that additionally captures the full result payload when declared |
 | `retry.attempts` | `1` | Number of retry attempts |
 | `retry.on` | `[]` | Error types to retry on |
 | `retry.backoff` | `1` | Backoff multiplier between retries |
 | `timeout` | `60` | Timeout in seconds |
-| `context_injection` | `[]` | List of context keys whose values are appended as a system message (RAG / search-result grounding) |
+| `context_injection` | `[]` | List of context keys whose values are appended as a delimited untrusted-content message (RAG / search-result grounding) |
+| `guardrails` | none | Artifact-backed I/O validation gates (`input` / `output` / `tools`) — see [Guardrails](../internals/tuvl-agentic-manual.md#415-guardrails-type-guardrail-artifacts) |
+
+### Autonomous Agent Steps
+
+Where `mode: completion` is a single LLM call, an `Agent` step with `mode: autonomous` runs a **bounded tool-calling loop**: the model is given its steering and a set of declared tools, autonomously chooses which to call, observes the results, and re-decides until it emits one of a declared `outcome.enum`. Autonomy stays inside the contract — the tools are a closed author-declared set, the exits are a closed set, and the loop is capped.
+
+```yaml
+- id: "triage"
+  kind: "Agent"
+  mode: "autonomous"
+  agent:
+    model: "default"
+    steering: "Resolve the support ticket using the available tools."
+    max_iterations: 8                  # hard cap (default 8)
+    token_budget: 50000                # optional cap on cumulative tokens
+    skills:                            # when-relevant capabilities — inline text or artifact refs
+      - "artifact://support-policy"
+    tools:                             # REQUIRED in this mode
+      - ref: "lookup_order"            # names ANOTHER step in this workflow;
+                                       # description comes from that step's own description:
+        parameters:
+          type: object
+          properties: { order_id: { type: string } }
+          required: [order_id]
+      - ref: "issue_refund"
+    outcome:
+      enum: ["resolved", "escalate", "needs_human"]   # the closed set of exits
+      write: "agent_result"                           # single data output
+  routes:
+    resolved: "format_reply"
+    escalate: "notify_manager"
+    needs_human: "hitl_review"
+    max_iterations: "fallback_summary"   # reserved abnormal exits
+    error: "alert_ops"
+    budget_exceeded: "fallback_summary"
+    aborted: "alert_ops"
+```
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `model` | Required | Preset name or LiteLLM model string (same as `mode: completion`) |
+| `steering` | Required | The agent's persistent instruction, always injected — inline text or `artifact://<steering artifact>` |
+| `skills` | `[]` | Optional when-relevant capabilities — inline text or `artifact://<skill artifact>` refs |
+| `tools` | Required | Tools the agent may call; each `ref` names another step (`APICall` / `MCP` / `ModelOp` / `Functional`) with JSON-Schema `parameters`. The tool description is sourced from the referenced step's own `description:` (required); a `description` here is only a fallback |
+| `tools[].writes_context` | `false` | When `true`, the tool's public output is merged back into the shared context (default: result returns to the agent only) |
+| `outcome.enum` | `[]` | Closed set of exit signals; **every value must be mapped in `routes:`** |
+| `outcome.write` | `<id>_result` | Context key that receives the agent's final result payload |
+| `max_iterations` | `8` | Hard cap on loop turns |
+| `token_budget` | `null` | Optional hard cap on cumulative tokens |
+| `guardrails` | none | `input` / `output` / `tools` gates backed by `type: guardrail` artifacts |
+
+The reserved abnormal exits `max_iterations`, `budget_exceeded`, `error`, `aborted` (supervisor/operator abort), and `guardrail_violation` (when guardrails are attached) should also be mapped in `routes:`. `system` / `prompt` are completion-only fields and are rejected in this mode. For data-driven branching after an outcome, route into a deterministic [`router` with `match:`](#router-steps) — never push that logic into the agent.
+
+### Artifacts, Guardrails, and Hooks
+
+Prompts, steering, skills, guardrails, hooks, and MCP server configs can all live as **artifacts** — named, versioned, typed assets in the project's `artifacts/` directory, referenced from workflow YAML via `artifact://name[@version]`. Guardrails (`type: guardrail`) gate agent input/output/tool observations with a closed set of checks; hooks (`type: hook`) are observe-only lifecycle subscribers attached per step (`hooks:`) or workflow-wide (`spec.hooks:`). See the manual: [Artifacts](../internals/tuvl-agentic-manual.md#211-artifacts-artifacts-kind-artifact), [Guardrails](../internals/tuvl-agentic-manual.md#415-guardrails-type-guardrail-artifacts), and [Hooks](../internals/tuvl-agentic-manual.md#416-hooks-type-hook-artifacts-observe-only).
 
 ### Router Steps
 
@@ -278,7 +341,25 @@ Evaluate a condition on the context and branch to different steps:
     "false": "auto_approve"
 ```
 
-The router emits `"true"` or `"false"` as the route signal. Chain multiple routers for more complex branching:
+The router emits `"true"` or `"false"` as the route signal.
+
+For multi-way value branching (e.g. by country or tier), use the `match:` switch instead of `condition:`. It emits the stringified value of a field as the route signal, falling back to `default` when the value isn't mapped:
+
+```yaml
+- id: "route_by_country"
+  kind: "Router"
+  match:
+    field: "user.country"     # dot-path supported
+  routes:
+    US: "resolve_us"
+    DE: "resolve_eu"
+    FR: "resolve_eu"
+    default: "resolve_other"  # any unmapped value lands here
+```
+
+This is the idiomatic way to add data-driven branching after an autonomous `Agent` outcome — keep the deterministic logic in the router, not in the model.
+
+Chain multiple routers for more complex conditional branching:
 
 ```yaml
 steps:
@@ -347,43 +428,39 @@ On HTTP errors the engine sets `_last_error` and `_api_status_code` in context a
 
 ### MCP Steps
 
-Call tools from MCP (Model Context Protocol) servers. Two transports are supported: **SSE** (default) and **stdio**.
+Call tools from MCP (Model Context Protocol) servers. The connection — SSE (default) or stdio transport — lives **only** in a `type: mcp` artifact; inline transport config on the step is rejected. One server, one definition, any number of steps.
 
-**SSE transport:**
+**The artifact declares the connection:**
 
-```yaml
-- id: "search_docs"
-  kind: "MCP"
-  mcp:
-    transport: "sse"                          # default
-    url: "http://localhost:3001/sse"
-    tool: "search"
-    arguments:
-      query: "{{ search_query }}"
-  response:
-    output_key: "search_results"              # full response stored here
-    extract:
-      - path: "0.title"
-        as: "first_result_title"
+```yaml title="artifacts/github_mcp.yaml"
+kind: "Artifact"
+metadata: { name: "github-mcp", version: 1 }
+spec:
+  type: "mcp"
+  transport: "stdio"                # sse | stdio (default sse)
+  command: "npx"
+  args: ["@modelcontextprotocol/server-github"]
+  env:
+    GITHUB_TOKEN: "${GITHUB_TOKEN}"
 ```
 
-**stdio transport (local MCP server):**
+**The step carries only the call:**
 
 ```yaml
 - id: "list_issues"
   kind: "MCP"
   mcp:
-    transport: "stdio"
-    command: "npx"
-    args: ["@modelcontextprotocol/server-github"]
-    env:
-      GITHUB_TOKEN: "{{ github_token }}"
+    server: "artifact://github-mcp"   # REQUIRED — ref to a type: mcp artifact
     tool: "list_issues"
+    timeout: 30
     arguments:
       owner: "{{ repo_owner }}"
       repo: "{{ repo_name }}"
   response:
-    output_key: "issues"
+    output_key: "issues"              # full response stored here
+    extract:
+      - path: "0.title"
+        as: "first_issue_title"
 ```
 
 ### Model-Op Steps
@@ -494,7 +571,7 @@ Pause workflow execution and hand off control to a human reviewer before continu
 When the engine reaches a `HumanInTheLoop` step it:
 
 1. Persists a **HITL instance** (a `SystemWorkflowInstance` row in the database) containing the current context snapshot and the step definition.
-2. Raises a suspension signal — the workflow API responds with HTTP **202 Accepted** (or a `SUSPENDED` gRPC status) and returns a `hitl_request` payload.
+2. Raises a suspension signal — the workflow API responds with HTTP **202 Accepted** (REST), a `suspended` SSE frame, or a `suspended` gRPC step event, carrying a `hitl_request` payload.
 3. The frontend displays the review form to the designated user.
 4. Once the reviewer submits their response the workflow resumes from the next step, with the human's answers merged into the context under `output_key`.
 
@@ -509,8 +586,8 @@ When the engine reaches a `HumanInTheLoop` step it:
 | `ui.display_context` | No | Allowlist of context keys sent to the reviewer. If omitted, **no** context data is forwarded. |
 | `human_feedback` | No | List of form field definitions (see below). If empty the reviewer can only approve/dismiss. |
 | `output_key` | No | Context key under which the reviewer's answers are stored. Defaults to `hitl_<id>`. |
-| `auth.required_group` | No | IAM group required to act on this review. |
-| `auth.assignee_user` | No | Specific user assigned as reviewer. Supports `{{ var }}` interpolation. |
+| `auth.required_group` | No | IAM group whose members may resume this instance (enforced with 403; `iam:admin` bypasses). |
+| `auth.assignee_user` | No | Reviewer assignment hint for the UI. Supports `{{ var }}` interpolation. |
 
 #### `human_feedback` Field Definition
 
@@ -552,17 +629,25 @@ The payload delivered to the frontend when a workflow suspends:
 
 #### Resuming a Suspended Workflow
 
-POST the reviewer's answers to the HITL resume endpoint:
+POST the reviewer's answers to the resume endpoint, wrapped in `human_input`:
 
 ```http
-POST /hitl/{instance_id}/respond
+POST /api/workflows/resume
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "approved": true,
-  "notes": "Strong candidate, approved."
+  "instance_id": "550e8400-e29b-41d4-a716-446655440000",
+  "human_input": {
+    "approved": true,
+    "notes": "Strong candidate, approved."
+  }
 }
 ```
+
+When the step declares `auth.required_group`, only members of that group (or an
+`iam:admin`) may resume it; otherwise only the user who triggered the workflow. The
+instance is deleted before the engine re-runs, so resume is one-shot.
 
 The engine resumes execution with `context["approval_result"]` set to that dict.
 
@@ -773,7 +858,7 @@ Always define error routes for critical steps:
 Organize context keys with prefixes:
 
 ```yaml
-output:
+outcome:
   map:
     result: "ai_classification"    # Prefix with source
     confidence: "ai_confidence"

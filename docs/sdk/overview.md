@@ -19,7 +19,7 @@ Your app (React / Vue / Node.js)
      │        │        │
      ▼        ▼        ▼
      POST   stream   stream
-         tuvl server :8000
+         tuvl server :8885
               │
          WorkflowEngine
 ```

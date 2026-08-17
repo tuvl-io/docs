@@ -19,10 +19,10 @@ tuvl prints the portal URL and a one-time security key:
 
 ```
 ╭─ tuvl dev ───────────────────────────────────────────────────────────╮
-│ Starting tuvl engine in dev mode on port 8000.                       │
+│ Starting tuvl engine in dev mode on port 8885.                       │
 │ Project: /home/user/my-project                                       │
 │                                                                      │
-│ Open http://127.0.0.1:8000/insight/ and the security key is stored  │
+│ Open http://127.0.0.1:8885/insight/ and the security key is stored  │
 │ in .tuvl/.dev-session (run tuvl dev --show-key to print it).         │
 ╰──────────────────────────────────────────────────────────────────────╯
 ```
@@ -56,7 +56,7 @@ The sidebar contains all top-level sections:
 | **Federation** | OAuth2 / OIDC provider setup |
 | **API Docs** | Live Swagger UI for your project's REST endpoints |
 | **Spectrum** | Workflow test runner and visual debugger |
-| **Settings** | Redis, telemetry, and LLM Judge configuration |
+| **Settings** | Redis, telemetry, LLM Judge, and API Access configuration |
 
 ---
 
@@ -72,7 +72,7 @@ Regular workflow execution and auth endpoints use the standard REST API at `/api
 
 | Requirement | Version |
 |-------------|---------|
-| `tuvl` | ≥ 25.4 |
+| `tuvl` | ≥ 1.0.0 |
 | `tuvl-insight` | Included with `pip install tuvl[standard]` |
 | Browser | Any modern Chromium, Firefox, or Safari |
 

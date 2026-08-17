@@ -6,7 +6,7 @@ Thank you for your interest in contributing to tuvl!
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.13 (`>=3.13,<3.14` — 3.14 is not yet supported; see [Installation → Troubleshooting](getting-started/installation.md#troubleshooting))
 - uv package manager
 - PostgreSQL 16+
 - Node.js 20+ and pnpm (for UI development)
@@ -39,8 +39,8 @@ make dev-core DIR=/path/to/your/project
 make dev DIR=/path/to/your/project
 ```
 
-The server starts on `http://localhost:8000`. The tuvl dev console is at
-`http://localhost:8000/insight` when `TUVL_DEV_MODE=true`.
+The server starts on `http://localhost:8885`. The tuvl dev console is at
+`http://localhost:8885/insight` when `TUVL_DEV_MODE=true`.
 
 ### Proto codegen
 

@@ -133,7 +133,7 @@ Schemas are validated automatically:
 
 ```bash
 # Missing required field
-curl -X POST http://localhost:8000/api/contact \
+curl -X POST http://localhost:8885/api/contact \
   -d '{"company": "Acme"}'
 
 # Response: 422
@@ -152,7 +152,7 @@ curl -X POST http://localhost:8000/api/contact \
 
 ```bash
 # Wrong type
-curl -X POST http://localhost:8000/api/contact \
+curl -X POST http://localhost:8885/api/contact \
   -d '{"email": 123, "name": "Jane"}'
 
 # Response: 422

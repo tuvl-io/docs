@@ -370,11 +370,11 @@ Lens will show `candidate_name` and `role` in the **Context Sent to Reviewer** s
 
 Lens shows the *outbound* payload only. It does not:
 
-- store a real HITL instance in Redis
+- persist a real HITL instance row
 - allow you to submit a reviewer response and see the resumed workflow output
 
 To test the full resume cycle use **Spectrum** with a workflow that includes the HITL step,
-or trigger the workflow normally in dev mode and use the `/hitl/{instance_id}/respond`
+or trigger the workflow normally in dev mode and use the `POST /api/workflows/resume`
 endpoint with mock reviewer data.
 
 ---

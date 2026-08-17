@@ -88,7 +88,7 @@ All other scopes are application-defined. Create any `resource:action` strings t
 When running tuvl for the first time against an empty database, use the bootstrap endpoint to create the first superadmin before any users exist:
 
 ```bash
-curl -X POST http://localhost:8000/auth/bootstrap \
+curl -X POST http://localhost:8885/auth/bootstrap \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@example.com", "phone_number": "+15551234567", "first_name": "Admin", "password": "change-me-now"}'
 ```

@@ -2,6 +2,17 @@
 
 **A lightweight, local-first workflow orchestration engine for AI-powered business automation.**
 
+!!! note "Stable release"
+    tuvl **1.0.1** is production-ready: the API and YAML schemas are stable and
+    versioned under [SemVer](https://semver.org) — breaking changes bump the
+    major version.
+
+!!! tip "Try it live — no install"
+    Run any [example](https://github.com/tuvl-io/examples) in a throwaway browser
+    sandbox at **[try.tuvl.online](https://try.tuvl.online)**. Pick an example, get a
+    private live instance with the **Insight** editor, and explore the workflows
+    hands-on — each sandbox resets automatically after a few minutes.
+
 <p align="center">
   <em>Pronounced "Thoo-val" (തൂവൽ) in Malayalam means a feather. It refers specifically to the soft feathers or plumage of a bird. </em>
 </p>
@@ -27,6 +38,7 @@ spec:
 
     - id: "ai_vetting"
       kind: "Agent"
+      mode: "completion"
       agent:
         model: "ollama/llama3"
         prompt: |
@@ -58,6 +70,30 @@ spec:
     ---
 
     Use LLMs as interchangeable logic units with structured JSON outputs and automatic routing.
+
+-   :material-robot-outline:{ .lg .middle } **Autonomous Agents**
+
+    ---
+
+    Beyond a single call: an `Agent` step in `mode: autonomous` runs a bounded tool-calling loop — the model picks from your declared tools until it emits a declared outcome, capped by `max_iterations` and `token_budget`.
+
+    [:octicons-arrow-right-24: Autonomous agents](concepts/workflows.md#autonomous-agent-steps)
+
+-   :material-eye-check:{ .lg .middle } **Agent Supervisor**
+
+    ---
+
+    An optional per-workflow watcher observes each autonomous run live and can **pause, steer, or abort** it mid-loop — deterministic rules or an LLM judge — with an operator API and a live Insight dashboard.
+
+    [:octicons-arrow-right-24: Supervise agents](configuration/agents.md#supervising-an-autonomous-agent)
+
+-   :material-package-variant:{ .lg .middle } **Artifacts**
+
+    ---
+
+    Prompts, steering, skills, guardrails, hooks, and MCP server configs as named, versioned, typed assets — referenced from YAML via `artifact://name[@version]` and sourced from project files, DB uploads, or sha256-pinned external packs.
+
+    [:octicons-arrow-right-24: Artifacts](internals/tuvl-agentic-manual.md#211-artifacts-artifacts-kind-artifact)
 
 -   :material-database:{ .lg .middle } **Dynamic Models**
 
@@ -138,7 +174,10 @@ flowchart TD
     subgraph Execution & Integrations
         Engine -->|ModelOp| UoW
         UoW -->|SQLModel Object Mapper| PG[(PostgreSQL)]
-        Engine -->|Agent| LLM[LiteLLM Any Provider]
+        Engine -->|Agent completion| LLM[LiteLLM Any Provider]
+        Engine -->|Agent autonomous| Loop[Bounded Tool-Calling Loop]
+        Loop -->|LLM + declared tools| LLM
+        Sup[Agent Supervisor<br>pause · steer · abort] -.watches.-> Loop
         Engine -->|DataSearch| RAG[(pgvector RAG)]
         Engine -->|Functional| Nodes[Custom Python Nodes]
         Engine -->|MCP| MCP[MCP Tools]
@@ -153,7 +192,7 @@ TUVL is fully compatible with AI coding agents. To empower your AI agent with co
 - <a href="assets/AGENTS.txt" download="AGENTS.md">⬇️ Download <code>AGENTS.md</code></a> — Core framework rules and architectural invariants
 - <a href="assets/skills.zip" download="skills.zip">⬇️ Download <code>skills.zip</code></a> — Procedural skillset definitions (unzip to `.agents/skills/`)
 
-Place these files directly in the root of your project workspace to align your AI assistant with the TUVL framework.
+Place these files directly in the root of your project workspace to align your AI assistant with the TUVL framework. New projects created with `tuvl init` already include them. For the full workflow — scaffolding, prompting, validating, and testing generated config — see [Build with Coding Agents](getting-started/coding-agents.md).
 
 ## Getting Started
 

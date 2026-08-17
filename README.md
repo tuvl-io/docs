@@ -39,8 +39,8 @@ tuvl_documentation/
 │       └── publish-docs.yml   # CI: build & deploy on release branch / tag
 └── docs/
     ├── index.md          # Home page
-    ├── getting-started/  # Installation, quickstart, project structure
-    ├── concepts/         # Architecture, workflows, nodes, models, context
+    ├── getting-started/  # Installation, quickstart, project structure, coding agents
+    ├── concepts/         # Architecture, agentic contract, workflows, nodes, models, context
     ├── configuration/    # Datasources, LLM presets, environment vars
     ├── cli/              # CLI command reference
     ├── api/              # REST API endpoints & schemas

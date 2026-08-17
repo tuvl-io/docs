@@ -10,6 +10,8 @@ tuvl uses YAML files for all configuration. This keeps your logic declarative an
 | `Workflow` | `workflows/` | Business logic flows |
 | `DataSource` | `datasources/` | Database connections |
 | `AgentModel` | `agents/` | LLM provider presets |
+| `Artifact` | `artifacts/` | Named, versioned assets — prompts, steering, skills, guardrails, hooks, MCP servers — referenced via `artifact://name[@version]` |
+| `SystemConfig` | `.tuvl/system.yaml` | Project-level, boot-time API surface settings |
 
 ## Environment Variables
 
@@ -123,11 +125,32 @@ different `schema_version` values coexist in the registry independently.
 Setting `enabled: false` excludes a definition from active use (no route mounted, no
 CRUD endpoints) but keeps it visible and manageable through the admin API. Omitting the
 field is equivalent to `enabled: true`.
-  name: "Order"
+
+## SystemConfig (`.tuvl/system.yaml`)
+
+Boot-time settings that shape the mounted API surface, read once at startup. The only
+knob today is `spec.api.expose_model_crud`:
+
+```yaml
+kind: SystemConfig
+metadata:
+  name: system
 spec:
-  tablename: "orders"
-  # ...
+  api:
+    expose_model_crud: false   # default: true
 ```
+
+Setting `expose_model_crud: false` unmounts every auto-generated `/models/*` CRUD
+router — the routes are absent entirely, not merely scope-denied — leaving only
+hand-authored `Workflow` triggers exposed. **Restart required** for the change to
+take effect.
+
+`TUVL_EXPOSE_MODEL_CRUD` overrides the YAML value at the env level (env wins over
+`.tuvl/system.yaml`). In dev mode, the toggle is also editable from the Insight
+[Settings page](../insight/settings.md#api-access)'s API Access section.
+
+See [Authorization Surfaces](../security/iam.md#authorization-surfaces) for the CRUD
+and workflow-trigger auth model this knob sits alongside.
 
 ## Validation
 

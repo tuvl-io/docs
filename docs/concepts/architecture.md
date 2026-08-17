@@ -110,7 +110,7 @@ See [Repositories](repositories.md) for the full API.
 
 ### Human-in-the-Loop (HITL)
 
-The `HumanInTheLoop` step kind pauses execution and stores state in Redis. A reviewer approves or rejects via the API (or the tuvl insight UI), after which the engine resumes exactly where it stopped. Timeouts are configurable per step.
+The `HumanInTheLoop` step kind pauses execution and freezes the public context as a `tuvl_system_workflow_instances` row in Postgres. A reviewer responds via `POST /api/workflows/resume` (or the tuvl insight UI), after which the engine resumes from the step after the pause; the instance row is deleted before re-running, so a resume can never replay.
 
 ### OpenTelemetry
 
@@ -140,7 +140,7 @@ sequenceDiagram
             W->>N: LiteLLM call + prompt
             N-->>W: JSON → context keys + signal
         else HumanInTheLoop
-            W->>W: Pause, store state in Redis
+            W->>W: Pause, persist instance row (Postgres)
             Note over W: Resumed by reviewer
         end
         W->>W: Follow signal → next step
@@ -156,9 +156,9 @@ sequenceDiagram
 | Kind | Description |
 |------|-------------|
 | `Functional` | Call a registered Python node from `NODE_REGISTRY` |
-| `Agent` | LLM call via LiteLLM; structured JSON output maps to context keys |
+| `Agent` | LLM step via LiteLLM — `mode: completion` (single retried call, structured JSON output maps to context keys) or `mode: autonomous` (bounded tool-calling loop; the model calls declared tools — other steps — until it emits an `outcome.enum`) |
 | `APICall` | Outbound HTTP request; response mapped into context |
-| `MCP` | Invoke a tool on an MCP server (stdio or SSE) |
+| `MCP` | Invoke a tool on an MCP server (connection declared in a `type: mcp` artifact) |
 | `HumanInTheLoop` | Pause execution; await a human approve/reject decision |
 | `ModelOp` | Direct CRUD operation on a registered data model |
 | `Router` | Evaluate a condition expression; branch via signal |

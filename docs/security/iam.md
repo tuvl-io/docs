@@ -33,12 +33,79 @@ The only built-in scope is `iam:admin`, which gates all `/auth/admin/*` endpoint
 
 ---
 
+## Authorization Surfaces
+
+Scopes and groups gate two built-in surfaces beyond any custom endpoints you protect yourself
+(see [Protecting Your Own Endpoints](#protecting-your-own-endpoints)): the auto-generated model
+CRUD API and workflow triggers.
+
+### Model CRUD
+
+Every `/models/{model}/…` route requires a valid Biscuit token by default. Scope names default
+to `{modelname.lower()}:read` / `:write` / `:delete`, overridable per model with
+`spec.access.{read,write,delete}_scope` in the `ModelDefinition`.
+
+`spec.access.{read,write,delete}_groups` (a list, or a bare group name) layers an IAM group
+requirement on top of the scope check — both the scope **and** the group must pass. A tier left
+undeclared cascades from the next-more-privileged tier (`write_groups` falls back to
+`read_groups`, `delete_groups` falls back to `write_groups`), so pinning only `read_groups` never
+leaves mutations open to a wider audience than reads. Declaring no groups at all is scope-only.
+`iam:admin` bypasses every scope and group check.
+
+```yaml
+kind: ModelDefinition
+metadata:
+  name: Candidate
+spec:
+  access:
+    read_scope: candidate:read
+    write_scope: candidate:write
+    read_groups: recruiter          # bare string or a list
+    write_groups: [hr_manager]      # delete_groups falls back to this
+```
+
+Use `GET /admin/scopes` to see every enforceable scope grouped by source (`crud`, `workflows`,
+`system`) — its `crud_api_enabled` field also reports whether the CRUD kill switch is currently on.
+
+!!! note "Disabling CRUD entirely"
+    The whole `/models/*` surface can be turned off project-wide with
+    `spec.api.expose_model_crud: false` — see
+    [Configuration Overview](../configuration/overview.md#systemconfig-tuvlsystemyaml). When
+    disabled, the routes are absent, not merely scope-denied.
+
+### Workflow Triggers
+
+Workflow triggers are gated by `metadata.required_scope` and/or `metadata.required_group` in the
+workflow YAML. In production, every trigger route — the REST mount, the versioned
+`/{schema_version}/run/{name}` route, and gRPC `RunWorkflow` — requires a valid bearer token by
+default, even for a workflow that declares neither.
+
+Anonymous access is an explicit opt-in via `spec.trigger.public: true`. Combining `public: true`
+with a declared `required_scope` or `required_group` is a `tuvl validate` error — the engine fails
+closed and always enforces the declared scope/group over `public` at runtime.
+
+```yaml
+kind: Workflow
+metadata:
+  name: register_user
+spec:
+  trigger:
+    path: /api/register
+    method: POST
+    public: true      # anonymous access — no required_scope/required_group allowed alongside this
+```
+
+In dev mode (`tuvl dev`), workflows with no scope/group requirement stay tokenless so quickstarts
+run without a login step.
+
+---
+
 ## Bootstrap
 
 On a fresh installation with no users, the bootstrap endpoint creates the first superadmin:
 
 ```bash
-curl -X POST http://localhost:8000/auth/bootstrap \
+curl -X POST http://localhost:8885/auth/bootstrap \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -87,7 +154,7 @@ Response:
 Use the token in subsequent requests:
 
 ```bash
-curl http://localhost:8000/auth/admin/users \
+curl http://localhost:8885/auth/admin/users \
   -H "Authorization: Bearer <biscuit_b64>"
 ```
 
@@ -96,7 +163,7 @@ curl http://localhost:8000/auth/admin/users \
 Exchange the current token for a new one with a fresh TTL (the old token is immediately revoked):
 
 ```bash
-curl -X POST http://localhost:8000/auth/refresh \
+curl -X POST http://localhost:8885/auth/refresh \
   -H "Authorization: Bearer <old_token>"
 ```
 
@@ -107,7 +174,7 @@ Returns a new `TokenResponse`. The old token is added to the blacklist and can n
 Revoke the current token immediately:
 
 ```bash
-curl -X POST http://localhost:8000/auth/logout \
+curl -X POST http://localhost:8885/auth/logout \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -131,25 +198,25 @@ npm install @tuvl/client
 ```ts
 import { TuvlAuth, TuvlClient } from "@tuvl/client";
 
-const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8885" });
 
 const { access_token } = await auth.loginWithPassword("admin@example.com", "secret");
 
 // Attach the token to the workflow client
-const client = new TuvlClient({ baseUrl: "http://localhost:8000", token: access_token });
+const client = new TuvlClient({ baseUrl: "http://localhost:8885", token: access_token });
 ```
 
 ### OAuth2 login (browser)
 
 ```ts
 // 1. Redirect the browser to the provider
-const auth = new TuvlAuth({ baseUrl: "http://localhost:8000" });
+const auth = new TuvlAuth({ baseUrl: "http://localhost:8885" });
 window.location.href = auth.getOAuthLoginUrl("google");
 
 // 2. After login the server redirects to TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit>
 //    On that landing page, extract the token:
 const token = new URLSearchParams(window.location.search).get("token")!;
-const client = new TuvlClient({ baseUrl: "http://localhost:8000", token });
+const client = new TuvlClient({ baseUrl: "http://localhost:8885", token });
 ```
 
 !!! info "Configure the redirect"
@@ -180,7 +247,7 @@ await auth.logout(token);
 ```ts
 import { TuvlAuth, TuvlClient } from "@tuvl/client";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://localhost:8885";
 const auth = new TuvlAuth({ baseUrl: BASE_URL });
 
 // Step 1 — on a fresh install: bootstrap the first admin
@@ -397,10 +464,10 @@ The IAM system creates four tables on startup:
 
 | Table | Purpose |
 |-------|---------|
-| `iam_users` | User credentials (email, phone number, names, bcrypt hash, federation fields) |
-| `iam_roles` | Named roles with optional description |
-| `iam_user_roles` | Many-to-many: user ↔ role assignments |
-| `iam_role_scopes` | One row per scope per role |
+| `tuvl_system_iam_users` | User credentials (email, phone number, names, bcrypt hash, federation fields) |
+| `tuvl_system_iam_roles` | Named roles with optional description |
+| `tuvl_system_iam_user_roles` | Many-to-many: user ↔ role assignments |
+| `tuvl_system_iam_role_scopes` | One row per scope per role |
 
 Tables are created automatically via SQLModel's `create_all` during startup — no migration tool required for initial setup.
 
@@ -414,6 +481,6 @@ user or manage tokens during local development.
 
 ```bash
 # Both of these work in dev mode:
-curl -H "Authorization: Bearer <dev_api_key>" http://localhost:8000/dev/files
-curl -H "Authorization: Bearer <dev_api_key>" http://localhost:8000/auth/admin/users
+curl -H "Authorization: Bearer <dev_api_key>" http://localhost:8885/dev/files
+curl -H "Authorization: Bearer <dev_api_key>" http://localhost:8885/auth/admin/users
 ```
