@@ -1,39 +1,22 @@
-# Example Projects
+# Example projects
 
-Five complete, runnable projects live in the public
-[`tuvl-io/examples`](https://github.com/tuvl-io/examples) repository. Each was
-built from a `project-specification.md` in its directory, passes
-`tuvl validate` with zero warnings, and runs with `tuvl dev` — clone one, point
-it at your Postgres, and make it yours.
+The [tuvl-io/examples](https://github.com/tuvl-io/examples) repository holds complete tuvl 2.0
+projects. Each runs with `tuvl dev`, passes `tuvl validate --strict`, and can be tried in a browser
+sandbox at [try.tuvl.online](https://try.tuvl.online).
 
-| Project | Difficulty | What it demonstrates |
+| Example | What it shows | Engines |
 |---|---|---|
-| [`invoice-extraction-api`](https://github.com/tuvl-io/examples/tree/release/invoice-extraction-api) | Easy | Raw invoice text → validated Postgres records: one `Agent` step with typed JSON output, a deterministic totals check, `enum` currencies, a `secure` tax id |
-| [`knowledge-base-qa`](https://github.com/tuvl-io/examples/tree/release/knowledge-base-qa) | Easy–Medium | RAG on the built-in rails — `DataIngest`/`DataSearch` over pgvector, cited answers, zero custom Python, a `@tuvl/client` demo script |
-| [`content-moderation-pipeline`](https://github.com/tuvl-io/examples/tree/release/content-moderation-pipeline) | Medium | LLM classification, deterministic `match:` region routing, and group-gated human review — the submitter cannot approve their own content |
-| [`mcp-research-agent`](https://github.com/tuvl-io/examples/tree/release/mcp-research-agent) | Medium–Complex | An autonomous-mode `Agent` driving an MCP fetch tool to a cited research brief, bounded by a token budget, with live loop progress over the SDK |
-| [`kyc-onboarding`](https://github.com/tuvl-io/examples/tree/release/kyc-onboarding) | Complex | A supervised autonomous investigator (fail-closed LLM judge), policy RAG, compliance-gated approval, PII masking, versioned risk schemas |
-
-Together the five exercise every step kind and subsystem: all eight step kinds
-(both `Agent` modes), RAG, `spec.supervisor`, `HumanInTheLoop` with
-`auth.required_group`, MCP over stdio, model versioning, `secure: true` masking,
-IAM scopes and groups, and the `tuvl test` framework with LLM-judge evaluations.
-
-## Running one
+| **sentiment-api** | Classify a product review and persist it — the smallest useful workflow | `llm`, `tool` (db) |
+| **invoice-extraction-api** | Extract a structured invoice from text, verify it deterministically, persist it; per-signal outputs (valid / mismatch / incomplete) | `llm`, `code`, `tool` |
+| **content-moderation-pipeline** | Classify user content, apply region policy in code, notify a channel, and send borderline items to a person | `llm`, `code`, `tool` (http), `human` |
+| **knowledge-base-qa** | Retrieval-augmented answers with citations on the built-in vector rails | `code` (`tuvl.data_ingest`, `tuvl.data_search`), `llm` |
+| **support-triage** | Rules-first triage (`decide`), an investigating `loop` with a supervisor, and a tool call that needs approval before issuing a credit (a child workflow) | `decide`, `loop`, `llm`, `tool`, `code` |
+| **mcp-research-agent** | A bounded `loop` driving an MCP fetch server (allow-listed tools, schema pinned in `tuvl.lock`) to write a cited brief | `loop`, `tool` (mcp), `llm`, `code` |
+| **kyc-onboarding** | PII-safe intake (`secure: true`), sanctions screening, a supervised investigation `loop` with a calibrated **judge**, and a compliance officer's decision | `loop`, `human`, `llm`, `tool`, `code` |
 
 ```bash
-uv tool install "tuvl[standard]>=1.0.0"
-git clone https://github.com/tuvl-io/examples.git
-cd examples/<project-name>
-cp .env.example .env        # fill in DATABASE_URL, GEMINI_API_KEY, …
-tuvl validate
-tuvl dev                    # → http://localhost:8885 (+ /insight)
+git clone https://github.com/tuvl-io/examples && cd examples/support-triage
+cp .env.example .env            # add a model key and Postgres settings
+tuvl validate --strict
+tuvl dev --auto-login
 ```
-
-Per-project infrastructure needs (database, pgvector, API keys, MCP tooling)
-are catalogued in the repo's
-[`REQUIREMENTS.md`](https://github.com/tuvl-io/examples/blob/release/REQUIREMENTS.md).
-Contributions follow
-[`AGENTS.md`](https://github.com/tuvl-io/examples/blob/release/AGENTS.md) —
-each project ships a specification a human or coding agent can implement
-unaided.

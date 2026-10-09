@@ -138,54 +138,21 @@ pip install "tuvl[standard]"
     docker exec ollama ollama pull llama3
     ```
 
-## Development Installation
-
-For contributing to tuvl or developing locally:
-
-```bash
-# Clone the repository
-git clone https://github.com/tuvl-io/tuvl.git
-cd tuvl
-
-# Install dependencies
-cd engine && uv sync
-cd ../cli && uv sync
-
-# Run the development server
-cd ../engine && uv run tuvl dev
-```
-
 ## Verifying Installation
 
-Create a test project to verify everything works:
+Create the sample project and run its checks:
 
 ```bash
-# Scaffold with sample files (recommended)
-tuvl init my-project --sample
+tuvl init my-project --sample --preset gemini -y   # or openai | anthropic | ollama
 cd my-project
-
-# Start the development server
-tuvl dev
-
-# Options: custom port or project directory
-# tuvl dev --port 3000
-# tuvl dev --project-dir /path/to/project
+tuvl validate --strict
+tuvl test
+tuvl dev --auto-login
 ```
 
-You should see output like:
-
-```
-╭─────────────────────────────── tuvl dev ───────────────────────────────╮
-│ Starting tuvl engine in dev mode on port 8885.                         │
-│                                                                        │
-│ Security key                                                           │
-│  XXXX-XXXX-XXXX-XXXX                                                   │
-│                                                                        │
-│ Open http://127.0.0.1:8885/insight/ and paste the key above.          │
-╰────────────────────────────────────────────────────────────────────────╯
-```
-
-Open `http://127.0.0.1:8885/insight/` in your browser and paste the printed security key to access the tuvl insight developer portal.
+`tuvl dev` serves the engine on port 8885 and **Insight** at `http://127.0.0.1:8885/insight/`.
+With `--auto-login` this machine skips the key screen; otherwise paste the session key, stored in
+`.tuvl/.dev-session` (`tuvl dev --show-key` prints it).
 
 ## Troubleshooting
 
@@ -293,4 +260,4 @@ The default `8885` spells **T·U·V·L** on a phone keypad and deliberately avoi
 
 - [Quickstart Guide](quickstart.md) — Build your first workflow
 - [Project Structure](project-structure.md) — Understand the project layout
-- [Architecture](../concepts/architecture.md) — Learn how tuvl works
+- [Agentic Manual](../internals/tuvl-agentic-manual.md) — how tuvl projects are written
