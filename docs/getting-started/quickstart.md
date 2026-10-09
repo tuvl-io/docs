@@ -1,291 +1,77 @@
 # Quickstart
 
-Build your first AI-powered workflow in under 5 minutes.
+This walks through the sample project: a support-ticket triage workflow with a spec, a task plan,
+tests and a lock that pass the CI gate as created.
 
-## Create a New Project
-
-```bash
-# Minimal scaffold
-tuvl init my-app
-
-# Recommended: include sample workflow, nodes, tests, and telemetry config
-tuvl init my-app --sample
-
-cd my-app
-```
-
-!!! tip
-    `--sample` writes a ready-to-run recruitment screening workflow, two LLM-as-a-Judge test cases, and a `.tuvl/telemetry.yaml` config. It's the fastest way to see every feature in action.
-
-This creates the following structure:
-
-```
-my-app/
-├── models/           # Data model definitions
-├── workflows/        # Workflow definitions
-├── datasources/      # Database configurations
-├── llms/             # LLM agent presets
-├── nodes/            # Python node implementations
-├── .tuvl/
-│   └── telemetry.yaml  # OTel config (--sample)
-├── tests/
-│   └── workflows/      # Test cases (--sample)
-├── .env              # Environment variables
-└── .env.example      # Safe-to-commit template
-```
-
-## Define a Model
-
-Create a simple `Contact` model:
-
-```yaml title="models/contact.yaml"
-kind: "ModelDefinition"
-version: "v1"
-metadata:
-  name: "Contact"
-spec:
-  tablename: "contacts"
-  schema: true
-  fields:
-    - name: "id"
-      type: "uuid"
-      primary_key: true
-      default: "uuid4"
-      input: false
-
-    - name: "email"
-      type: "string"
-      unique: true
-      required: true
-      input: true
-
-    - name: "name"
-      type: "string"
-      required: true
-      input: true
-
-    - name: "company"
-      type: "string"
-      input: true
-
-    - name: "priority"
-      type: "string"
-      input: false
-      description: "AI-assigned priority level"
-```
-
-## Create a Node
-
-Nodes are Python functions that process the workflow context:
-
-```python title="nodes/contact_nodes.py"
-from typing import Any
-from tuvl_engine.nodes.base import node
-from tuvl_engine.repositories.registry import get_repository
-
-@node("save_contact")
-async def save_contact(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Save a new contact to the database."""
-    session = ctx["_session"]
-    repo = get_repository("Contact", session)
-    
-    contact = await repo.add({
-        "email": ctx["email"],
-        "name": ctx["name"],
-        "company": ctx.get("company"),
-    })
-    
-    ctx["id"] = str(contact.id)
-    ctx["status"] = "saved"
-    return ctx
-
-
-@node("enrich_contact")
-async def enrich_contact(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Update contact with AI-enriched data."""
-    session = ctx["_session"]
-    repo = get_repository("Contact", session)
-    
-    await repo.update(ctx["id"], {
-        "priority": ctx.get("priority", "normal"),
-    })
-    
-    ctx["status"] = "enriched"
-    return ctx
-```
-
-## Define a Workflow
-
-Create a workflow that saves a contact and uses AI to prioritize them:
-
-```yaml title="workflows/contact_intake.yaml"
-kind: "Workflow"
-version: "v1"
-metadata:
-  name: "contact_intake"
-  description: "Capture and prioritize new contacts"
-
-spec:
-  context: "Contact"
-
-  trigger:
-    path: "/api/contacts"
-    method: "POST"
-    input_schema: "context"
-    response_schema: "context"
-
-  steps:
-    - id: "save"
-      kind: "Functional"
-      runner: "save_contact"
-
-    - id: "prioritize"
-      kind: "Agent"
-      mode: "completion"
-      agent:
-        model: "ollama/llama3"
-        system: |
-          You are a lead scoring assistant. Analyze the contact
-          and assign a priority level.
-        prompt: |
-          Contact: {{ name }}
-          Email: {{ email }}
-          Company: {{ company }}
-          
-          Respond with JSON: {"priority": "high" | "medium" | "low"}
-        outcome:
-          format: json
-          map:
-            priority: priority
-      routes:
-        default: "enrich"
-        error: "enrich"
-
-    - id: "enrich"
-      kind: "Functional"
-      runner: "enrich_contact"
-```
-
-## Configure the Database
-
-Edit `.env` with your PostgreSQL credentials:
-
-```env title=".env"
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=tuvl
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password
-```
-
-## Run the Server
+## 1. Create the project
 
 ```bash
-# Start dev server in current directory
-tuvl dev
-
-# Specify a different port or project directory
-tuvl dev --port 3000
-tuvl dev --project-dir ./services/api
+tuvl init triage --sample --preset gemini -y      # or openai | anthropic | ollama
+cd triage
 ```
 
-The dev server starts on `http://localhost:8885` with the built-in tuvl insight UI at `http://localhost:8885/insight/`. A one-time security key is generated and saved to `.tuvl/.dev-session` — paste it into the UI to authenticate.
+The preset writes `llms/default.yaml` (the agents' model) and `llms/analysis.yaml` (spec analysis)
+and reads the API key from your environment into `.env`. Point `.env` at a PostgreSQL database
+(`POSTGRES_*`).
 
-```
-╭─────────────────────────────── tuvl dev ───────────────────────────────╮
-│ Starting tuvl engine in dev mode on port 8885.                         │
-│                                                                        │
-│ Open http://127.0.0.1:8885/insight/ and the security key is stored    │
-│ in .tuvl/.dev-session (run tuvl dev --show-key to print it).           │
-╰────────────────────────────────────────────────────────────────────────╯
-```
-
-!!! tip
-    Use `tuvl dev --auto-login` to automatically authenticate the UI and bypass the security key prompt.
-
-## Test Your Workflow
-
-Send a request to your new endpoint:
+## 2. Check it
 
 ```bash
-curl -X POST http://localhost:8885/api/contacts \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "jane@example.com",
-    "name": "Jane Doe",
-    "company": "Acme Corp"
-  }'
+tuvl validate --strict
 ```
 
-Response:
-
-```json
-{
-  "success": true,
-  "status_code": 200,
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "email": "jane@example.com",
-    "name": "Jane Doe",
-    "company": "Acme Corp",
-    "priority": "high",
-    "status": "enriched"
-  },
-  "error": null
-}
+```
+triage_ticket  4 agents · 2 deterministic · 1 bounded · 1 external  ·  worst-case 500 tok
+✓ Validation passed
 ```
 
-!!! info "No token needed here — dev mode only"
-    This call works without an `Authorization` header because `tuvl dev` exempts
-    workflows with no `required_scope`/`required_group` from authentication. In
-    production every trigger requires a valid bearer token by default, even with
-    neither set — opt a route into anonymous access explicitly with
-    `spec.trigger.public: true`. See [Authorization Surfaces](../security/iam.md#authorization-surfaces).
+Every workflow gets a **determinism profile** and a **worst-case token cost**. Then run the tests —
+offline, with recorded and mocked results:
 
-## Explore the API
+```bash
+tuvl test
+tuvl spec status        # every task derived as done
+```
 
-Open `http://localhost:8885/insight/` and paste the security key to access the tuvl insight developer portal, where you can:
+## 3. Open Insight
 
-- Browse and test all your workflow endpoints
-- Inspect live step events and execution traces
-- Manage models, datasources, and LLM providers visually
+```bash
+tuvl dev --auto-login   # http://localhost:8885/insight
+```
 
-The raw OpenAPI schema is also available at `http://localhost:8885/docs`.
+- **Workflows → triage_ticket** shows the graph: `classify` (llm) → `prioritise` → `review`
+  (human) → `store` (tool). Click a card to see its contract and engine.
+- **▶ Run** with a ticket. An urgent one stops at `review`: the **Runs** page shows the approval form;
+  approve it and the run continues to `store`.
+- **📌 Pin as fixture** turns the run into a test that replays with zero tokens.
 
-## What's Next?
+## 4. Call it
 
-<div class="grid cards" markdown>
+```bash
+curl -X POST localhost:8885/api/tickets/triage \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"subject": "Refund", "body": "I was charged twice", "customer_email": "a@example.com"}'
+```
 
--   :material-sitemap:{ .lg .middle } **Understand Workflows**
+The response is the end's body (`201` with the stored ticket), or `202` with a run descriptor when
+the run waits for a person. Follow it with `tuvl runs tail <run_id>` or
+`GET /api/runs/<run_id>/events` (SSE). In dev mode the session key works as an admin token.
 
-    ---
+## 5. Change something
 
-    Learn about step kinds, routing, and advanced patterns.
+Open `specs/triage-ticket.md`, add a policy, and let tuvl plan the change:
 
-    [:octicons-arrow-right-24: Workflows](../concepts/workflows.md)
+```bash
+tuvl spec analyse specs/triage-ticket.md           # proposed contracts + tasks (dry run)
+tuvl spec analyse specs/triage-ticket.md --apply
+tuvl spec status                                   # the new tasks, derived
+```
 
--   :material-code-braces:{ .lg .middle } **Build Custom Nodes**
+Implement the tasks (YAML engine blocks; Python only for `code` agents), then run the CI gate:
 
-    ---
+```bash
+tuvl validate --strict && tuvl codegen --check && tuvl lock --check && tuvl test && tuvl spec status --strict
+```
 
-    Create powerful reusable logic units.
-
-    [:octicons-arrow-right-24: Nodes](../concepts/nodes.md)
-
--   :material-robot:{ .lg .middle } **Configure AI Agents**
-
-    ---
-
-    Set up LLM providers and prompts.
-
-    [:octicons-arrow-right-24: Agents](../configuration/agents.md)
-
--   :material-database:{ .lg .middle } **Work with Data**
-
-    ---
-
-    Learn the repository pattern and model definitions.
-
-    [:octicons-arrow-right-24: Repositories](../concepts/repositories.md)
-
-</div>
+Next: the [Agentic Manual](../internals/tuvl-agentic-manual.md) and
+[spec-driven development](../internals/spec-driven.md).

@@ -133,38 +133,19 @@ nav:
       - Quickstart: getting-started/quickstart.md
       - Project Structure: getting-started/project-structure.md
       - Build with Coding Agents: getting-started/coding-agents.md
-  - Concepts:
-      - Architecture: concepts/architecture.md
-      - The Agentic Contract: concepts/agentic-contract.md
-      - Workflows: concepts/workflows.md
-      - Nodes: concepts/nodes.md
-      - Models: concepts/models.md
-      - Repositories: concepts/repositories.md
-      - Context Object: concepts/context.md
-  - Configuration:
-      - Overview: configuration/overview.md
-      - Datasources: configuration/datasources.md
-      - Redis: configuration/redis.md
-      - Agents: configuration/agents.md
-      - Telemetry: configuration/telemetry.md
-      - LLM Judge: configuration/llm-judge.md
-  - Engine Internals:
+  - Guide:
       - Agentic Manual: internals/tuvl-agentic-manual.md
-      - Authentication & Authorization: internals/auth.md
-      - Autonomous Agent Mode: internals/autonomous-agent.md
-      - Supervisor & Orchestrator: internals/supervisor.md
-      - Human-in-the-Loop: internals/human-in-the-loop.md
-      - Functional Nodes: internals/functional-node.md
-      - ModelOp: internals/model-op.md
-      - Response: internals/response.md
+      - Engines: internals/engines.md
+      - Decide: internals/decide.md
+      - Loop and Tools: internals/loop-and-tools.md
+      - Judges: internals/judges.md
+      - Runtime and Journal: internals/runtime.md
+      - Spec-Driven Development: internals/spec-driven.md
+      - API — REST, SSE, MCP: internals/api.md
+      - CLI Reference: internals/cli.md
       - Observability: internals/observability.md
-  - Security:
-      - IAM: security/iam.md
-      - Federation: security/federation.md
-      - Tokens: security/tokens.md
-  - Insight Portal:
-      - Overview: insight/overview.md
-      - Workflows: insight/workflows.md
+  - Insight:
+      - Overview: internals/insight.md
       - Models: insight/models.md
       - Datasources: insight/datasources.md
       - AI Models: insight/ai-models.md
@@ -172,25 +153,16 @@ nav:
       - IAM: insight/iam.md
       - Federation: insight/federation.md
       - API Docs: insight/api-docs.md
-      - Spectrum: insight/spectrum.md
       - Settings: insight/settings.md
-  - Tools:
-      - Spectrum: tools/spectrum.md
-      - Workflow Canvas Test Mode: tools/workflow-testing.md
-      - Human-in-the-Loop: tools/hitl.md
-      - Testing Workflows: tools/testing.md
-  - TypeScript SDK:
-      - Overview: sdk/overview.md
-      - Quickstart: sdk/quickstart.md
-      - API Reference: sdk/api-reference.md
-  - CLI Reference:
-      - Overview: cli/overview.md
-      - Commands: cli/commands.md
-  - API Reference:
-      - Endpoints: api/endpoints.md
-      - Schemas: api/schemas.md
-  - Examples:
-      - Example Projects: examples/example-projects.md
-      - Candidate Onboarding: examples/candidate-onboarding.md
-      - Custom Nodes: examples/custom-nodes.md
+  - Configuration:
+      - Overview: configuration/overview.md
+      - Datasources: configuration/datasources.md
+      - Redis: configuration/redis.md
+      - AI Models: configuration/agents.md
+  - Security:
+      - Authentication & Authorization: internals/auth.md
+      - IAM: security/iam.md
+      - Federation: security/federation.md
+      - Tokens: security/tokens.md
+  - Examples: examples/example-projects.md
   - Contributing: contributing.md

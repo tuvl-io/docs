@@ -1,205 +1,136 @@
 # tuvl
 
-**A lightweight, local-first workflow orchestration engine for AI-powered business automation.**
+**Typed workflows of agents — deterministic where they can be, bounded where they can't — on a durable, journaled runtime, built spec-first.**
 
-!!! note "Stable release"
-    tuvl **1.0.1** is production-ready: the API and YAML schemas are stable and
-    versioned under [SemVer](https://semver.org) — breaking changes bump the
-    major version.
+!!! note "tuvl 2.0"
+    tuvl 2.0 is a redesign with no 1.x compatibility layer: workflows are graphs of typed
+    **agents**, every run is durable and journaled, and projects are built from specs. Versions follow
+    [SemVer](https://semver.org).
 
 !!! tip "Try it live — no install"
-    Run any [example](https://github.com/tuvl-io/examples) in a throwaway browser
-    sandbox at **[try.tuvl.online](https://try.tuvl.online)**. Pick an example, get a
-    private live instance with the **Insight** editor, and explore the workflows
-    hands-on — each sandbox resets automatically after a few minutes.
+    Run any [example](https://github.com/tuvl-io/examples) in a throwaway browser sandbox at
+    **[try.tuvl.online](https://try.tuvl.online)** with the **Insight** editor.
 
 <p align="center">
-  <em>Pronounced "Thoo-val" (തൂവൽ) in Malayalam means a feather. It refers specifically to the soft feathers or plumage of a bird. </em>
+  <em>Pronounced "Thoo-val" (തൂവൽ) in Malayalam — a feather.</em>
 </p>
 
 ---
 
 ## What is tuvl?
 
-tuvl is a modular workflow engine that bridges the gap between deterministic code and probabilistic AI. It enables you to build complex business workflows using YAML-defined playbooks, with LLMs and traditional Python functions as interchangeable logic units.
+A tuvl workflow is a graph of **agents**. Each agent has a typed contract — `inputs`, `outputs`, the
+signals it emits — and an **engine** that implements it. Signals route to the next agent or a named
+end. tuvl checks the whole graph statically (contracts, data flow, types, policy, worst-case cost)
+and runs it on a durable runtime that records everything it does.
 
-```yaml title="workflows/onboarding.yaml"
-kind: "Workflow"
-version: "v1"
-metadata:
-  name: "candidate_onboarding"
-  description: "AI-powered candidate vetting workflow"
-
+```yaml title="workflows/refund_flow.yaml"
+kind: Workflow
+version: tuvl/v2
+metadata: { name: refund_flow, description: Handle a refund request }
 spec:
-  steps:
-    - id: "save_draft"
-      kind: "Functional"
-      runner: "db_save"
-
-    - id: "ai_vetting"
-      kind: "Agent"
-      mode: "completion"
-      agent:
-        model: "ollama/llama3"
-        prompt: |
-          Evaluate this candidate: {{ full_name }}
-          Experience: {{ experience_years }} years
-      routes:
-        senior: "fast_track"
-        needs_review: "manual_review"
+  models: [Order, Refund]
+  trigger:
+    http: { path: /api/refunds, method: POST }
+    input: { order_id: uuid, reason: str }
+  agents:
+    - id: load_order
+      description: Load the order
+      engine: tool
+      inputs: { order_id: uuid }
+      outputs: { order: Order }
+      tool: { use: db, model: Order, op: read, where: { id: "{{ order_id }}" } }
+      routes: { default: triage, not_found: END.missing, error: END.failed }
+    - id: triage
+      description: Decide how the refund is handled
+      engine: decide
+      inputs: { order: Order, reason: str }
+      outputs: { lane: "enum[auto, review]" }
+      decide:
+        rules:
+          - { when: "order.total > 500", then: review }
+          - { when: "true", then: auto }
+      routes: { auto: issue_refund, review: approval, error: END.failed }
+    # issue_refund (code) and approval (human) …
+  outputs:
+    default: { status: 200, body: { refund_id: "{{ refund.id }}" } }
+    missing: { status: 404, body: { error: unknown order } }
+    failed:  { status: 500, rollback: true, body: { error: refund failed } }
 ```
 
-## Key Features
+## Key features
 
 <div class="grid cards" markdown>
 
--   :material-cloud-off:{ .lg .middle } **Local-First**
+-   :material-shape-outline:{ .lg .middle } **Seven engines, one contract**
 
     ---
 
-    Run entirely on your infrastructure with Ollama for LLM inference. No data leaves your network.
+    `code`, `tool` (DB/HTTP/MCP), `decide` (rules, then a model), `llm`, `loop` (bounded tool
+    use), `human`, and `pending` contracts. Swap an engine without touching the graph.
 
--   :material-code-braces:{ .lg .middle } **YAML-Driven Workflows**
-
-    ---
-
-    Define complex business logic in readable YAML files. No more scattered code.
-
--   :material-robot:{ .lg .middle } **AI as a Function**
+-   :material-scale-balance:{ .lg .middle } **Deterministic first**
 
     ---
 
-    Use LLMs as interchangeable logic units with structured JSON outputs and automatic routing.
+    Every workflow has a determinism profile and a worst-case token cost. Rules decide before models;
+    an unavailable model is an error, never a silent fallback.
 
--   :material-robot-outline:{ .lg .middle } **Autonomous Agents**
-
-    ---
-
-    Beyond a single call: an `Agent` step in `mode: autonomous` runs a bounded tool-calling loop — the model picks from your declared tools until it emits a declared outcome, capped by `max_iterations` and `token_budget`.
-
-    [:octicons-arrow-right-24: Autonomous agents](concepts/workflows.md#autonomous-agent-steps)
-
--   :material-eye-check:{ .lg .middle } **Agent Supervisor**
+-   :material-database-sync:{ .lg .middle } **Durable runs**
 
     ---
 
-    An optional per-workflow watcher observes each autonomous run live and can **pause, steer, or abort** it mid-loop — deterministic rules or an LLM judge — with an operator API and a live Insight dashboard.
+    Runs survive restarts, wait for people, pause and resume on any worker, and compensate on
+    rollback. Every run is journaled.
 
-    [:octicons-arrow-right-24: Supervise agents](configuration/agents.md#supervising-an-autonomous-agent)
-
--   :material-package-variant:{ .lg .middle } **Artifacts**
-
-    ---
-
-    Prompts, steering, skills, guardrails, hooks, and MCP server configs as named, versioned, typed assets — referenced from YAML via `artifact://name[@version]` and sourced from project files, DB uploads, or sha256-pinned external packs.
-
-    [:octicons-arrow-right-24: Artifacts](internals/tuvl-agentic-manual.md#211-artifacts-artifacts-kind-artifact)
-
--   :material-database:{ .lg .middle } **Dynamic Models**
+-   :material-replay:{ .lg .middle } **Record, replay, test**
 
     ---
 
-    Define data models in YAML and get SQLModel classes, Pydantic schemas, and CRUD APIs automatically.
+    Pin any run as a fixture and replay it with zero tokens. Offline tests with typed mocks;
+    calibrated, cached judges for free-text checks.
 
--   :material-source-branch:{ .lg .middle } **Flexible Routing**
-
-    ---
-
-    Branch workflows based on node outputs, AI decisions, or custom conditions.
-
--   :material-api:{ .lg .middle } **Auto-Generated APIs**
+-   :material-file-document-edit:{ .lg .middle } **Spec-driven**
 
     ---
 
-    Every workflow becomes an HTTP endpoint. Every model gets CRUD operations.
+    Write intent in a spec; analysis proposes contracts and a task plan; codegen, validation and
+    task status are deterministic. Coding agents use the same tools over MCP.
 
--   :material-monitor-dashboard:{ .lg .middle } **Insight Developer Portal**
+-   :material-monitor-dashboard:{ .lg .middle } **Insight**
 
     ---
 
-    Browser-based UI for editing workflows, managing models, testing with Spectrum, and configuring IAM — all in dev mode.
+    Specs and task board, a canvas over the same YAML, runs with breakpoints, step mode and
+    approvals, change-engine checks, judge calibration.
 
-    [:octicons-arrow-right-24: Explore the portal](insight/overview.md)
+-   :material-api:{ .lg .middle } **REST, SSE and MCP**
+
+    ---
+
+    Typed OpenAPI from contracts, journal events over SSE, workflows as MCP tools, and a typed
+    TypeScript client.
+
+-   :material-shield-lock:{ .lg .middle } **Governed**
+
+    ---
+
+    Biscuit tokens, default-deny triggers, approvals without self-approval, secure fields kept away
+    from models, policy checked before you ship.
 
 </div>
 
-## Quick Example
+## Where to start
 
-```python title="nodes/onboarding.py"
-from typing import Any
-from tuvl_engine.nodes.base import node
-from tuvl_engine.repositories.registry import get_repository
+- [Installation](getting-started/installation.md) and the [Quickstart](getting-started/quickstart.md)
+- The [Agentic Manual](internals/tuvl-agentic-manual.md) — the complete document contract
+- [Spec-driven development](internals/spec-driven.md) and [building with coding agents](getting-started/coding-agents.md)
+- [Engines](internals/engines.md), [Runtime and journal](internals/runtime.md), [Insight](internals/insight.md)
 
-@node("db_save")
-async def db_save(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Save a candidate to the database."""
-    session = ctx["_session"]
-    repo = get_repository("Candidate", session)
-    
-    candidate = await repo.add({
-        "email": ctx["email"],
-        "full_name": ctx["full_name"],
-        "experience_years": ctx.get("experience_years", 0),
-    })
-    
-    ctx["id"] = str(candidate.id)
-    return ctx
-```
+## AI agent instructions
 
-## Architecture & Data Flow
-
-```mermaid
-flowchart TD
-    subgraph Configuration
-        YAML[YAML Definitions] -->|load_all_configs| Reg[In-Memory Registries]
-    end
-
-    subgraph Transport Layer
-        Reg -->|Mount Endpoints| REST[FastAPI REST Server]
-        Reg -->|Mount Services| GRPC[gRPC Server]
-    end
-
-    Client([Clients]) -->|HTTP/JSON| REST
-    Client -->|HTTP/2 Protobuf| GRPC
-
-    subgraph Security: Authentication & Authorization
-        REST --> Auth[Biscuit Token Auth<br>Verify Crypto Signature]
-        GRPC --> Auth
-        Auth -->|Extract Identity| AuthZ[IAM Scope Guard<br>Enforce Model/Route Scopes]
-    end
-
-    AuthZ -->|Workflow Route| Engine{WorkflowEngine.run}
-    AuthZ -->|Auto-Generated CRUD| UoW[Workflow Unit of Work<br>Pydantic-Validated CRUD]
-
-    subgraph Execution & Integrations
-        Engine -->|ModelOp| UoW
-        UoW -->|SQLModel Object Mapper| PG[(PostgreSQL)]
-        Engine -->|Agent completion| LLM[LiteLLM Any Provider]
-        Engine -->|Agent autonomous| Loop[Bounded Tool-Calling Loop]
-        Loop -->|LLM + declared tools| LLM
-        Sup[Agent Supervisor<br>pause · steer · abort] -.watches.-> Loop
-        Engine -->|DataSearch| RAG[(pgvector RAG)]
-        Engine -->|Functional| Nodes[Custom Python Nodes]
-        Engine -->|MCP| MCP[MCP Tools]
-        Engine -->|APICall| ExtAPI[External APIs]
-    end
-```
-
-## AI Agent Instructions
-
-TUVL is fully compatible with AI coding agents. To empower your AI agent with complete knowledge of the TUVL declarative schema, YAML logic, and custom python nodes, provide it with our official agent instructions:
-
-- <a href="assets/AGENTS.txt" download="AGENTS.md">⬇️ Download <code>AGENTS.md</code></a> — Core framework rules and architectural invariants
-- <a href="assets/skills.zip" download="skills.zip">⬇️ Download <code>skills.zip</code></a> — Procedural skillset definitions (unzip to `.agents/skills/`)
-
-Place these files directly in the root of your project workspace to align your AI assistant with the TUVL framework. New projects created with `tuvl init` already include them. For the full workflow — scaffolding, prompting, validating, and testing generated config — see [Build with Coding Agents](getting-started/coding-agents.md).
-
-## Getting Started
-
-Ready to build your first workflow?
-
-[Get Started :material-arrow-right:](getting-started/installation.md){ .md-button .md-button--primary }
-[View Examples :material-arrow-right:](examples/candidate-onboarding.md){ .md-button }
+- <a href="assets/AGENTS.txt" download="AGENTS.md">⬇️ Download <code>AGENTS.md</code></a> — the rules for coding agents working in a tuvl project
+- <a href="assets/skills.zip" download="skills.zip">⬇️ Download <code>skills.zip</code></a> — the tuvl 2.0 skill set (unzip to `.agents/skills/`; `tuvl skills update` does this for you)
 
 ## License
 
