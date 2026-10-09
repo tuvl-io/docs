@@ -76,11 +76,11 @@ Use `GET /admin/scopes` to see every enforceable scope grouped by source (`crud`
 ### Workflow Triggers
 
 Workflow triggers are gated by `metadata.required_scope` and/or `metadata.required_group` in the
-workflow YAML. In production, every trigger route — the REST mount, the versioned
-`/{schema_version}/run/{name}` route, and gRPC `RunWorkflow` — requires a valid bearer token by
-default, even for a workflow that declares neither.
+workflow YAML. Every way of starting a run — the workflow's HTTP route,
+`POST /api/workflows/{name}/runs`, and MCP export — requires a valid bearer token by default, even for
+a workflow that declares neither.
 
-Anonymous access is an explicit opt-in via `spec.trigger.public: true`. Combining `public: true`
+Anonymous access is an explicit opt-in via `spec.trigger.http.public: true`. Combining `public: true`
 with a declared `required_scope` or `required_group` is a `tuvl validate` error — the engine fails
 closed and always enforces the declared scope/group over `public` at runtime.
 

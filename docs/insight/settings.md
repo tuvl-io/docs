@@ -14,7 +14,6 @@ The left panel groups settings into four categories:
 |----------|------|---------|
 | Infrastructure | Redis | Shared state for multi-worker deployments |
 | Observability | Telemetry | OpenTelemetry trace and metric export |
-| Testing | LLM Judge | Automated quality evaluation for CI |
 | Security | API Access | Control which HTTP API surfaces are mounted |
 
 ---
@@ -82,37 +81,7 @@ spec:
 | `jaeger` | Jaeger native UDP exporter (legacy) |
 | `console` | Print spans to stdout — useful for debugging |
 
-See the [Telemetry configuration guide](../configuration/telemetry.md) for a full guide including Grafana Tempo setup.
-
----
-
-## LLM Judge
-
-The LLM Judge powers tuvl's `tuvl test` command. It evaluates workflow outputs against natural-language quality criteria using a secondary LLM.
-
-### LLM Judge YAML format
-
-```yaml
-kind: LLMJudgeConfig
-version: v1
-enabled: true
-metadata:
-  name: judge
-spec:
-  model: default          # references an AgentModel metadata.name
-  temperature: 0.0        # deterministic for consistent scoring
-  pass_threshold: 0.8     # 0.0–1.0; runs below this score are flagged
-```
-
-### Judge fields
-
-| Field | Description |
-|-------|-------------|
-| `model` | AgentModel to use for evaluation (see [AI Models](ai-models.md)) |
-| `temperature` | Set to `0.0` for reproducible judgements |
-| `pass_threshold` | Minimum pass score (0.0–1.0). Runs below this fail the test. |
-
-See the [LLM Judge guide](../configuration/llm-judge.md) and the [Testing Workflows](../tools/testing.md) reference for how to write test cases and run them in CI.
+See [Observability](../internals/observability.md) for spans, logs and collector setup (Grafana Tempo, Honeycomb, Datadog).
 
 ---
 
