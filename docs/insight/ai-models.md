@@ -1,6 +1,6 @@
 # AI Models
 
-The AI Models section configures your `AgentModel` definitions — the LLM connections that power `Agent` steps in your workflows. tuvl uses [LiteLLM](https://docs.litellm.ai/) under the hood, which means you can connect to any major LLM provider with a single config file.
+The AI Models section configures your `AgentModel` definitions — the model connections behind `llm`, `loop` and `decide` agents, judges and spec analysis. tuvl uses [LiteLLM](https://docs.litellm.ai/) under the hood, which means you can connect to any major LLM provider with a single config file.
 
 ![AI Models page](../assets/screenshots/insight-ai-models.png)
 
@@ -127,7 +127,8 @@ models) a `decide` agent:
 ```
 
 The **Decision** toggle on this page creates `type: decision` models (`laya`, `jev` or `litellm`) for
-the [decide engine](../internals/decide.md).
+the [decide engine](../internals/decide.md). For a hosted decision model, set its API base and an
+`${ENV_VAR}` API key there too.
 
 ---
 
