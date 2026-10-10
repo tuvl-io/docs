@@ -126,6 +126,7 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - What's New in 2.0: whats-new.md
   - Main Website: https://tuvl.io
   - Try it Live ↗: https://try.tuvl.online
   - Getting Started:
