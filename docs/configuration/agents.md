@@ -49,23 +49,30 @@ spec:
 ```
 
 A decision model picks one value of a `decide` agent's enum output with a confidence; it never writes
-free text. `laya` needs the `tuvl[laya]` extra; `jev` must be pinned to a version.
+free text.
 
-A decision model behind an OpenAI-compatible endpoint connects through `provider: litellm`:
+**Laya (self-hosted).** `tuvl init --decision-model laya` writes this model, `LAYA_API_*` entries in
+`.env`, and a `compose.yaml` that runs the laya-serve container on `localhost:8000`
+(`docker compose up -d laya`). `tuvl ship` adds Laya to the Helm chart.
 
-```yaml title="llms/laya-hosted.yaml"
+```yaml title="llms/laya.yaml"
 kind: AgentModel
-metadata: { name: laya-hosted }
+metadata: { name: laya }
 spec:
   type: decision
-  provider: litellm
-  model: openai/laya-typed-decisions
-  api_base: ${LAYA_API_BASE}
-  api_key: ${LAYA_API_KEY}     # an ${ENV_VAR} reference; a literal key is refused
+  provider: laya
+  model: auto                  # auto | english | multilingual | typed-decisions
+  api_base: ${LAYA_API_BASE:http://localhost:8000}
+  api_key: ${LAYA_API_KEY:}    # optional; an ${ENV_VAR} reference, never a literal key
 ```
 
-The endpoint must return `{"decision": …, "confidence": 0..1}` (or token logprobs). A decision model's
-own confidence is trusted first; an answer with no confidence is an error, never treated as certain.
+**Jev (hosted).** `provider: jev` with its `api_base`, and `model` pinned to a version (`jev-1.13.0`).
+
+**OpenAI-compatible endpoints** (a LiteLLM proxy, your own classifier) use `provider: litellm` with
+`model: openai/<name>`, `api_base` and an `${ENV_VAR}` `api_key`. The endpoint must return
+`{"decision": …, "confidence": 0..1}` (or token logprobs); an answer with no confidence is an error,
+never treated as certain.
+
 See [Decide](../internals/decide.md).
 
 ## Where models are used

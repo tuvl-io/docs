@@ -8,7 +8,7 @@ directory everywhere.
 
 | Command | Options | |
 |---|---|---|
-| `tuvl init [NAME]` | `--sample`, `--preset gemini\|openai\|anthropic\|ollama`, `-y/--yes`, `--multi-tenant`, `--no-ai-skills` | Scaffold a project. A preset writes `llms/default.yaml`, `llms/analysis.yaml` and `config.yaml` with current model ids, reading the key from the environment. `--sample` is a ticket-triage project (spec, TaskPlan, tests, lock) that passes the CI gate as created. `-y` accepts every default |
+| `tuvl init [NAME]` | `--sample`, `--preset gemini\|openai\|anthropic\|ollama`, `--decision-model laya\|none`, `-y/--yes`, `--multi-tenant`, `--no-ai-skills` | Scaffold a project. A preset writes `llms/default.yaml`, `llms/analysis.yaml` and `config.yaml` with current model ids, reading the key from the environment. `--sample` is a ticket-triage project (spec, TaskPlan, tests, lock) that passes the CI gate as created. `--decision-model laya` adds `llms/laya.yaml`, `LAYA_API_*` in `.env` and a `compose.yaml` that runs laya-serve locally (asked interactively, default no). `-y` accepts every default |
 | `tuvl validate` | `--strict`, `--json` | Contracts, data flow, types, policy, artifacts, lock; prints each workflow's determinism profile and worst-case tokens. `--strict` fails on warnings |
 | `tuvl codegen [WORKFLOW]` | `--check` | Schemas, code-agent stubs (body-preserving merge), prompt placeholders, spec tests. `--check` writes nothing and exits 1 on drift |
 | `tuvl lock` | `--check`, `--mcp/--no-mcp` | Pin model ids, artifact hashes, judge/decision models and MCP tool schemas in `tuvl.lock` |
@@ -49,7 +49,7 @@ These talk to a running server: `-u/--url` (`TUVL_URL`, default `http://localhos
 
 | Command | Options | |
 |---|---|---|
-| `tuvl ship` | `-t/--tag`, `--no-build`, `--push`, `--force`, `--strict` | Gate (validate, no `pending` agents, current lock), then `deploy/Dockerfile` (pins the locked tuvl version) and a Helm chart (`split: true` for api + worker Deployments) and `docker build` |
+| `tuvl ship` | `-t/--tag`, `--no-build`, `--push`, `--force`, `--strict`, `--with-laya/--without-laya` | Gate (validate, no `pending` agents, current lock), then `deploy/Dockerfile` (pins the locked tuvl version) and a Helm chart (`split: true` for api + worker Deployments; a Laya Deployment + Service, with `LAYA_API_BASE` set for the engine, when a model uses `provider: laya` or with `--with-laya` — `laya.enabled` in values.yaml) and `docker build` |
 | `tuvl keys generate` | `-w/--write`, `-f/--force` | A persistent Ed25519 key for Biscuit tokens (`TUVL_BISCUIT_PRIVATE_KEY`) |
 | `tuvl db generate-rls` | `-o/--out` | Idempotent row-level-security SQL for tenant-scoped tables |
 | `tuvl db check-rls` | | Exit 1 if a tenant-scoped table lacks its RLS policy |
