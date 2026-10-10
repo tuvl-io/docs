@@ -57,18 +57,46 @@ spec:
   model: gemini/gemini-3.1-flash-lite    # pinned in tuvl.lock
 ```
 
-A decision model served behind an OpenAI-compatible endpoint (a hosted typed-decision model, a
-LiteLLM proxy) connects through the same provider:
+### Laya and Jev (System One)
+
+`laya` and `jev` speak the System One protocol (`POST /v1/systemone`): the agent's inputs are sent
+as the `state`, and its enum output as one `choice` question. The answer comes back with a
+probability for every option, and tuvl uses the server's calibrated confidence for `min_confidence`.
 
 ```yaml
 kind: AgentModel
-metadata: { name: laya-hosted }
+metadata: { name: laya }
+spec:
+  type: decision
+  provider: laya
+  model: auto                            # auto | english | multilingual | typed-decisions
+  api_base: ${LAYA_API_BASE:http://localhost:8000}
+  api_key: ${LAYA_API_KEY:}              # optional; must be an ${ENV_VAR} reference
+```
+
+- **Laya** is self-hosted: the `laya-serve` image serves it on CPU with its weights pinned and
+  verified, so the image version is what pins the model. `model: auto` lets Laya route by
+  language (English or multilingual); `tuvl init --decision-model laya` scaffolds this model, a
+  `compose.yaml` for local development, and `tuvl ship` adds Laya to the Helm chart.
+- **Jev** is TypeSafe's hosted service: set `api_base` to its endpoint and pin `model` to a version
+  (`jev-1.13.0`); an unpinned Jev model is a V026 warning.
+- Confidence thresholds do not transfer between Laya and Jev (or between checkpoints) — calibrate
+  `min_confidence` for the model you deploy.
+
+### OpenAI-compatible endpoints
+
+A decision model behind an OpenAI-compatible endpoint (a LiteLLM proxy, a self-hosted classifier)
+connects through `provider: litellm`:
+
+```yaml
+kind: AgentModel
+metadata: { name: hosted-classifier }
 spec:
   type: decision
   provider: litellm
-  model: openai/laya-typed-decisions     # LiteLLM's OpenAI-compatible route
-  api_base: ${LAYA_API_BASE}
-  api_key: ${LAYA_API_KEY}               # must be an ${ENV_VAR} reference
+  model: openai/my-classifier            # LiteLLM's OpenAI-compatible route
+  api_base: ${CLASSIFIER_API_BASE}
+  api_key: ${CLASSIFIER_API_KEY}         # must be an ${ENV_VAR} reference
 ```
 
 - `litellm` asks the model for `{"decision": <one of the choices>, "confidence": <0..1>}` as
@@ -78,8 +106,10 @@ spec:
   first, then token logprobs. An `llm` model's logprobs come first, because a general LLM's
   self-reported confidence is poorly calibrated. An answer with neither (or a confidence outside
   0..1) is `decision_model_unavailable` — never treated as certain.
-- `laya` (local typed-decision model) needs the `tuvl[laya]` extra; `jev` must be pinned to a version.
-  Other providers can be registered through the `tuvl.decision_providers` entry point.
+
+### All providers
+
+- Other providers can be registered through the `tuvl.decision_providers` entry point.
 - A decide agent with an LLM-backed model must declare `budget.max_tokens` and `budget.timeout`.
 - `/health` reports each configured decision model's readiness.
 
