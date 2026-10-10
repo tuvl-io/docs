@@ -54,11 +54,30 @@ metadata: { name: triage-classifier }
 spec:
   type: decision
   provider: litellm                      # laya | jev | litellm
-  model: gemini/gemini-2.5-flash         # pinned in tuvl.lock
+  model: gemini/gemini-3.1-flash-lite    # pinned in tuvl.lock
 ```
 
-- `litellm` asks any LiteLLM model for an enum-constrained structured answer. An `llm`-type
-  AgentModel can also be referenced directly; it uses the same adapter.
+A decision model served behind an OpenAI-compatible endpoint (a hosted typed-decision model, a
+LiteLLM proxy) connects through the same provider:
+
+```yaml
+kind: AgentModel
+metadata: { name: laya-hosted }
+spec:
+  type: decision
+  provider: litellm
+  model: openai/laya-typed-decisions     # LiteLLM's OpenAI-compatible route
+  api_base: ${LAYA_API_BASE}
+  api_key: ${LAYA_API_KEY}               # must be an ${ENV_VAR} reference
+```
+
+- `litellm` asks the model for `{"decision": <one of the choices>, "confidence": <0..1>}` as
+  structured output. An `llm`-type AgentModel can also be referenced directly; it uses the same
+  adapter.
+- **Where the confidence comes from.** A `type: decision` model's reported `confidence` is used
+  first, then token logprobs. An `llm` model's logprobs come first, because a general LLM's
+  self-reported confidence is poorly calibrated. An answer with neither (or a confidence outside
+  0..1) is `decision_model_unavailable` — never treated as certain.
 - `laya` (local typed-decision model) needs the `tuvl[laya]` extra; `jev` must be pinned to a version.
   Other providers can be registered through the `tuvl.decision_providers` entry point.
 - A decide agent with an LLM-backed model must declare `budget.max_tokens` and `budget.timeout`.
