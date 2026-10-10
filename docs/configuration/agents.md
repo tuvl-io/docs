@@ -45,12 +45,28 @@ metadata: { name: triage-classifier }
 spec:
   type: decision
   provider: litellm            # laya | jev | litellm
-  model: gemini/gemini-2.5-flash
+  model: gemini/gemini-3.1-flash-lite
 ```
 
 A decision model picks one value of a `decide` agent's enum output with a confidence; it never writes
-free text. `laya` needs the `tuvl[laya]` extra; `jev` must be pinned to a version. See
-[Decide](../internals/decide.md).
+free text. `laya` needs the `tuvl[laya]` extra; `jev` must be pinned to a version.
+
+A decision model behind an OpenAI-compatible endpoint connects through `provider: litellm`:
+
+```yaml title="llms/laya-hosted.yaml"
+kind: AgentModel
+metadata: { name: laya-hosted }
+spec:
+  type: decision
+  provider: litellm
+  model: openai/laya-typed-decisions
+  api_base: ${LAYA_API_BASE}
+  api_key: ${LAYA_API_KEY}     # an ${ENV_VAR} reference; a literal key is refused
+```
+
+The endpoint must return `{"decision": …, "confidence": 0..1}` (or token logprobs). A decision model's
+own confidence is trusted first; an answer with no confidence is an error, never treated as certain.
+See [Decide](../internals/decide.md).
 
 ## Where models are used
 
