@@ -20,7 +20,7 @@ The left panel groups settings into four categories:
 
 ## Redis
 
-Redis is required when running tuvl with more than one uvicorn worker. Without Redis, OAuth2 CSRF state tokens and Biscuit token revocation lists are stored only in each worker's memory — causing random failures when a request lands on a different worker than the one that started the session.
+Redis is required when running tuvl with more than one uvicorn worker. Without Redis, OAuth2 CSRF state tokens and token revocation lists (and session ends) are stored only in each worker's memory — causing random failures when a request lands on a different worker than the one that started the session.
 
 ### Redis YAML format
 

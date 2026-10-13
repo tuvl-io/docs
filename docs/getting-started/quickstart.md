@@ -1,7 +1,8 @@
 # Quickstart
 
-This walks through the sample project: a support-ticket triage workflow with a spec, a task plan,
-tests and a lock that pass the CI gate as created.
+This walks through the sample project: a support-ticket triage workflow with a spec, a task list,
+tests and a lock that pass the CI gate as created. During the 2.0 beta, install tuvl as shown in
+[Installation](installation.md#20-public-beta) first.
 
 ## 1. Create the project
 
@@ -10,8 +11,8 @@ tuvl init triage --sample --preset gemini -y      # or openai | anthropic | olla
 cd triage
 ```
 
-The preset writes `llms/default.yaml` (the agents' model) and `llms/analysis.yaml` (spec analysis)
-and reads the API key from your environment into `.env`. Point `.env` at a PostgreSQL database
+The preset writes `llms/default.yaml` (the agents' model) and reads the API key from your environment
+into `.env`. Point `.env` at a PostgreSQL database
 (`POSTGRES_*`).
 
 ## 2. Check it
@@ -59,18 +60,21 @@ the run waits for a person. Follow it with `tuvl runs tail <run_id>` or
 
 ## 5. Change something
 
-Open `specs/triage-ticket.md`, add a policy, and let tuvl plan the change:
+Open `specs/triage-ticket.md` and add a policy. Then hand it to your coding agent (it has the
+`tuvl-spec`, `tuvl-plan` and `tuvl-task-loop` skills); tuvl referees the result:
 
 ```bash
-tuvl spec analyse specs/triage-ticket.md           # proposed contracts + tasks (dry run)
-tuvl spec analyse specs/triage-ticket.md --apply
-tuvl spec status                                   # the new tasks, derived
+tuvl spec check                      # the spec is well-formed
+tuvl spec diff                       # what changed since the task list was written
+tuvl spec status                     # the tasks, with status derived from the project
 ```
 
-Implement the tasks (YAML engine blocks; Python only for `code` agents), then run the CI gate:
+The agent updates `specs/triage-ticket.tasks.yaml` and implements the tasks (YAML engine blocks;
+Python only for `code` agents). Then run the CI gate:
 
 ```bash
-tuvl validate --strict && tuvl codegen --check && tuvl lock --check && tuvl test && tuvl spec status --strict
+tuvl spec check && tuvl validate --strict && tuvl codegen --check && tuvl lock --check \
+  && tuvl test --strict && tuvl spec verify --strict && tuvl spec status --strict
 ```
 
 Next: the [Agentic Manual](../internals/tuvl-agentic-manual.md) and
