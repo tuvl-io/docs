@@ -106,22 +106,30 @@ Starting a run is one grant; following it and deciding its human steps are separ
 
 | To… | The caller needs |
 |---|---|
-| read their own runs and their events (e.g. poll a `202` run) | `runs:read` |
+| read the runs they started and their events (e.g. poll a `202` run) | nothing beyond signing in — `iam:admin` reads everyone's |
 | pause, resume, abort or steer a run | `runs:control` |
 | see and decide approvals | `approvals:decide` **and** the step's `human.required_group`, if it has one |
 
 A reviewer role therefore carries both: name it after the group the human step requires and give it
-the scope.
+the scope. Insight's approver picker flags a role without `approvals:decide` and grants it in one
+click.
 
 ```bash
 curl -X POST http://localhost:8885/auth/admin/roles -H "Authorization: Bearer $ADMIN" \
   -H "Content-Type: application/json" \
-  -d '{"name": "finance_lead", "scopes": ["approvals:decide", "runs:read"]}'
+  -d '{"name": "finance_lead", "scopes": ["approvals:decide"]}'
 ```
 
 On a group-gated step, the person who started the run can't approve it. Every decision is journaled
-with who made it. Role and scope changes reach a user at their next sign-in: tokens already issued
-keep the roles they were minted with until they expire (`TUVL_TOKEN_TTL_SECONDS`, 24 h by default).
+with who made it.
+
+### When access changes
+
+Taking access away is immediate. Deactivating a user, changing their password, deleting them,
+removing one of their roles, or deleting or narrowing a role they hold **ends their sessions**:
+tokens issued before that are refused (`401 Session ended — sign in again.`), and the next sign-in
+gets the current roles. Granting a role or adding scopes ends nothing — the user picks it up at their
+next sign-in. Users and roles that are in use can be deleted; their role links go with them.
 
 ---
 
