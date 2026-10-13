@@ -117,7 +117,7 @@ spec:
 
     ---
 
-    Biscuit tokens, default-deny triggers, approvals without self-approval, secure fields kept away
+    Ed25519-signed JWTs, default-deny triggers, approvals without self-approval, secure fields kept away
     from models, policy checked before you ship.
 
 </div>

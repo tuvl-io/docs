@@ -1,8 +1,8 @@
 # Identity & Access Management (IAM)
 
 tuvl has a built-in IAM system based on **users**, **roles**, and **scopes**. Access tokens are
-[Biscuit](https://www.biscuitsec.org/) tokens — cryptographically signed Datalog structures that embed
-identity, group membership, and fine-grained permission scopes.
+Ed25519-signed JWTs that carry identity, group membership, and fine-grained permission scopes —
+see [Access Tokens](tokens.md).
 
 ---
 
@@ -41,7 +41,7 @@ CRUD API and workflow triggers.
 
 ### Model CRUD
 
-Every `/models/{model}/…` route requires a valid Biscuit token by default. Scope names default
+Every `/models/{model}/…` route requires a valid access token by default. Scope names default
 to `{modelname.lower()}:read` / `:write` / `:delete`, overridable per model with
 `spec.access.{read,write,delete}_scope` in the `ModelDefinition`.
 
@@ -148,7 +148,7 @@ curl -X POST http://localhost:8885/auth/bootstrap \
 
 ```json
 {
-  "access_token": "<biscuit_b64>",
+  "access_token": "<jwt>",
   "token_type": "bearer"
 }
 ```
@@ -179,7 +179,7 @@ Response:
 
 ```json
 {
-  "access_token": "<biscuit_b64>",
+  "access_token": "<jwt>",
   "token_type": "bearer"
 }
 ```
@@ -188,7 +188,7 @@ Use the token in subsequent requests:
 
 ```bash
 curl http://localhost:8885/auth/admin/users \
-  -H "Authorization: Bearer <biscuit_b64>"
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ### Token Refresh
@@ -246,7 +246,7 @@ const client = new TuvlClient({ baseUrl: "http://localhost:8885", token: access_
 const auth = new TuvlAuth({ baseUrl: "http://localhost:8885" });
 window.location.href = auth.getOAuthLoginUrl("google");
 
-// 2. After login the server redirects to TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit>
+// 2. After login the server redirects to TUVL_OAUTH_UI_REDIRECT_URL?token=<jwt>
 //    On that landing page, extract the token:
 const token = new URLSearchParams(window.location.search).get("token")!;
 const client = new TuvlClient({ baseUrl: "http://localhost:8885", token });
@@ -451,7 +451,7 @@ Use `verify_token` + `get_current_user` as FastAPI dependencies:
 
 ```python
 from fastapi import APIRouter, Depends
-from tuvl.core.auth.biscuit_auth import get_current_user
+from tuvl.core.auth.access import get_current_user
 from tuvl.core.auth.schemas import TokenUser
 
 router = APIRouter()
@@ -464,7 +464,7 @@ async def my_endpoint(user: TokenUser = Depends(get_current_user)):
 ### Require a Specific Scope
 
 ```python
-from tuvl.core.auth.biscuit_auth import require_scope
+from tuvl.core.auth.access import require_scope
 
 @router.post("/requisitions")
 async def create_requisition(
@@ -478,7 +478,7 @@ async def create_requisition(
 ### Require Group Membership
 
 ```python
-from tuvl.core.auth.biscuit_auth import require_groups
+from tuvl.core.auth.access import require_groups
 
 @router.get("/admin-panel")
 async def admin_panel(
