@@ -27,7 +27,7 @@ sequenceDiagram
     Provider (Google / GitHub / Microsoft)-->>tuvl: access_token + id_token
     tuvl->>Provider (Google / GitHub / Microsoft): GET user profile (email, sub, name)
     tuvl->>tuvl: Upsert IAMUser (including first_name/last_name) + auto-assign default_role (if configured)
-    tuvl-->>Browser: 302 Redirect → TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit_b64>
+    tuvl-->>Browser: 302 Redirect → TUVL_OAUTH_UI_REDIRECT_URL?token=<jwt>
 ```
 
 CSRF state tokens are stored in Redis (when configured) or in-process memory. In multi-worker
@@ -196,7 +196,7 @@ In local development set it to `http://localhost:8885`.
 TUVL_OAUTH_UI_REDIRECT_URL=https://app.example.com/auth/callback
 ```
 
-After a successful OAuth login the browser is redirected to this URL with `?token=<biscuit_b64>`
+After a successful OAuth login the browser is redirected to this URL with `?token=<jwt>`
 appended. Your frontend reads the token from the query string and passes it to `TuvlClient`.
 When unset the callback returns JSON instead (useful for server-side and CLI flows).
 
@@ -259,7 +259,7 @@ When a federated login succeeds, tuvl looks up a `iam_users` record by email:
 2. **Not found** — a new user record is created with `is_active=true`. The account has no
    password (federated-only).
 
-The returned Biscuit token carries whatever roles the user has been assigned in the database.
+The returned access token carries whatever roles the user has been assigned in the database.
 
 !!! warning "First-time federated users have no roles by default"
     When a user logs in via OAuth for the first time they arrive with **zero permissions**.

@@ -1,29 +1,56 @@
-# Biscuit Tokens
+# Access Tokens
 
-tuvl uses [Biscuit](https://www.biscuitsec.org/) tokens for authentication and authorization.
-Biscuit is an open standard for capability tokens — they are cryptographically signed, carry
-Datalog facts (identity, roles, scopes, expiry), and cannot be forged or tampered with.
+tuvl authenticates callers with **access tokens**: JSON Web Tokens (JWTs) signed with the
+server's Ed25519 key (`alg: EdDSA`). A token carries the caller's identity, IAM roles and
+scopes; it can't be forged or altered without the key, and any service holding tuvl's public
+key can verify it.
+
+!!! note "Changed in 2.0"
+    tuvl 1.x used Biscuit tokens. 2.0 issues JWTs with the same claims, signed with the same
+    key — see [Upgrading from 1.x](#upgrading-from-1x).
 
 ---
 
 ## Token Structure
 
-Every tuvl Biscuit token contains an **authority block** with four kinds of Datalog facts:
-
-```datalog
-user("550e8400-e29b-41d4-a716-446655440000");  // user UUID
-group("hr_manager");                            // role name(s)
-scope("requisition:write");                     // permission scope(s)
-scope("candidate:read");                        // multiple scopes allowed
-exp(1747180800);                                // UNIX expiry timestamp (optional)
-```
-
-The token is signed with the server's Ed25519 private key and encoded as URL-safe Base64.
-It is sent in every API request as an HTTP Bearer token:
+A token is three base64url parts — header, claims, signature — sent in every API request as
+an HTTP Bearer token:
 
 ```http
-Authorization: Bearer <biscuit_b64>
+Authorization: Bearer eyJhbGciOiJFZERTQSIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJ0dXZsIiwuLi59.c2ln…
 ```
+
+```json title="header"
+{ "alg": "EdDSA", "typ": "JWT", "kid": "tX6By-eOwUtPXkJI" }
+```
+
+```json title="claims"
+{
+  "iss": "tuvl",
+  "sub": "550e8400-e29b-41d4-a716-446655440000",
+  "groups": ["hr_manager"],
+  "scopes": ["requisition:write", "candidate:read"],
+  "tenant": "acme",
+  "iat": 1747094400.123,
+  "exp": 1747180800,
+  "jti": "9f2c…"
+}
+```
+
+| Claim | Meaning |
+|---|---|
+| `iss` | Always `tuvl` |
+| `sub` | The user id |
+| `groups` | The user's IAM role names |
+| `scopes` | The scopes those roles grant |
+| `tenant` | The tenant id — multi-tenant deployments only |
+| `iat` | Issued at (seconds, millisecond precision) |
+| `exp` | Expiry (seconds) — omitted only when `TUVL_TOKEN_TTL_SECONDS=0` |
+| `jti` | A unique token id |
+
+!!! warning "Claims are readable, not secret"
+    A JWT is signed, not encrypted: anyone holding a token can read its claims (that's how
+    clients show who is signed in). Keep secrets and personal data out of tokens.
 
 ---
 
@@ -32,40 +59,41 @@ Authorization: Bearer <biscuit_b64>
 ```mermaid
 stateDiagram-v2
     [*] --> Minted: POST /auth/token\nor OAuth callback
-    Minted --> Active: Valid, not expired, not blacklisted
-    Active --> Expired: exp() fact timestamp passed
+    Minted --> Active: Valid, not expired, not revoked
+    Active --> Expired: exp passed
     Active --> Revoked: POST /auth/logout\nor POST /auth/refresh (old token)
+    Active --> Ended: user deactivated, deleted,\nor a role/scope taken away
     Active --> Refreshed: POST /auth/refresh (new token issued)
     Expired --> [*]
     Revoked --> [*]
+    Ended --> [*]
 ```
 
 ---
 
 ## Token TTL
 
-Tokens are minted with an embedded `exp({unix_ts})` fact. The default TTL is **86400 seconds
-(24 hours)**. You can change it per deployment:
+The default lifetime is **86400 seconds (24 hours)**. Change it per deployment:
 
 ```env title=".env"
 TUVL_TOKEN_TTL_SECONDS=3600   # 1 hour
 ```
 
-Setting `TUVL_TOKEN_TTL_SECONDS=0` omits the expiry fact entirely. This is **not recommended
-for production** — tokens without an expiry can only be invalidated by blacklisting.
+Setting `TUVL_TOKEN_TTL_SECONDS=0` omits `exp` entirely. This is **not recommended for
+production** — such tokens end only by revocation or a session end.
 
-When a request arrives with an expired token, tuvl returns:
+An expired token is refused by signature verification itself:
 
 ```json
 HTTP/1.1 401 Unauthorized
-{"detail": "Token has expired."}
+{"detail": "Token has expired or failed authorization checks."}
 ```
 
 ---
 
 ## Token Refresh
 
-A client may request a new token before expiry using the refresh endpoint:
+A client may request a new token before expiry:
 
 ```bash
 curl -X POST http://localhost:8885/auth/refresh \
@@ -73,27 +101,30 @@ curl -X POST http://localhost:8885/auth/refresh \
 ```
 
 The server:
-1. Verifies the current token (must be valid and not expired)
+1. Verifies the current token (valid, not expired, not revoked)
 2. Looks up the user in the database (must still be active)
-3. Mints a new token with a fresh TTL
+3. Mints a new token with a fresh TTL and the user's current roles
 4. **Revokes the old token** by adding it to the blacklist
 
 ```json
-{
-  "access_token": "<new_biscuit_b64>",
-  "token_type": "bearer"
-}
+{ "access_token": "<new token>", "token_type": "bearer" }
 ```
+
+Clients can tell when to refresh by reading `exp` — `@tuvl/client` has `isTokenExpired(token)`.
 
 ---
 
-## Token Revocation (Blacklist)
+## Revocation and Session Ends
 
-Explicit revocation is handled by a **token blacklist**. Revoked tokens are rejected
-on every subsequent request, even before their `exp` timestamp is reached.
+**Revocation.** Logout and refresh put the token on a **blacklist** that every request
+checks, so it's refused even before `exp`. The blacklist stores the **SHA-256 hash** of each
+token — the raw token is never persisted.
 
-The blacklist stores the **SHA-256 hash** of each revoked token string — the raw token
-value is never persisted.
+**Session ends.** When a user's access shrinks — deactivated, password changed, deleted, a
+role removed, or a role they hold deleted or stripped of a scope — tuvl records *sessions
+ended now* for that user, and every token issued before then is refused with
+`401 Session ended — sign in again.` Granting access ends nothing; it arrives at the next
+sign-in.
 
 ### Storage backends
 
@@ -103,63 +134,61 @@ value is never persisted.
 | **In-process dict** | No Redis configured (fallback) | Single worker only |
 
 !!! warning "Multi-worker deployments"
-    Without Redis, a token revoked by one worker is still accepted by all other workers
-    because each process has its own blacklist. Configure a Redis datasource before scaling
-    to multiple workers or processes. See [Redis Configuration](../configuration/redis.md).
+    Without Redis, a token revoked (or a session ended) by one worker is still accepted by
+    the others, because each process has its own store. Configure a Redis datasource before
+    scaling to multiple workers. See [Redis Configuration](../configuration/redis.md).
 
-### Automatic TTL
-
-When a token is blacklisted, the entry is stored with the token's remaining TTL (time until
-its `exp` fact). Once the natural expiry passes, the blacklist entry is cleaned up
-automatically. For tokens without an `exp` fact, a 24-hour fallback TTL is used.
+Entries live as long as a token can (the token TTL), then expire on their own.
 
 ---
 
 ## Signing Keys
 
-tuvl tokens are signed with an **Ed25519** private key. The key lifecycle is handled by the
-`TuvlKeyManager`:
+Tokens are signed with an **Ed25519** private key managed by `TuvlKeyManager`.
 
-### Persistent mode (recommended for production)
+### Persistent mode (required for production)
 
 ```env title=".env"
-TUVL_BISCUIT_PRIVATE_KEY=<hex-encoded-ed25519-private-key>
+TUVL_SIGNING_KEY=<64-hex-char Ed25519 private key>
 ```
 
 Generate a key with the CLI:
 
 ```bash
 tuvl keys generate            # prints the key and the .env line to paste
-tuvl keys generate --write    # writes TUVL_BISCUIT_PRIVATE_KEY into the project .env
+tuvl keys generate --write    # writes TUVL_SIGNING_KEY into the project .env (mode 0600)
 ```
 
 !!! warning "Required for `tuvl run`"
-    Production mode fails closed if `TUVL_BISCUIT_PRIVATE_KEY` is not set — it will
-    **not** fall back to an ephemeral key the way `tuvl dev` does. Generate and set the
-    key before deploying. Keep it stable: rotating it invalidates every existing token.
+    Production mode fails closed if no signing key is set — it will **not** fall back to an
+    ephemeral key the way `tuvl dev` does. Keep the key stable: rotating it invalidates every
+    existing token.
 
 ??? note "Generate without the CLI"
     ```bash
-    python3 -c "from biscuit_auth import KeyPair; print(KeyPair().private_key.to_bytes().hex())"
+    python3 -c "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey as K; from cryptography.hazmat.primitives import serialization as s; print(K.generate().private_bytes(s.Encoding.Raw, s.PrivateFormat.Raw, s.NoEncryption()).hex())"
     ```
-
-Store the hex string in your `.env` file or secrets manager.
 
 ### Ephemeral mode (development only)
 
-If `TUVL_BISCUIT_PRIVATE_KEY` is not set:
+Without a signing key:
 
-- **Production mode** (`tuvl_dev_mode=false`, the default): the server **refuses to start**
-  with a `RuntimeError`. This prevents accidentally running production without a stable key.
-- **Dev mode** (`tuvl_dev_mode=true`, set by `tuvl dev`): a fresh random key is generated
-  in memory. All tokens are invalidated on restart.
+- **Production mode** (the default): the server **refuses to start** with a `RuntimeError`.
+- **Dev mode** (`tuvl dev`): a fresh key is generated in memory; tokens are invalid after a
+  restart, and a warning says so.
 
-A warning is logged in dev mode:
+### Verifying tokens elsewhere
 
+tuvl publishes its public key as a JSON Web Key Set:
+
+```bash
+curl http://localhost:8885/auth/jwks.json
+# {"keys":[{"kty":"OKP","crv":"Ed25519","x":"…","kid":"tX6By-eOwUtPXkJI","alg":"EdDSA","use":"sig"}]}
 ```
-⚠️  Auth: No TUVL_BISCUIT_PRIVATE_KEY found — using an EPHEMERAL key.
-   All Biscuit tokens will be invalid after process restart.
-```
+
+A gateway or another service can verify tuvl tokens offline with it — accept `EdDSA` only,
+and check `iss: tuvl` and `exp`. Offline verification can't see revocations or session ends;
+call `GET /auth/me` when those matter.
 
 ---
 
@@ -167,29 +196,33 @@ A warning is logged in dev mode:
 
 | Property | How it is achieved |
 |----------|--------------------|
-| **Integrity** | Ed25519 signature — any modification invalidates the token |
-| **No server-side state** (normal) | Facts are self-contained in the authority block |
-| **Expiry** | `exp({ts})` Datalog fact checked against `time.time()` on every request |
+| **Integrity** | Ed25519 signature — any change to header or claims invalidates the token |
+| **No algorithm confusion** | Only `EdDSA` is accepted: `alg: none` and HMAC tokens keyed with the public key are refused |
+| **Required claims** | `iss`, `sub` and `iat` must be present; `iss` must be `tuvl`; claims are shape-checked |
+| **Expiry** | `exp` is signed and checked on every request |
 | **Revocation** | SHA-256 blacklist in Redis or in-process memory |
-| **Scope injection prevention** | Scope/group values validated against `^[\w:.\-/]+$` before minting |
+| **Immediate access removal** | Session ends refuse tokens issued before a user's access shrank |
+| **Name injection prevention** | Scope/group values validated against `^[\w:.\-/]+$` before minting |
 
 ---
 
 ## Token Inspection
 
-You can decode a Biscuit token for debugging (the signature is not verified client-side):
+The claims are readable with any JWT tool (the signature isn't checked by these):
 
 ```bash
-# Biscuit CLI (https://github.com/biscuit-auth/biscuit-cli)
-biscuit inspect <token>
+python3 -c "import jwt,sys; print(jwt.decode(sys.argv[1], options={'verify_signature': False}))" "$TOKEN"
 ```
 
-Or in Python:
+From TypeScript, `readToken(token)` in `@tuvl/client` returns the claims.
 
-```python
-from biscuit_auth import Biscuit
-from tuvl.core.auth.keys import key_manager
+---
 
-biscuit = Biscuit.from_base64(token, key_manager.public_key)
-print(biscuit.authority_block())
-```
+## Upgrading from 1.x
+
+- **The key carries over.** A 1.x `TUVL_BISCUIT_PRIVATE_KEY` is the same 32-byte Ed25519 key;
+  2.0 still reads it (with a warning) — rename it to `TUVL_SIGNING_KEY` when convenient, or run
+  `tuvl keys generate --write --force` to replace it with a new one.
+- **Everyone signs in once.** Biscuit tokens issued by 1.x are not accepted by 2.0.
+- **Python 3.14 is supported.** 1.x was held to Python 3.13 by `biscuit-python`'s missing
+  3.14 builds; 2.0 runs on 3.13 and 3.14.
