@@ -94,32 +94,29 @@ spec:
 
 ## Using RAG in a workflow
 
-Once an `EmbeddingModel` and `VectorCollection` are configured and enabled, tuvl registers automatic RAG nodes that you can call from `Functional` steps:
+Search and ingest are built-in `code` agents with typed contracts:
 
 ```yaml
 - id: retrieve_policy
-  kind: Functional
-  runner: rag_search          # auto-registered by tuvl
-  input:
-    collection: hr_knowledge_base
-    query: "{{ employee_question }}"
-    top_k: 5
+  description: Find the relevant policy passages
+  engine: code
+  inputs:  { employee_question: str }
+  outputs: { hits: "list[json]" }          # [{content, metadata, score}]
+  code:
+    run: tuvl.data_search
+    with: { collection: hr_knowledge_base, query: "{{ employee_question }}", top_k: 5 }
+  routes: { default: answer, error: END.failed }
+
+- id: ingest_policy
+  description: Add a policy document to the knowledge base
+  engine: code
+  inputs:  { title: str, content: str }
+  outputs: { doc_id: uuid }
+  code:
+    run: tuvl.data_ingest
+    with: { collection: hr_knowledge_base, document: "{{ content }}", metadata: { title: "{{ title }}" } }
+  routes: { default: END, error: END.failed }
 ```
 
-The RAG node returns the top-k chunks as a list in `ctx["rag_results"]`, which you can pass to a subsequent `Agent` step as context.
-
----
-
-## Indexing documents
-
-Use the auto-generated REST endpoint to index text into a collection:
-
-```bash
-curl -X POST http://localhost:8885/api/collections/hr_knowledge_base/index \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"text": "All employees are entitled to 25 days annual leave.", "metadata": {"source": "policy_v3.pdf"}}'
-```
-
-!!! note "Bulk indexing"
-    For large document sets, use the `POST /api/collections/{name}/index-batch` endpoint, which accepts a JSON array of `{text, metadata}` objects and processes them with connection pooling.
+Pass `hits` to an `llm` agent as an input to ground its answer. See the knowledge-base-qa
+[example](../examples/example-projects.md).
