@@ -1,8 +1,8 @@
 # Identity & Access Management (IAM)
 
 tuvl has a built-in IAM system based on **users**, **roles**, and **scopes**. Access tokens are
-[Biscuit](https://www.biscuitsec.org/) tokens — cryptographically signed Datalog structures that embed
-identity, group membership, and fine-grained permission scopes.
+Ed25519-signed JWTs that carry identity, group membership, and fine-grained permission scopes —
+see [Access Tokens](tokens.md).
 
 ---
 
@@ -41,7 +41,7 @@ CRUD API and workflow triggers.
 
 ### Model CRUD
 
-Every `/models/{model}/…` route requires a valid Biscuit token by default. Scope names default
+Every `/models/{model}/…` route requires a valid access token by default. Scope names default
 to `{modelname.lower()}:read` / `:write` / `:delete`, overridable per model with
 `spec.access.{read,write,delete}_scope` in the `ModelDefinition`.
 
@@ -76,27 +76,60 @@ Use `GET /admin/scopes` to see every enforceable scope grouped by source (`crud`
 ### Workflow Triggers
 
 Workflow triggers are gated by `metadata.required_scope` and/or `metadata.required_group` in the
-workflow YAML. In production, every trigger route — the REST mount, the versioned
-`/{schema_version}/run/{name}` route, and gRPC `RunWorkflow` — requires a valid bearer token by
-default, even for a workflow that declares neither.
+workflow YAML. Every way of starting a run — the workflow's HTTP route,
+`POST /api/workflows/{name}/runs`, and MCP export — requires a valid bearer token by default, even for
+a workflow that declares neither.
 
-Anonymous access is an explicit opt-in via `spec.trigger.public: true`. Combining `public: true`
+Anonymous access is an explicit opt-in via `spec.trigger.http.public: true`. Combining `public: true`
 with a declared `required_scope` or `required_group` is a `tuvl validate` error — the engine fails
 closed and always enforces the declared scope/group over `public` at runtime.
 
 ```yaml
 kind: Workflow
+version: tuvl/v2
 metadata:
   name: register_user
 spec:
   trigger:
-    path: /api/register
-    method: POST
-    public: true      # anonymous access — no required_scope/required_group allowed alongside this
+    http: { path: /api/register, method: POST, public: true }   # anonymous — no required_scope/required_group alongside
 ```
 
 In dev mode (`tuvl dev`), workflows with no scope/group requirement stay tokenless so quickstarts
 run without a login step.
+
+An IAM **role's name is the token's group**: `required_group: finance_lead` admits users who hold
+the `finance_lead` role. The role's scopes travel in the token too, and `iam:admin` passes every check.
+
+### People who follow runs and decide human steps
+
+Starting a run is one grant; following it and deciding its human steps are separate scopes:
+
+| To… | The caller needs |
+|---|---|
+| read the runs they started and their events (e.g. poll a `202` run) | nothing beyond signing in — `iam:admin` reads everyone's |
+| pause, resume, abort or steer a run | `runs:control` |
+| see and decide approvals | `approvals:decide` **and** the step's `human.required_group`, if it has one |
+
+A reviewer role therefore carries both: name it after the group the human step requires and give it
+the scope. Insight's approver picker flags a role without `approvals:decide` and grants it in one
+click.
+
+```bash
+curl -X POST http://localhost:8885/auth/admin/roles -H "Authorization: Bearer $ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "finance_lead", "scopes": ["approvals:decide"]}'
+```
+
+On a group-gated step, the person who started the run can't approve it. Every decision is journaled
+with who made it.
+
+### When access changes
+
+Taking access away is immediate. Deactivating a user, changing their password, deleting them,
+removing one of their roles, or deleting or narrowing a role they hold **ends their sessions**:
+tokens issued before that are refused (`401 Session ended — sign in again.`), and the next sign-in
+gets the current roles. Granting a role or adding scopes ends nothing — the user picks it up at their
+next sign-in. Users and roles that are in use can be deleted; their role links go with them.
 
 ---
 
@@ -115,7 +148,7 @@ curl -X POST http://localhost:8885/auth/bootstrap \
 
 ```json
 {
-  "access_token": "<biscuit_b64>",
+  "access_token": "<jwt>",
   "token_type": "bearer"
 }
 ```
@@ -146,7 +179,7 @@ Response:
 
 ```json
 {
-  "access_token": "<biscuit_b64>",
+  "access_token": "<jwt>",
   "token_type": "bearer"
 }
 ```
@@ -155,7 +188,7 @@ Use the token in subsequent requests:
 
 ```bash
 curl http://localhost:8885/auth/admin/users \
-  -H "Authorization: Bearer <biscuit_b64>"
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ### Token Refresh
@@ -213,7 +246,7 @@ const client = new TuvlClient({ baseUrl: "http://localhost:8885", token: access_
 const auth = new TuvlAuth({ baseUrl: "http://localhost:8885" });
 window.location.href = auth.getOAuthLoginUrl("google");
 
-// 2. After login the server redirects to TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit>
+// 2. After login the server redirects to TUVL_OAUTH_UI_REDIRECT_URL?token=<jwt>
 //    On that landing page, extract the token:
 const token = new URLSearchParams(window.location.search).get("token")!;
 const client = new TuvlClient({ baseUrl: "http://localhost:8885", token });
@@ -418,7 +451,7 @@ Use `verify_token` + `get_current_user` as FastAPI dependencies:
 
 ```python
 from fastapi import APIRouter, Depends
-from tuvl.core.auth.biscuit_auth import get_current_user
+from tuvl.core.auth.access import get_current_user
 from tuvl.core.auth.schemas import TokenUser
 
 router = APIRouter()
@@ -431,7 +464,7 @@ async def my_endpoint(user: TokenUser = Depends(get_current_user)):
 ### Require a Specific Scope
 
 ```python
-from tuvl.core.auth.biscuit_auth import require_scope
+from tuvl.core.auth.access import require_scope
 
 @router.post("/requisitions")
 async def create_requisition(
@@ -445,7 +478,7 @@ async def create_requisition(
 ### Require Group Membership
 
 ```python
-from tuvl.core.auth.biscuit_auth import require_groups
+from tuvl.core.auth.access import require_groups
 
 @router.get("/admin-panel")
 async def admin_panel(

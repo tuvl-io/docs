@@ -66,22 +66,17 @@ project/
 Reduce duplication with anchors:
 
 ```yaml
-# Define anchor
-defaults: &defaults
-  timeout: 30
-  retry:
-    attempts: 3
-    backoff: 2
-
-steps:
-  - id: "step1"
-    <<: *defaults       # Merge anchor
-    runner: "process_a"
-    
-  - id: "step2"
-    <<: *defaults       # Reuse
-    runner: "process_b"
+agents:
+  - id: summarise
+    # …
+    budget: &llm_budget { timeout: 30s, max_tokens: 1500, retry: { attempts: 2, errors: [timeout, parse_error] } }
+  - id: reply
+    # …
+    budget: *llm_budget
 ```
+
+Define the anchor where it is first used: documents are strict, so an extra top-level key just to hold
+an anchor is rejected.
 
 ### Multi-Document Files
 
