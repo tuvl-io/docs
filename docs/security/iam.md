@@ -86,17 +86,42 @@ closed and always enforces the declared scope/group over `public` at runtime.
 
 ```yaml
 kind: Workflow
+version: tuvl/v2
 metadata:
   name: register_user
 spec:
   trigger:
-    path: /api/register
-    method: POST
-    public: true      # anonymous access — no required_scope/required_group allowed alongside this
+    http: { path: /api/register, method: POST, public: true }   # anonymous — no required_scope/required_group alongside
 ```
 
 In dev mode (`tuvl dev`), workflows with no scope/group requirement stay tokenless so quickstarts
 run without a login step.
+
+An IAM **role's name is the token's group**: `required_group: finance_lead` admits users who hold
+the `finance_lead` role. The role's scopes travel in the token too, and `iam:admin` passes every check.
+
+### People who follow runs and decide human steps
+
+Starting a run is one grant; following it and deciding its human steps are separate scopes:
+
+| To… | The caller needs |
+|---|---|
+| read their own runs and their events (e.g. poll a `202` run) | `runs:read` |
+| pause, resume, abort or steer a run | `runs:control` |
+| see and decide approvals | `approvals:decide` **and** the step's `human.required_group`, if it has one |
+
+A reviewer role therefore carries both: name it after the group the human step requires and give it
+the scope.
+
+```bash
+curl -X POST http://localhost:8885/auth/admin/roles -H "Authorization: Bearer $ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "finance_lead", "scopes": ["approvals:decide", "runs:read"]}'
+```
+
+On a group-gated step, the person who started the run can't approve it. Every decision is journaled
+with who made it. Role and scope changes reach a user at their next sign-in: tokens already issued
+keep the roles they were minted with until they expire (`TUVL_TOKEN_TTL_SECONDS`, 24 h by default).
 
 ---
 
