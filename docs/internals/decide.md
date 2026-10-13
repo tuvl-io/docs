@@ -129,8 +129,10 @@ spec:
 
 ## Policy
 
-`policy.model_only_decisions: warn | error` flags (V013) a model-only decision (no rules) that feeds a
-write or destructive effect without a human, approval or `compensate`.
+`policy.model_only_decisions: warn | error | allow` flags (V013) a model-only decision (no rules) that
+feeds a write or destructive effect without a human, approval or `compensate`. `allow` records that the
+workflow accepts this on purpose — for example a screen whose negative verdict blocks and whose unsure
+verdict goes to a human — so the choice is reviewed in the YAML instead of silenced.
 
 Changing an agent's engine to or from `decide` in Insight keeps its contract and re-checks it against
 the workflow's pinned fixtures ([Insight](insight.md)).

@@ -6,13 +6,13 @@ This guide walks you through installing tuvl and its dependencies.
 
 Before installing tuvl, ensure you have:
 
-- **Python 3.13** — tuvl targets Python 3.13 (`>=3.13,<3.14`). Python 3.14 is **not yet supported** — see [Troubleshooting](#troubleshooting) for the reason and the fix.
+- **Python 3.13 or 3.14** — tuvl 2.0 supports `>=3.13,<3.15`. uv picks a compatible interpreter automatically.
 - **uv** — Fast Python package manager (recommended)
 - **PostgreSQL** — For data persistence (optional for development)
 - **Ollama** — For local LLM inference (optional)
 
-!!! warning "Use Python 3.13"
-    tuvl pins `requires-python = ">=3.13,<3.14"`. A clean `uv tool install "tuvl[standard]"` picks a compatible interpreter automatically. If you force the install into a pre-created **Python 3.14** environment it will fail while building `biscuit-python` — jump to [Python 3.14: `biscuit-python` build failure](#python-314-biscuit-python-build-failure).
+!!! note "Python 3.14"
+    tuvl 1.x was held to Python 3.13 because its token library (`biscuit-python`) had no 3.14 builds. tuvl 2.0 signs tokens as standard JWTs and runs on 3.13 and 3.14 on Linux, macOS and Windows.
 
 ### Installing uv
 
@@ -33,6 +33,32 @@ Before installing tuvl, ensure you have:
     ```bash
     pip install uv
     ```
+
+## 2.0 public beta
+
+tuvl **2.0.0** is released on **20 October 2026**. Until then, 2.0 is available as the public beta
+**2.0.0b1**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
+beta explicitly:
+
+```bash
+# CLI + dev server + Insight (recommended)
+uv tool install --prerelease allow "tuvl[standard]==2.0.0b1"
+
+# CLI only
+uv tool install "tuvl==2.0.0b1"
+```
+
+`--prerelease allow` is needed because uv only takes a pre-release for packages you name yourself,
+and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b1` indirectly.
+
+The TypeScript client has a matching beta on npm's `beta` channel:
+
+```bash
+npm install @tuvl/client@beta     # 2.0.0-beta.1
+```
+
+From 20 October the commands below install 2.0.0 directly. Report beta issues on
+[GitHub](https://github.com/tuvl-io/tuvl/issues).
 
 ## Installing tuvl CLI
 
@@ -155,70 +181,6 @@ With `--auto-login` this machine skips the key screen; otherwise paste the sessi
 `.tuvl/.dev-session` (`tuvl dev --show-key` prints it).
 
 ## Troubleshooting
-
-### Python 3.14: `biscuit-python` build failure
-
-**Symptom** — installing on Python 3.14 (typically Windows) aborts while building `biscuit-python`:
-
-```text
-× Failed to build biscuit-python==0.4.0
-  ╰─▶ Call to maturin.build_wheel failed (exit code: 1)
-      error: the configured Python interpreter version (3.14) is newer than
-      PyO3's maximum supported version (3.13)
-hint: biscuit-python (v0.4.0) was included because tuvl (v1.0.0) depends on biscuit-python
-```
-
-**Why this happens** — tuvl uses [Biscuit](https://www.biscuitsec.org/) tokens for its capability-based auth, via the `biscuit-python` package. `biscuit-python` is a native extension written in Rust (built with `maturin` + PyO3), so installing it needs a **pre-compiled wheel** for your exact Python version and platform. `biscuit-python==0.4.0` publishes wheels up to **CPython 3.13** only — there is no 3.14 Windows wheel yet. When no wheel matches, uv/pip falls back to compiling from Rust source, and **PyO3 0.24.1 refuses to build against any Python newer than 3.13** and stops.
-
-This is exactly why tuvl pins `requires-python = ">=3.13,<3.14"`. A correctly formed install (`uv tool install "tuvl[standard]"`) selects a compatible interpreter automatically and never reaches this build. You only hit the error above when you install into an environment that was **already created with Python 3.14** — uv then honours that interpreter instead of choosing 3.13.
-
-#### Fix A — use Python 3.13 (recommended, zero friction)
-
-Wheels exist for 3.13, so the install is a fast binary download with no Rust toolchain involved.
-
-=== "uv tool (global CLI)"
-
-    ```powershell
-    # Install a 3.13 interpreter (uv manages it for you) and pin the tool to it
-    uv python install 3.13
-    uv tool install --python 3.13 "tuvl[standard]"
-    ```
-
-=== "uv venv (project)"
-
-    ```powershell
-    # Recreate the environment explicitly on 3.13
-    uv venv --python 3.13 .venv
-    .\.venv\Scripts\activate
-    uv pip install "tuvl[standard]"
-    ```
-
-Verify:
-
-```powershell
-tuvl --version
-```
-
-#### Fix B — force the build on Python 3.14 (advanced, unsupported)
-
-If you must stay on 3.14, you can tell PyO3 to skip its forward-compatibility check and build against the stable ABI anyway. This is **not officially supported** — it requires a working **Rust toolchain** (`rustc`/`cargo`) and may produce a binary that behaves subtly differently. Prefer Fix A.
-
-=== "PowerShell"
-
-    ```powershell
-    $env:PYO3_USE_ABI3_FORWARD_COMPATIBILITY = "1"
-    uv pip install "tuvl[standard]"
-    ```
-
-=== "cmd.exe"
-
-    ```bat
-    set PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
-    uv pip install "tuvl[standard]"
-    ```
-
-!!! note
-    Native 3.14 support will land once `biscuit-python` ships 3.14 wheels (and PyO3 raises its supported ceiling). Until then, **3.13 is the supported runtime.**
 
 ### Windows: port already in use or permission denied
 

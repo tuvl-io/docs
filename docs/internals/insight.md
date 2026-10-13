@@ -13,8 +13,10 @@ tuvl dev --auto-login    # skip the key screen on this machine
 
 | Page | What it does |
 |---|---|
-| **Specs** | Write a spec, **Analyse** (token estimate first), review the plan (summary, cost, notes, per-file diff, tasks) and apply all or some files; the task board shows derived statuses with stale/blocked badges, and a card opens its target |
+| **Specs** | Every spec is a tile across the top (task progress, stale/blocked markers, a ✗ badge for blocking `spec check` findings); click one to show it below, double-click (or **Open spec**) to edit it in its own window, with `spec check` findings inline — saving there refreshes the page. Below: **Tasks** (the coding agent's task list, statuses derived), **Findings** (blocking, warnings, waivers, unchecked prose) and **Traceability** (`spec verify`: step → agent ✓ / pending / mismatch → the tests that run it, each example's test result with why; a step opens its node on the canvas, and the canvas links back) |
+| | On the canvas, **Run** / **Step** are disabled while a model the workflow uses isn't configured (`/health` → `tuvl doctor`) |
 | **Workflows** | Canvas and YAML editor for each workflow (below) |
+| | A `code` agent's **Engine** tab is a Python editor for `agents/<file>.py` (⤢ full screen, ⌘S / **Save Python**). Saving is syntax-checked, normalized by codegen (decorator, signature and docstring come from the contract; your body is kept) and reloads the agent. **✦ Assist** writes or changes the body with one of the project's LLM AgentModels: it is given the agent's contract, the fields of its models and the `agent-code` rules, returns the whole file into the editor (↶ undo) and saves nothing; unconfigured models are disabled |
 | **Runs** | Live and past runs, journal timeline per agent (loop turns, tool calls, decisions, judge verdicts), approvals inbox with forms and tool-call approve/edit/reject, pause/resume/abort/steer, start a run, pin a run as a fixture, replay fixtures (SAME/DIFF) |
 | **Artifacts** | Prompts, steering, skills, guardrails, hooks, MCP servers; **judge editor** with try/calibrate; **rules editor** with "which rule matches" |
 | **Models**, **Datasources**, **Embeddings**, **Collections** | Data configuration |

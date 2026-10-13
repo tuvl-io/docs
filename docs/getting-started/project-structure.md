@@ -5,10 +5,9 @@ my-project/
 ├── pyproject.toml / uv.lock      # Python dependencies (uv)
 ├── tuvl.lock                     # pinned model ids, artifact hashes, MCP schemas (tuvl lock)
 ├── .env / .env.example           # secrets and connection settings — never in YAML
-├── config.yaml                   # ProjectConfig (spec.analysis_model, …)
 ├── specs/
 │   ├── triage-ticket.md          # intent: flows, policies, acceptance examples
-│   └── triage-ticket.tasks.yaml  # TaskPlan — statuses are derived
+│   └── triage-ticket.tasks.yaml  # task list, written by the coding agent — statuses are derived
 ├── workflows/                    # kind: Workflow (version: tuvl/v2)
 ├── agents/                       # code agents: one @agent function per file
 │   └── _generated/schemas.py     # typed In/Out models (tuvl codegen) — never hand-edited
