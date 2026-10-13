@@ -30,14 +30,14 @@ This page holds the detail behind the four guarantees on [tuvl.io](https://tuvl.
 
 ### Data: read and write are separate grants
 
-- **CRUD is opt-in.** A model gets REST routes only for the operations it lists in `spec.api.crud`. `read`, `write` and `delete` are independent grants, carried as signed facts in offline-verifiable Biscuit tokens.
+- **CRUD is opt-in.** A model gets REST routes only for the operations it lists in `spec.api.crud`. `read`, `write` and `delete` are independent grants, carried as signed claims in offline-verifiable access tokens (Ed25519 JWTs).
 - **Group-pinned models.** `spec.access` can restrict a model to named IAM groups per tier. A caller needs the scope *and* the membership; the only bypass is the explicit `iam:admin` grant.
 - **Restrictions cascade down, never up.** Declare who may read, and the write and delete tiers inherit that fence unless you narrow them further.
 
 ### Surface: the API you don't declare doesn't exist
 
 - **Kill the CRUD plane entirely.** One `SystemConfig` line unmounts every auto-generated `/models/*` route. The routes are absent from the router and the OpenAPI schema, rather than hidden behind a 403.
-- **No signing key, no boot.** A production engine without its Biscuit key refuses to start rather than fall back to anything weaker.
+- **No signing key, no boot.** A production engine without its signing key refuses to start rather than fall back to anything weaker.
 - **Dev conveniences can't leak.** The dev-mode superuser shortcut hard-exits the process if it's ever enabled in production.
 
 ## How tuvl compares
