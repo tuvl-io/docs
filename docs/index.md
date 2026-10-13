@@ -2,10 +2,12 @@
 
 **Typed workflows of agents — deterministic where they can be, bounded where they can't — on a durable, journaled runtime, built spec-first.**
 
-!!! note "tuvl 2.0.0"
+!!! note "tuvl 2.0.0 — released 20 October 2026, public beta now"
     tuvl 2.0 is a redesign with no 1.x compatibility layer: workflows are graphs of typed
     **agents**, every run is durable and journaled, and projects are built from specs. See
-    [what's new](whats-new.md). Versions follow [SemVer](https://semver.org).
+    [what's new](whats-new.md). Until the release, install the public beta **2.0.0b1** — see
+    [Installation](getting-started/installation.md#20-public-beta). Versions follow
+    [SemVer](https://semver.org).
 
 !!! tip "Try it live — no install"
     Run any [example](https://github.com/tuvl-io/examples) in a throwaway browser sandbox at

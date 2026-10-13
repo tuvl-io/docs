@@ -1,6 +1,7 @@
 # What's new in 2.0
 
-tuvl **2.0.0** is a redesign: workflows are graphs of typed **agents**, every run is **durable and
+tuvl **2.0.0** (released 20 October 2026; public beta **2.0.0b1** until then — see
+[Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
 [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
@@ -21,7 +22,7 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
 
     ---
 
-    `tuvl validate` checks contracts, data flow, types and policy (V001–V026) and prints each
+    `tuvl validate` checks contracts, data flow, types and policy (V001–V029) and prints each
     workflow's determinism profile and worst-case token cost.
     [Agentic Manual](internals/tuvl-agentic-manual.md)
 
@@ -45,9 +46,10 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
 
     ---
 
-    `tuvl spec analyse` turns intent into contracts and a task plan with derived statuses;
-    `tuvl codegen`, `tuvl test`, `tuvl lock` are deterministic; `tuvl mcp` and 13 skills for coding
-    agents. [Spec-driven development](internals/spec-driven.md)
+    The coding agent builds; tuvl referees. `tuvl spec check` checks the spec, `tuvl spec verify`
+    checks the build against it, and task status is derived, never self-reported. `tuvl codegen`,
+    `tuvl test` and `tuvl lock` are deterministic; `tuvl mcp` and 13 skills for coding agents.
+    [Spec-driven development](internals/spec-driven.md)
 
 -   **Insight 2.0**
 

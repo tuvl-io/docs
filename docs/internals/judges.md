@@ -41,7 +41,7 @@ expect:
 ## Rules
 
 1. **Deterministic checks first.** `end`, `path`, `decisions`, `output` and TEL `assertions` run
-   before any judge. Spec analysis turns acceptance bullets into assertions where it can.
+   before any judge. Prefer a TEL assertion over a judge wherever the check is exact.
 2. **Verdict cache.** Verdicts are cached in `.tuvl/judge-cache/` by subject, judge version and
    content hash, so CI re-runs are deterministic and free. Commit the cache to share it.
 3. **Calibration.** `tuvl test` runs each judge's calibration set before first use. Agreement below

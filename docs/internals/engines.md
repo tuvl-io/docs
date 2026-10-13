@@ -25,7 +25,7 @@ engine (`code:`, `tool:`, `llm:`, …).
   normal signal. Tests override it with `mocks`.
 - `tuvl ship` refuses a project with `pending` agents, and the production runner won't load one.
 
-Spec analysis produces `pending` agents; the TaskPlan records which engine each should become.
+A `pending` agent is a typed placeholder for a step the spec names but nobody has built yet; `tuvl spec verify` reports it as unfinished and tests through it are *stubbed*, not passed.
 
 ---
 

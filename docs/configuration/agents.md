@@ -83,7 +83,6 @@ See [Decide](../internals/decide.md).
 | `loop` agent | `loop.model` |
 | `decide` agent | `decide.model.ref` — a decision model or an `llm` model |
 | Judge artifact | `spec.model` |
-| Spec analysis | `config.yaml` → `spec.analysis_model`, or `tuvl spec analyse --model` |
 
 Model ids are pinned in `tuvl.lock` by `tuvl lock`. You can also manage models on the Insight
 **AI Models** page.
