@@ -88,16 +88,22 @@ When a model is loaded, tuvl mounts CRUD routes at `/api/<table-name>/`:
 
 ## Using a model in a workflow
 
-Reference the model by its `metadata.name` value in a `ModelOp` step:
+List the model in the workflow's `spec.models`, then read and write it with a `tool` agent
+(`use: db`) or `ctx.db` in a `code` agent:
 
 ```yaml
 - id: save_candidate
-  kind: ModelOp
-  op: add
-  model: Candidate
+  description: Store the candidate
+  engine: tool
+  inputs:  { name: str, email: str }
+  outputs: { candidate: Candidate }
+  tool: { use: db, model: Candidate, op: create, values: { name: "{{ name }}", email: "{{ email }}" } }
+  routes: { default: END, conflict: END.duplicate, error: END.failed }
 ```
 
-Available operations: `add`, `get`, `update`, `delete`, `list`.
+Operations: `create`, `read`, `update`, `delete`, `list`, `upsert`. Models are also types:
+`Candidate`, `Candidate.create`, `list[Candidate]`. CRUD REST routes exist only for models that opt
+in with `spec.api.crud`.
 
 ---
 

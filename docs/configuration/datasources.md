@@ -298,4 +298,4 @@ For full details on scaling considerations and Docker setup, see [Redis Configur
 
 - [Redis](redis.md) — Configure Redis for distributed state
 - [Agents](agents.md) — Configure LLM providers
-- [Models](../concepts/models.md) — Define data models
+- [Agentic Manual](../internals/tuvl-agentic-manual.md) — documents, types and models
