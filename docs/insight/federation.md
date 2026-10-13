@@ -12,7 +12,7 @@ The Federation section configures OAuth2 / OIDC social login providers. Once con
 2. tuvl redirects to the provider's OAuth2 authorisation endpoint.
 3. After the user consents, the provider redirects back to `http://<your-tuvl-host>/auth/callback/<provider>`.
 4. tuvl exchanges the authorisation code for an access token, fetches the user's profile, and creates or links a tuvl user account.
-5. A Biscuit token is issued and the user is logged in.
+5. An access token is issued and the user is logged in.
 
 ---
 
