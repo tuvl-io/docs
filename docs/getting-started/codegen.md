@@ -30,7 +30,7 @@ tuvl codegen --check          # write nothing; exit 1 if anything would change (
 
     from tuvl import Ctx, agent
 
-    from ._generated.schemas import ScoreTicketIn, ScoreTicketOut
+    from agents._generated.schemas import ScoreTicketIn, ScoreTicketOut
 
 
     @agent("score_ticket")
