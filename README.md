@@ -1,6 +1,6 @@
 # tuvl Documentation
 
-Source for the [tuvl](https://github.com/tuvl-io/tuvl) documentation site, built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) and published to [tuvl.dev](https://tuvl.dev).
+Source for the [tuvl](https://github.com/tuvl-io/tuvl) documentation site, built with [MkDocs](https://www.mkdocs.org/) and the [shadcn theme](https://github.com/asiffer/mkdocs-shadcn) and published to [tuvl.dev](https://tuvl.dev).
 
 ## Prerequisites
 
