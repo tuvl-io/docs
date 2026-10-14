@@ -1,0 +1,28 @@
+<footer view-transition-name="footer" class="tuvl-footer">
+    <div class="tuvl-footer__inner">
+        <div class="tuvl-footer__brand">
+            <a href="https://tuvl.io" class="tuvl-footer__logo">
+                <span class="tuvl-footer__mark">{{ config.theme.icon | read_file | safe }}</span>
+                <span>tuvl</span>
+            </a>
+            <p>{{ config.site_description }}</p>
+            <p class="tuvl-footer__small">&copy; {{ build_date_utc.year if build_date_utc else "2026" }} tuvl.io &middot; MIT licensed</p>
+        </div>
+        <nav class="tuvl-footer__col" aria-label="Project links">
+            <div class="tuvl-footer__title">Project</div>
+            {% for link in config.extra.footer_links %}
+            <a href="{{ link.url }}" rel="noopener">{{ link.title }}</a>
+            {% endfor %}
+        </nav>
+        <div class="tuvl-footer__col">
+            <div class="tuvl-footer__title">Contact</div>
+            <a href="mailto:{{ config.extra.contact.developer }}">{{ config.extra.contact.developer }}</a>
+            <span class="tuvl-footer__small">Questions, feedback, partnerships</span>
+            <a href="mailto:{{ config.extra.contact.security }}">{{ config.extra.contact.security }}</a>
+            <span class="tuvl-footer__small">Security reports</span>
+        </div>
+    </div>
+    <div class="tuvl-footer__credit">
+        Documentation built with <a href="https://github.com/asiffer/mkdocs-shadcn">mkdocs-shadcn</a>
+    </div>
+</footer>
