@@ -64,56 +64,56 @@ spec:
 
 <div class="grid cards" markdown>
 
--   :material-shape-outline:{ .lg .middle } **Seven engines, one contract**
+-   **Seven engines, one contract**
 
     ---
 
     `code`, `tool` (DB/HTTP/MCP), `decide` (rules, then a model), `llm`, `loop` (bounded tool
     use), `human`, and `pending` contracts. Swap an engine without touching the graph.
 
--   :material-scale-balance:{ .lg .middle } **Deterministic first**
+-   **Deterministic first**
 
     ---
 
     Every workflow has a determinism profile and a worst-case token cost. Rules decide before models;
     an unavailable model is an error, never a silent fallback.
 
--   :material-database-sync:{ .lg .middle } **Durable runs**
+-   **Durable runs**
 
     ---
 
     Runs survive restarts, wait for people, pause and resume on any worker, and compensate on
     rollback. Every run is journaled.
 
--   :material-replay:{ .lg .middle } **Record, replay, test**
+-   **Record, replay, test**
 
     ---
 
     Pin any run as a fixture and replay it with zero tokens. Offline tests with typed mocks;
     calibrated, cached judges for free-text checks.
 
--   :material-file-document-edit:{ .lg .middle } **Spec-driven**
+-   **Spec-driven**
 
     ---
 
     Write intent in a spec; analysis proposes contracts and a task plan; codegen, validation and
     task status are deterministic. Coding agents use the same tools over MCP.
 
--   :material-monitor-dashboard:{ .lg .middle } **Insight**
+-   **Insight**
 
     ---
 
     Specs and task board, a canvas over the same YAML, runs with breakpoints, step mode and
     approvals, change-engine checks, judge calibration.
 
--   :material-api:{ .lg .middle } **REST, SSE and MCP**
+-   **REST, SSE and MCP**
 
     ---
 
     Typed OpenAPI from contracts, journal events over SSE, workflows as MCP tools, and a typed
     TypeScript client.
 
--   :material-shield-lock:{ .lg .middle } **Governed**
+-   **Governed**
 
     ---
 
