@@ -69,15 +69,18 @@ metadata: { name: laya }
 spec:
   type: decision
   provider: laya
-  model: auto                            # auto | english | multilingual | typed-decisions
+  model: english                         # english | auto | multilingual | typed-decisions
   api_base: ${LAYA_API_BASE:http://localhost:8000}
   api_key: ${LAYA_API_KEY:}              # optional; must be an ${ENV_VAR} reference
 ```
 
-- **Laya** is self-hosted: the `laya-serve` image serves it on CPU with its weights pinned and
-  verified, so the image version is what pins the model. `model: auto` lets Laya route by
-  language (English or multilingual); `tuvl init --decision-model laya` scaffolds this model, a
-  `compose.yaml` for local development, and `tuvl ship` adds Laya to the Helm chart.
+- **Laya** is self-hosted: the [`tuvl/laya-serve`](https://hub.docker.com/r/tuvl/laya-serve) image
+  ([source](https://github.com/tuvl-io/laya-serve)) serves it on CPU, amd64 or arm64, with its
+  weights pinned and verified, so the image version is what pins the model. `model: english` runs
+  the English-only `-en` image (about 2 GiB of memory); `model: auto` routes by language and
+  `multilingual` need the full image (about 3.5 GiB), because an `-en` image fails on non-English
+  text. `tuvl init --decision-model laya` scaffolds an `english` model and a `compose.yaml` for
+  local development, and `tuvl ship` adds Laya to the Helm chart with the image that matches `model`.
 - **Jev** is TypeSafe's hosted service: set `api_base` to its endpoint and pin `model` to a version
   (`jev-1.13.0`); an unpinned Jev model is a V026 warning.
 - Confidence thresholds do not transfer between Laya and Jev (or between checkpoints) — calibrate
