@@ -7,46 +7,15 @@ repo_name: tuvl-io/tuvl
 repo_url: https://github.com/tuvl-io/tuvl
 
 theme:
-  name: material
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: cyan
-      accent: cyan
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: cyan
-      accent: cyan
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-  font:
-    text: Inter
-    code: JetBrains Mono
-  features:
-    - navigation.instant
-    - navigation.tracking
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - navigation.sections
-    - navigation.expand
-    - navigation.top
-    - navigation.footer
-    - search.suggest
-    - search.highlight
-    - content.code.copy
-    - content.code.annotate
-    - content.tabs.link
-  icon:
-    repo: fontawesome/brands/github
-  logo: assets/logo.png
+  name: shadcn
+  custom_dir: overrides
+  icon: assets/logo-icon.svg
   favicon: assets/favicon.ico
+  show_datetime: false
+  katex_options: {}
 
 plugins:
-  - search
+  - shadcn/search
   - mkdocstrings:
       handlers:
         python:
@@ -69,9 +38,6 @@ markdown_extensions:
       smart_enable: all
   - pymdownx.caret
   - pymdownx.details
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -94,28 +60,16 @@ markdown_extensions:
   - pymdownx.tilde
 
 extra:
-  analytics:
-    provider: google
-    property: G-7NBSPKBZSP
-    feedback:
-      title: Was this page helpful?
-      ratings:
-        - icon: material/thumb-up-outline
-          name: Yes
-          data: 1
-          note: Thanks for your feedback!
-        - icon: material/thumb-down-outline
-          name: No
-          data: 0
-          note: Thanks — we'll work on improving this page.
-  social:
-    - icon: fontawesome/solid/globe
-      link: https://tuvl.io
-      name: tuvl.io
-    - icon: fontawesome/brands/github
-      link: https://github.com/tuvl-io/tuvl
-    - icon: fontawesome/brands/discord
-      link: https://discord.gg/tuvl
+  footer_links:
+    - { title: Website, url: "https://tuvl.io" }
+    - { title: Try it live, url: "https://try.tuvl.online" }
+    - { title: GitHub, url: "https://github.com/tuvl-io/tuvl" }
+    - { title: Examples, url: "https://github.com/tuvl-io/examples" }
+    - { title: PyPI, url: "https://pypi.org/project/tuvl/" }
+    - { title: Discord, url: "https://discord.gg/tuvl" }
+  contact:
+    developer: developer@tuvl.io
+    security: security@tuvl.io
   generator: false
 
 extra_css:
