@@ -87,6 +87,8 @@ nav:
   - Getting Started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
+      - Code Generation: getting-started/codegen.md
+      - Shipping to Production: getting-started/shipping.md
       - Project Structure: getting-started/project-structure.md
       - Build with Coding Agents: getting-started/coding-agents.md
   - Guide:
