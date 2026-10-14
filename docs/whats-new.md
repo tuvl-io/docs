@@ -1,6 +1,6 @@
 # What's new in 2.0
 
-tuvl **2.0.0** (released 20 October 2026; public beta **2.0.0b1** until then — see
+tuvl **2.0.0** (released 20 October 2026; public beta **2.0.0b2** until then — see
 [Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
