@@ -1,5 +1,5 @@
 site_name: tuvl
-site_description: A lightweight, local-first workflow orchestration engine for AI-powered business automation
+site_description: Typed workflows of agents — deterministic where they can be, bounded where they can't — on a durable, journaled runtime, built spec-first.
 site_author: tuvl Team
 site_url: https://tuvl.dev
 
