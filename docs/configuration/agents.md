@@ -53,7 +53,8 @@ free text.
 
 **Laya (self-hosted).** `tuvl init --decision-model laya` writes this model, `LAYA_API_*` entries in
 `.env`, and a `compose.yaml` that runs the laya-serve container on `localhost:8000`
-(`docker compose up -d laya`). `tuvl ship` adds Laya to the Helm chart.
+(`docker compose up -d laya`). `tuvl ship` adds Laya to the Helm chart
+([Shipping to production](../getting-started/shipping.md)).
 
 The [`tuvl/laya-serve`](https://hub.docker.com/r/tuvl/laya-serve) image comes in two variants:
 

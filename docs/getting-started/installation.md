@@ -9,7 +9,13 @@ Before installing tuvl, ensure you have:
 - **Python 3.13 or 3.14** — tuvl 2.0 supports `>=3.13,<3.15`. uv picks a compatible interpreter automatically.
 - **uv** — Fast Python package manager (recommended)
 - **PostgreSQL** — For data persistence (optional for development)
+- **Docker** — Optional. The easiest way to run PostgreSQL, Redis and Laya locally, and required by `tuvl ship` to build the production image
+- **Redis** — Optional for `tuvl dev`; needed when you run more than one worker ([why](../configuration/redis.md))
+- **Laya (`tuvl/laya-serve`)** — Optional. A self-hosted decision model for `decide` agents; runs as its own container
 - **Ollama** — For local LLM inference (optional)
+
+!!! note "What you actually need"
+    To try tuvl you need Python and uv, and a PostgreSQL database. Everything else above is opt-in: Redis only matters for multi-worker deployments, and Laya only if a `decide` agent uses it as its decision model.
 
 !!! note "Python 3.14"
     tuvl 1.x was held to Python 3.13 because its token library (`biscuit-python`) had no 3.14 builds. tuvl 2.0 signs tokens as standard JWTs and runs on 3.13 and 3.14 on Linux, macOS and Windows.
@@ -130,6 +136,73 @@ pip install "tuvl[standard]"
       postgres:16-alpine
     ```
 
+### Redis (optional)
+
+Redis shares OAuth state and the token-revocation list between workers. A single `tuvl dev`
+process works without it (an in-process fallback is used); add it before running more than one
+worker. See [Redis configuration](../configuration/redis.md) for the datasource file.
+
+=== "macOS (Homebrew)"
+
+    ```bash
+    brew install redis
+    brew services start redis
+    ```
+
+=== "Ubuntu/Debian"
+
+    ```bash
+    sudo apt install redis-server
+    sudo systemctl start redis-server
+    ```
+
+=== "Docker"
+
+    ```bash
+    docker run -d --name tuvl-redis -p 6379:6379 redis:7-alpine
+    ```
+
+Then add `datasources/redis-primary.yaml` with `type: redis`, `host: ${REDIS_HOST:localhost}`.
+
+### Laya decision server (optional)
+
+[Laya](https://hub.docker.com/r/tuvl/laya-serve) is an open-weight model that picks one value of a
+`decide` agent's enum with a confidence. It runs on CPU in its own container, offline, with
+verified weights baked in. Use it when you want decisions made on your own infrastructure instead
+of calling a hosted model.
+
+The quickest route is to let `tuvl init` scaffold it:
+
+```bash
+tuvl init my-project --decision-model laya -y
+cd my-project
+docker compose up -d laya        # serves on http://localhost:8000
+```
+
+This writes `llms/laya.yaml` (a `provider: laya` AgentModel), `LAYA_API_*` entries in `.env` and a
+`compose.yaml`. To run the container by hand:
+
+=== "English only (smaller)"
+
+    ```bash
+    docker run -d --name laya -p 127.0.0.1:8000:8000 tuvl/laya-serve:0.4.7-1-en
+    ```
+
+=== "English + multilingual"
+
+    ```bash
+    docker run -d --name laya -p 127.0.0.1:8000:8000 tuvl/laya-serve:0.4.7-1
+    ```
+
+| Image | Use with | Memory |
+|---|---|---|
+| `…-en` | `model: english` | about 2 GiB |
+| full | `model: auto` or `multilingual` | about 3.5 GiB |
+
+The image is about 2.7 GB (CPU PyTorch plus the weights), amd64 and arm64. Check it is up with
+`curl localhost:8000/health`. Details, checkpoints and settings are in
+[AI Models → Laya](../configuration/agents.md) and [Decide](../internals/decide.md).
+
 ### Ollama (Local LLM)
 
 === "macOS"
@@ -221,5 +294,7 @@ The default `8885` spells **T·U·V·L** on a phone keypad and deliberately avoi
 ## Next Steps
 
 - [Quickstart Guide](quickstart.md) — Build your first workflow
+- [Code generation](codegen.md) — `tuvl codegen`: typed schemas, stubs and tests
+- [Shipping to production](shipping.md) — `tuvl ship`: image, Helm chart, Laya and secrets
 - [Project Structure](project-structure.md) — Understand the project layout
 - [Agentic Manual](../internals/tuvl-agentic-manual.md) — how tuvl projects are written
