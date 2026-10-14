@@ -294,6 +294,7 @@ The default `8885` spells **T·U·V·L** on a phone keypad and deliberately avoi
 ## Next Steps
 
 - [Quickstart Guide](quickstart.md) — Build your first workflow
+- [Code generation](codegen.md) — `tuvl codegen`: typed schemas, stubs and tests
 - [Shipping to production](shipping.md) — `tuvl ship`: image, Helm chart, Laya and secrets
 - [Project Structure](project-structure.md) — Understand the project layout
 - [Agentic Manual](../internals/tuvl-agentic-manual.md) — how tuvl projects are written
