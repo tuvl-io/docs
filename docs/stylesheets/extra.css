@@ -62,8 +62,6 @@ a.button.ghost:has(> h1) > h1 {
 .tuvl-footer__col a:hover { opacity: 1; text-decoration: underline; }
 .tuvl-footer__small { font-size: 0.75rem; opacity: 0.6; }
 .tuvl-footer__col .tuvl-footer__small { margin-bottom: 0.6rem; }
-.tuvl-footer__credit { border-top: 1px solid var(--border, rgba(127, 127, 127, 0.2)); text-align: center; font-size: 0.75rem; opacity: 0.6; padding: 1rem; }
-.tuvl-footer__credit a { color: inherit; text-decoration: underline; }
 @media (max-width: 768px) {
   .tuvl-footer__inner { grid-template-columns: 1fr; gap: 1.75rem; }
 }
