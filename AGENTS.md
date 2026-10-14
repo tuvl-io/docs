@@ -1,6 +1,6 @@
 # tuvl_documentation Agent Rules
 
-This directory contains the source code for the TUVL documentation website (`tuvl.dev`), built using **MkDocs Material**. 
+This directory contains the source code for the TUVL documentation website (`tuvl.dev`), built with MkDocs and the **shadcn** theme (`mkdocs-shadcn`; templates overridden in `overrides/`). 
 
 ## 1. Environment & Setup
 - **Dependency Management:** The project uses `uv`. 
@@ -16,7 +16,7 @@ This directory contains the source code for the TUVL documentation website (`tuv
 - **CSS Overrides:** Located in `docs/stylesheets/`.
 
 ## 3. Formatting & Linking Rules
-- **Markdown Flavor:** Uses standard Markdown + MkDocs Material extensions (Admonitions, Code Annotations, Content Tabs).
+- **Markdown Flavor:** Uses standard Markdown + pymdown-extensions (admonitions, content tabs, code blocks). Material-only syntax (`:material-…:` icons, `{ .md-button }`) is not supported.
 - **Links:** Always use root-relative links between documents (e.g., `[Link](../concepts/nodes.md)`).
 - **Frontmatter:** MkDocs does not strictly require YAML frontmatter for every page, but title headings (`#`) are mandatory.
 

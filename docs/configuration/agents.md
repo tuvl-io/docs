@@ -55,13 +55,25 @@ free text.
 `.env`, and a `compose.yaml` that runs the laya-serve container on `localhost:8000`
 (`docker compose up -d laya`). `tuvl ship` adds Laya to the Helm chart.
 
+The [`tuvl/laya-serve`](https://hub.docker.com/r/tuvl/laya-serve) image comes in two variants:
+
+| Tag | Checkpoints | Memory | Use with |
+|---|---|---|---|
+| `<version>-en` | english | about 2 GiB | `model: english` |
+| `<version>` | english + multilingual | about 3.5 GiB | `model: auto` or `multilingual` |
+
+`tuvl init` scaffolds `model: english` with the `-en` image, and `tuvl ship` picks the image (and the
+Helm memory requests) that matches the model. An `-en` image has no multilingual weights and runs
+offline, so non-English text sent to it fails with HTTP 500 `inference failed` — set `model: auto`
+and use the full image when you need other languages.
+
 ```yaml title="llms/laya.yaml"
 kind: AgentModel
 metadata: { name: laya }
 spec:
   type: decision
   provider: laya
-  model: auto                  # auto | english | multilingual | typed-decisions
+  model: english               # english | auto | multilingual | typed-decisions
   api_base: ${LAYA_API_BASE:http://localhost:8000}
   api_key: ${LAYA_API_KEY:}    # optional; an ${ENV_VAR} reference, never a literal key
 ```
