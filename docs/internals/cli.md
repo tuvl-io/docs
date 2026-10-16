@@ -14,6 +14,10 @@ directory everywhere.
 | `tuvl lock` | `--check`, `--mcp/--no-mcp` | Pin model ids, artifact hashes, judge/decision models and MCP tool schemas in `tuvl.lock` |
 | `tuvl doctor` | `--live`, `--json` | Are the project's models configured? Lists each model, the variables it needs and which are missing (exit 1 if any). `--live` makes one minimal call per model (a few tokens; Laya/Jev: their `/health`). A production server runs the same check at startup and refuses to start on a missing variable; `/health` reports each model's readiness |
 | `tuvl test` | `--live`, `--allow-uncertain`, `--strict`, `-k/--only TEXT`, `--json` | Run `Test` documents offline (`--live` lets unmocked model/tool agents call out). Results are PASS, **STUBBED** (expectations met only through unmocked `pending` placeholders — not counted) or FAIL; `--strict` (CI) also fails on stubbed results and untrusted judge calibration |
+| `tuvl project info` | `--json` | The project's identity from `.tuvl/project.yaml`: the immutable, self-checking id (`prj_<uuidv7>-<2 check characters>`, minted by `tuvl init`; the check catches typos and hand edits, it is not a signature), name, author, email, type (`poc\|dev\|production`), version, registry status. Also editable in Insight → Settings → Project. Full reference: [project](project.md) |
+| `tuvl project init` | `--name`, `--new-id` | Create `project.yaml` for a project that predates it. Never changes an existing id; `--new-id` replaces a malformed or copied id and clears its registration |
+| `tuvl project set FIELD VALUE` | | Update `name`, `author`, `email`, `type`, `version`, `description`, `license` or `repo` (validated). The description is Markdown (up to 2000 characters): `VALUE` of `@about.md` reads a file, `-` reads stdin; `project info` renders it |
+| `tuvl project register` | `--hub URL`, `--public-email`, `-y` | List the project in the public catalogue. Prints the exact payload first and asks; signs in with GitHub's device flow; the email is sent only with `--public-email`. Also available as Insight → Settings → Project → Register / Update listing (same payload preview and login) |
 | `tuvl skills update` | `--diff` | Refresh `AGENTS.md` and `.agents/skills/` to this tuvl version (removes 1.x skills; mirrors to `.claude/skills/`) |
 
 ## Specs
@@ -48,8 +52,6 @@ These talk to a running server: `-u/--url` (`TUVL_URL`, default `http://localhos
 | `tuvl runs replay FIXTURES…` | `--json` | Re-run pinned journals offline; fail if the end or output differ |
 
 ## Shipping and operations
-
-See [Shipping to production](../getting-started/shipping.md) for a walkthrough.
 
 | Command | Options | |
 |---|---|---|

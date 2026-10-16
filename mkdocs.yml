@@ -84,6 +84,7 @@ nav:
   - Why tuvl: why-tuvl.md
   - Main Website: https://tuvl.io
   - Try it Live ↗: https://try.tuvl.online
+  - Hub ↗: https://hub.tuvl.io
   - Getting Started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
@@ -101,6 +102,7 @@ nav:
       - Spec-Driven Development: internals/spec-driven.md
       - API — REST, SSE, MCP: internals/api.md
       - CLI Reference: internals/cli.md
+      - Project and Catalogue: internals/project.md
       - Observability: internals/observability.md
   - Insight:
       - Overview: internals/insight.md
