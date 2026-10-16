@@ -8,13 +8,38 @@ The Settings section configures project-level infrastructure and observability i
 
 ## Navigation
 
-The left panel groups settings into four categories:
+The left panel groups settings into these categories (Project opens first):
 
 | Category | Item | Purpose |
 |----------|------|---------|
+| General | Project | The project's identity and its listing in the public catalogue |
 | Infrastructure | Redis | Shared state for multi-worker deployments |
 | Observability | Telemetry | OpenTelemetry trace and metric export |
 | Security | API Access | Control which HTTP API surfaces are mounted |
+
+---
+
+## Project
+
+The **Project** page edits `.tuvl/project.yaml`: the identity `tuvl init` gave the project.
+
+| Field | Notes |
+|-------|-------|
+| Project id | Read-only. `prj_<uuidv7>-<check>`, created once; a hand-edited id fails its check and Insight refuses to register it |
+| Name, Author, Developer email | Email stays private unless you choose to publish it |
+| Type | `PoC`, `Dev` or `Production` |
+| Version | The application's own semver, not the engine's |
+| Description | Markdown, up to 2000 characters, with an **Edit / Preview** toggle |
+| License, Repository | Optional; the repository must be an `http(s)` URL |
+
+The **Catalogue** card below the form shows whether the project is listed on [hub.tuvl.io](https://hub.tuvl.io):
+not listed, up to date, changed since the last registration, or id changed. **Register** (or **Update
+listing** once listed) opens a dialog with the exact payload that will be sent and a *Show my developer
+email publicly* checkbox. **Send** registers directly when this machine already has a hub login;
+otherwise it shows a GitHub device code, waits for you to approve it and then registers. The hub token
+stays on the dev server, never in the browser.
+
+The same actions are available from the CLI: see [Project and Catalogue](../internals/project.md).
 
 ---
 
