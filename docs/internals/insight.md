@@ -21,7 +21,7 @@ tuvl dev --auto-login    # skip the key screen on this machine
 | **Artifacts** | Prompts, steering, skills, guardrails, hooks, MCP servers; **judge editor** with try/calibrate; **rules editor** with "which rule matches" |
 | **Models**, **Datasources**, **Embeddings**, **Collections** | Data configuration |
 | **AI Models** | `AgentModel`s — LLM (LiteLLM id, base URL, key reference, parameters) or **Decision** (provider `laya`/`jev`/`litellm` + model) |
-| **IAM**, **Federation**, **Settings**, **API Docs** | Users and roles, OAuth providers, system settings (incl. the CRUD kill switch), OpenAPI |
+| **IAM**, **Federation**, **Settings**, **API Docs** | Users and roles, OAuth providers, system settings (incl. the CRUD kill switch), the **Project** identity and catalogue registration ([project](project.md)), OpenAPI |
 
 ## Workflows: the canvas
 
