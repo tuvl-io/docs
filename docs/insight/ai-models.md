@@ -1,6 +1,6 @@
 # AI Models
 
-The AI Models section configures your `AgentModel` definitions — the model connections behind `llm`, `loop` and `decide` agents, judges and spec analysis. tuvl uses [LiteLLM](https://docs.litellm.ai/) under the hood, which means you can connect to any major LLM provider with a single config file.
+The AI Models section configures your `AgentModel` definitions — the model connections behind `llm`, `loop` and `decide` agents, judges and spec analysis. tuvl calls models with its own built-in client, so OpenAI, Anthropic, Gemini, Azure OpenAI, Bedrock, Vertex AI, Cohere, Ollama and any OpenAI-compatible endpoint connect with a single config file. See [Models and Providers](../internals/models.md).
 
 ![AI Models page](../assets/screenshots/insight-ai-models.png)
 
@@ -28,8 +28,8 @@ The form is split into three sections:
 
 | Field | Description |
 |-------|-------------|
-| **LLM Model string** | LiteLLM model identifier in `provider/model-name` format |
-| **API Base URL** | Required for Ollama, LiteLLM proxy, or self-hosted deployments |
+| **LLM Model string** | Model identifier in `provider/model-name` format |
+| **API Base URL** | Required for Ollama, a gateway such as a LiteLLM proxy, or self-hosted deployments |
 | **API Key** | Provider API key; use `${ENV_VAR}` syntax to avoid hardcoding secrets |
 
 ### Parameters
@@ -92,9 +92,9 @@ spec:
 
     ```yaml
     spec:
-      model: openai/my-model
-      api_base: http://my-litellm-proxy:4000
-      api_key: "${LITELLM_PROXY_KEY}"
+      model: litellm_proxy/my-model
+      api_base: http://my-litellm-proxy:4000/v1
+      api_key: "${LITELLM_API_KEY}"
     ```
 
 === "Azure OpenAI"
@@ -102,7 +102,7 @@ spec:
     ```yaml
     spec:
       model: azure/my-deployment
-      api_base: "https://my-org.openai.azure.com"
+      api_base: "https://my-org.openai.azure.com"   # or set AZURE_OPENAI_ENDPOINT
       api_key: "${AZURE_OPENAI_API_KEY}"
     ```
 
@@ -126,7 +126,7 @@ models) a `decide` agent:
   routes: { default: END, parse_error: END.failed, timeout: END.failed, budget_exceeded: END.failed, error: END.failed }
 ```
 
-The **Decision** toggle on this page creates `type: decision` models (`laya`, `jev` or `litellm`) for
+The **Decision** toggle on this page creates `type: decision` models (`laya`, `jev` or `llm`) for
 the [decide engine](../internals/decide.md). For a hosted decision model, set its API base and an
 `${ENV_VAR}` API key there too.
 

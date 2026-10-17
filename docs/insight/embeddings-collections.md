@@ -48,8 +48,9 @@ spec:
 
 | Field | Description |
 |-------|-------------|
-| `model` | LiteLLM embedding model string |
-| `api_base` | Required for Ollama. Leave blank for cloud providers. |
+| `model` | `provider/model` of an OpenAI-compatible embeddings endpoint (OpenAI, Gemini, Ollama, Cohere, Voyage, a gateway) |
+| `api_base` | Optional — a gateway or proxy; Ollama defaults to `OLLAMA_BASE_URL` |
+| `api_key` | Optional `${ENV_VAR}` reference; blank uses the provider's key variable |
 | `dimensions` | Vector size — must match the model's output dimension |
 
 ### Common embedding models
@@ -61,6 +62,7 @@ spec:
 | OpenAI | `openai/text-embedding-3-small` | 1536 |
 | OpenAI | `openai/text-embedding-3-large` | 3072 |
 | Cohere | `cohere/embed-english-v3.0` | 1024 |
+| Voyage | `voyage/voyage-3` | 1024 |
 
 ---
 
