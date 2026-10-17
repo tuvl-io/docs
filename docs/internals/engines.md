@@ -145,7 +145,7 @@ calls get a stable `Idempotency-Key`; MCP calls are at-least-once, so give write
   outputs: { text: str }
   budget:  { timeout: 20s, max_tokens: 1500, retry: { attempts: 2, errors: [parse_error, timeout] } }
   llm:
-    model: default                        # AgentModel name (type llm) or a LiteLLM model id
+    model: default                        # AgentModel name (type llm) or a provider/model id (see `docs/models.md`)
     system: artifact://support-voice@3    # text or a prompt artifact
     prompt: Write a short confirmation of the refund.
     skills: [artifact://refund-policy@2]

@@ -103,6 +103,7 @@ nav:
       - API — REST, SSE, MCP: internals/api.md
       - CLI Reference: internals/cli.md
       - Project and Catalogue: internals/project.md
+      - Models and Providers: internals/models.md
       - Observability: internals/observability.md
   - Insight:
       - Overview: internals/insight.md

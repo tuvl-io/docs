@@ -81,6 +81,14 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     with `tuvl project set` or in Insight, and list the project on [hub.tuvl.io](https://hub.tuvl.io)
     with `tuvl project register` or the Register button. [Project and Catalogue](internals/project.md)
 
+-   **A lighter install: built-in model client**
+
+    ---
+
+    tuvl calls models with its own HTTP client instead of litellm, about 210 MB smaller to install.
+    OpenAI, Anthropic, Gemini, Azure OpenAI, Bedrock, Vertex AI, Cohere, Ollama and any
+    OpenAI-compatible endpoint or gateway are built in. [Models and Providers](internals/models.md)
+
 </div>
 
 ## From 1.x to 2.0

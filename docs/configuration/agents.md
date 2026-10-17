@@ -13,7 +13,7 @@ version: v1
 metadata:
   name: default
 spec:
-  model: gemini/gemini-3.1-flash-lite     # a LiteLLM model id
+  model: gemini/gemini-3.1-flash-lite     # a provider/model id
   api_key: ${GEMINI_API_KEY}             # optional; read from the environment
   temperature: 0.2
   max_tokens: 2048
@@ -22,8 +22,8 @@ spec:
 
 | Property | Description |
 |---|---|
-| `model` | LiteLLM model id: `provider/model` (required) |
-| `api_base` | Endpoint, for Ollama or a LiteLLM proxy |
+| `model` | Model id: `provider/model` (required) — see [Models and Providers](../internals/models.md) |
+| `api_base` | Endpoint, for Ollama, a gateway or any OpenAI-compatible server |
 | `api_key` | Use `${ENV_VAR}` — secrets live in `.env`, never in YAML. Without it, the provider's standard variable (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, …) is used |
 | `temperature`, `max_tokens` | Defaults for calls through this model (an agent's `budget.max_tokens` still bounds it) |
 | `timeout` | Request timeout in seconds (default 60) |
@@ -35,7 +35,14 @@ spec:
 | OpenAI | `openai/gpt-5.4-mini` |
 | Anthropic | `anthropic/claude-haiku-4-5` |
 | Gemini | `gemini/gemini-3.1-flash-lite` |
-| LiteLLM proxy | `litellm_proxy/<name>` with `api_base` and `api_key` |
+| Azure OpenAI | `azure/<deployment>` with `AZURE_OPENAI_ENDPOINT` or `api_base` |
+| Amazon Bedrock | `bedrock/<model id>` with `AWS_BEARER_TOKEN_BEDROCK` and `AWS_REGION` |
+| Vertex AI | `vertex_ai/google/<model>` with `VERTEX_ACCESS_TOKEN` and `GOOGLE_CLOUD_PROJECT` |
+| Cohere, Groq, Mistral, DeepSeek, xAI | `cohere/…`, `groq/…`, `mistral/…`, `deepseek/…`, `xai/…` |
+| LiteLLM proxy or other gateway | `litellm_proxy/<alias>` with `api_base` and `api_key` |
+
+tuvl calls these with its own HTTP client; nothing else is installed. Providers, key variables and
+caveats: [Models and Providers](../internals/models.md).
 
 ## Decision models
 
@@ -44,7 +51,7 @@ kind: AgentModel
 metadata: { name: triage-classifier }
 spec:
   type: decision
-  provider: litellm            # laya | jev | litellm
+  provider: llm                # laya | jev | llm
   model: gemini/gemini-3.1-flash-lite
 ```
 
@@ -81,7 +88,7 @@ spec:
 
 **Jev (hosted).** `provider: jev` with its `api_base`, and `model` pinned to a version (`jev-1.13.0`).
 
-**OpenAI-compatible endpoints** (a LiteLLM proxy, your own classifier) use `provider: litellm` with
+**OpenAI-compatible endpoints** (a LiteLLM proxy, your own classifier) use `provider: llm` with
 `model: openai/<name>`, `api_base` and an `${ENV_VAR}` `api_key`. The endpoint must return
 `{"decision": …, "confidence": 0..1}` (or token logprobs); an answer with no confidence is an error,
 never treated as certain.
@@ -92,7 +99,7 @@ See [Decide](../internals/decide.md).
 
 | Site | Field |
 |---|---|
-| `llm` agent | `llm.model: default` (or a LiteLLM id directly) |
+| `llm` agent | `llm.model: default` (or a provider/model id directly) |
 | `loop` agent | `loop.model` |
 | `decide` agent | `decide.model.ref` — a decision model or an `llm` model |
 | Judge artifact | `spec.model` |

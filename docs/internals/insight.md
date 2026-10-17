@@ -20,7 +20,7 @@ tuvl dev --auto-login    # skip the key screen on this machine
 | **Runs** | Live and past runs, journal timeline per agent (loop turns, tool calls, decisions, judge verdicts), approvals inbox with forms and tool-call approve/edit/reject, pause/resume/abort/steer, start a run, pin a run as a fixture, replay fixtures (SAME/DIFF) |
 | **Artifacts** | Prompts, steering, skills, guardrails, hooks, MCP servers; **judge editor** with try/calibrate; **rules editor** with "which rule matches" |
 | **Models**, **Datasources**, **Embeddings**, **Collections** | Data configuration |
-| **AI Models** | `AgentModel`s — LLM (LiteLLM id, base URL, key reference, parameters) or **Decision** (provider `laya`/`jev`/`litellm` + model) |
+| **AI Models** | `AgentModel`s — LLM (provider/model id, base URL, key reference, parameters) or **Decision** (provider `laya`/`jev`/`llm` + model) |
 | **IAM**, **Federation**, **Settings**, **API Docs** | Users and roles, OAuth providers, system settings (incl. the CRUD kill switch), the **Project** identity and catalogue registration ([project](project.md)), OpenAPI |
 
 ## Workflows: the canvas

@@ -58,7 +58,7 @@ Visual builders are a good canvas for a human exploring. Code-first frameworks a
 ## Who it's for
 
 **Engineers: a mechanism you can audit.**
-Typed agent contracts and seven engines form a closed set, checked by 29 validation rules before anything runs. The stack is FastAPI, Postgres with pgvector, LiteLLM and OpenTelemetry. Durable runs are rows in your Postgres, with no extra workflow server and no torch or langchain dependency. Run `tuvl dev` on a laptop, and `tuvl ship` for a container and Helm chart. Start with the [Agentic Manual](internals/tuvl-agentic-manual.md).
+Typed agent contracts and seven engines form a closed set, checked by 29 validation rules before anything runs. The stack is FastAPI, Postgres with pgvector, a built-in model client for every major provider, and OpenTelemetry. Durable runs are rows in your Postgres, with no extra workflow server and no torch or langchain dependency. Run `tuvl dev` on a laptop, and `tuvl ship` for a container and Helm chart. Start with the [Agentic Manual](internals/tuvl-agentic-manual.md).
 
 **Product managers: scope that ships this sprint.**
 Start from a spec in plain language. The task board's progress is derived from the project, not self-reported. `human` agents put sign-off *inside* the workflow: the run waits, durably, for days if needed, and the approval is on record. When someone asks "why did the AI do that?", you open the run and show them.

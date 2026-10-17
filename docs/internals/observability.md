@@ -10,7 +10,7 @@ tuvl ships enterprise-grade observability out of the box: structured JSON loggin
 2. [Structured Logging](#2-structured-logging)
 3. [Distributed Tracing](#3-distributed-tracing)
 4. [Span Hierarchy](#4-span-hierarchy)
-5. [LiteLLM GenAI Telemetry](#5-litellm-genai-telemetry)
+5. [Model-call spans](#5-model-call-spans)
 6. [Metrics](#6-metrics)
 7. [Configuration Reference](#7-configuration-reference)
 8. [Collector Setup](#8-collector-setup)
@@ -27,7 +27,7 @@ trigger (HTTP / API / MCP / schedule / child run)
     ▼
 tuvl.run                      one span per execution of a run (each claim: start, resume)
 ├── tuvl.agent <id>           one per agent invocation
-│   └── litellm.completion    gen_ai.* spans for model calls (llm, loop turns, decide models, judges)
+│   └── chat <model>          gen_ai.* spans for model calls (llm, loop turns, decide models, judges)
 └── tuvl.agent <id> …
 ```
 
@@ -131,13 +131,13 @@ whole run. Engine work — model calls, HTTP calls, DB queries — nests under t
 
 ---
 
-## 5. LiteLLM GenAI Telemetry
+## 5. Model-call spans
 
-When telemetry is enabled, tuvl registers LiteLLM's OpenTelemetry callback
-(`litellm.callbacks = ["opentelemetry"]`). Model calls appear as spans with the
-[GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — `gen_ai.system`,
-`gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`,
-`gen_ai.response.finish_reason` — nested under the `tuvl.agent` span that made them.
+The built-in model client wraps every call in a span named `chat <model>` (`embeddings <model>` for
+embeddings) using the [GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) —
+`gen_ai.operation.name`, `gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`,
+`gen_ai.usage.output_tokens`, `gen_ai.response.finish_reasons` — nested under the `tuvl.agent` span
+that made them. A failed call records the exception on the span.
 
 ---
 
@@ -267,7 +267,6 @@ When `TUVL_DEV_MODE=true` (set automatically by `tuvl dev`):
 
 - `init_telemetry()` is a **no-op** — no `TracerProvider` is installed
 - The OTel SDK default `NonRecordingSpan` is returned for all `start_as_current_span` calls — all span operations become no-ops with negligible overhead
-- The LiteLLM OTel callback is **not** registered
 - Logs use the **coloured ConsoleRenderer** instead of JSON
 - `trace_id` / `span_id` are **not** injected into log events (no valid span context)
 
