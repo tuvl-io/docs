@@ -112,7 +112,7 @@ trace.
 | `tuvl.run_id` | `tuvl.run` | The run |
 | `tuvl.workflow` | `tuvl.run`, `tuvl.agent` | Workflow name |
 | `tuvl.agent` | `tuvl.agent` | Agent id |
-| `tuvl.engine` | `tuvl.agent` | `code`, `tool`, `decide`, `llm`, `loop`, `human`, `pending` |
+| `tuvl.engine` | `tuvl.agent` | `code`, `tool`, `decide`, `llm`, `loop`, `human`, `map`, `pending` |
 | `tuvl.determinism` | `tuvl.agent` | `deterministic`, `bounded`, `external`, `pending` |
 | `tuvl.signal` | `tuvl.agent` | The emitted signal |
 | `tuvl.tokens` | `tuvl.agent` | Tokens used by the invocation |
@@ -160,8 +160,10 @@ All settings are read from `.env` or environment variables. Settings also suppor
 | Variable | Default | Description |
 |---|---|---|
 | `TUVL_TELEMETRY_ENABLED` | `true` | Set `false` to disable all OTel export |
-| `TUVL_OTLP_ENDPOINT` | `http://localhost:4317` | gRPC OTLP collector endpoint |
+| `TUVL_OTLP_ENDPOINT` | `http://localhost:4318` | OTLP collector endpoint (base URL; tuvl adds `/v1/traces` and `/v1/metrics`) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | — | Standard OTel env var — takes precedence over `TUVL_OTLP_ENDPOINT` when set |
+| `TUVL_OTLP_PROTOCOL` | `http/protobuf` | `http/protobuf` or `grpc` (needs `pip install 'tuvl[otel-grpc]'`) |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | — | Standard OTel env var — takes precedence over `TUVL_OTLP_PROTOCOL` when set |
 | `TUVL_SERVICE_NAME` | `tuvl` | `service.name` resource attribute in every span |
 | `TUVL_ENV` | `production` | `production` → JSON logs; `development` → coloured console logs |
 
@@ -174,7 +176,8 @@ kind: TelemetryConfig
 version: v1
 spec:
   enabled: true
-  otlp_endpoint: http://otel-collector:4317
+  otlp_endpoint: http://otel-collector:4318
+  otlp_protocol: http/protobuf
   service_name: my-tuvl-app
 ```
 
@@ -184,13 +187,13 @@ For each setting, the first non-empty source wins:
 
 1. Environment variable (`TUVL_TELEMETRY_ENABLED`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `TUVL_OTLP_ENDPOINT`, `TUVL_SERVICE_NAME`)
 2. `.tuvl/telemetry.yaml` spec fields
-3. Hardcoded defaults (enabled=`true`, endpoint=`http://localhost:4317`, service=`tuvl`)
+3. Hardcoded defaults (enabled=`true`, endpoint=`http://localhost:4318`, protocol=`http/protobuf`, service=`tuvl`)
 
 ---
 
 ## 8. Collector Setup
 
-tuvl exports spans over **gRPC** to any OTLP-compatible collector. Below are quick-start configurations for common backends.
+tuvl exports spans and metrics over **OTLP/HTTP** (port 4318) to any OTLP-compatible collector. To use gRPC (port 4317) instead, install `tuvl[otel-grpc]` and set `TUVL_OTLP_PROTOCOL=grpc`. If you upgraded from a version that used gRPC and your endpoint still ends in `:4317`, tuvl logs a warning at startup. Below are quick-start configurations for common backends.
 
 ### OpenTelemetry Collector (recommended)
 
@@ -200,7 +203,7 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     ports:
-      - "4317:4317"   # gRPC OTLP
+      - "4318:4318"   # OTLP/HTTP
     volumes:
       - ./otel-config.yaml:/etc/otelcol/config.yaml
 
@@ -215,8 +218,8 @@ services:
 receivers:
   otlp:
     protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
 
 exporters:
   jaeger:
@@ -233,14 +236,14 @@ service:
 
 ```bash
 # .env
-TUVL_OTLP_ENDPOINT=http://localhost:4317
+TUVL_OTLP_ENDPOINT=http://localhost:4318
 TUVL_SERVICE_NAME=my-app
 ```
 
 ### Grafana Tempo (via Alloy)
 
 ```bash
-TUVL_OTLP_ENDPOINT=http://alloy:4317
+TUVL_OTLP_ENDPOINT=http://alloy:4318
 TUVL_SERVICE_NAME=my-app
 ```
 
@@ -256,7 +259,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
 Use the Datadog Agent as an OTLP collector:
 
 ```bash
-TUVL_OTLP_ENDPOINT=http://datadog-agent:4317
+TUVL_OTLP_ENDPOINT=http://datadog-agent:4318
 ```
 
 ---
