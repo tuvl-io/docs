@@ -64,7 +64,7 @@ Typed agent contracts and eight engines form a closed set, checked by 36 validat
 Start from a spec in plain language. The task board's progress is derived from the project, not self-reported. `human` agents put sign-off *inside* the workflow: the run waits, durably, for days if needed, and the approval is on record. When someone asks "why did the AI do that?", you open the run and show them.
 
 **Stakeholders: risk with a fence around it.**
-MIT-licensed and open source, with no per-seat or per-call platform fee; the only spend is your own infrastructure and model tokens. Your data stays in your Postgres, PII marked secure never reaches a model, and decisions can run on a self-hosted model in your own cluster. The business logic is portable YAML and the runtime is a standard Python wheel, so adopting tuvl doesn't strand you in it.
+Apache-2.0 licensed and open source, with no per-seat or per-call platform fee; the only spend is your own infrastructure and model tokens. Your data stays in your Postgres, PII marked secure never reaches a model, and decisions can run on a self-hosted model in your own cluster. The business logic is portable YAML and the runtime is a standard Python wheel, so adopting tuvl doesn't strand you in it.
 
 ## See it built
 

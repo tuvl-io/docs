@@ -136,4 +136,4 @@ spec:
 
 ## License
 
-tuvl is open source software licensed under the MIT license.
+tuvl is open source software licensed under the [Apache License, Version 2.0](license.md).
