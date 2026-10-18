@@ -87,24 +87,23 @@ tuvl ships with built-in [OpenTelemetry](https://opentelemetry.io/) support. Tra
 ```yaml
 kind: TelemetryConfig
 version: v1
-enabled: true
-metadata:
-  name: otel
 spec:
-  exporter: otlp-grpc              # otlp-grpc | otlp-http | jaeger | console
-  endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}"
-  service_name: "${OTEL_SERVICE_NAME:tuvl}"
-  sample_rate: 1.0                 # 0.0–1.0  (1.0 = trace everything)
+  enabled: true
+  otlp_endpoint: http://localhost:4318
+  otlp_protocol: http/protobuf     # http/protobuf (default) | grpc
+  service_name: tuvl
 ```
 
-### Exporter options
+### Protocol options
 
-| Exporter | Description |
+| `otlp_protocol` | Description |
 |----------|-------------|
-| `otlp-grpc` | OpenTelemetry Protocol over gRPC (default) |
-| `otlp-http` | OpenTelemetry Protocol over HTTP/JSON |
-| `jaeger` | Jaeger native UDP exporter (legacy) |
-| `console` | Print spans to stdout — useful for debugging |
+| `http/protobuf` | OTLP over HTTP (default), port 4318. Spans go to `<endpoint>/v1/traces`, metrics to `<endpoint>/v1/metrics` |
+| `grpc` | OTLP over gRPC, port 4317. Needs `tuvl[otel-grpc]`; `tuvl ship` installs it when this is set |
+
+Environment variables win over this file: `TUVL_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_ENDPOINT`,
+`TUVL_OTLP_PROTOCOL`, `OTEL_EXPORTER_OTLP_PROTOCOL`. If you upgraded from a version that used gRPC and
+your endpoint still ends in `:4317`, tuvl logs a warning at startup.
 
 See [Observability](../internals/observability.md) for spans, logs and collector setup (Grafana Tempo, Honeycomb, Datadog).
 

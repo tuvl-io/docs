@@ -78,6 +78,7 @@ carry `version: tuvl/v2`; a 1.x-shaped workflow fails to load.
 | `guardrail` | YAML | `guardrails.{input,output,tools}` |
 | `hook` | YAML | agent/workflow `hooks` (observe-only) |
 | `mcp` | YAML | `tool.use: mcp`, loop MCP tools |
+| `Storage` | YAML (`storage/`) | `tool.use: storage`, `ctx.storage(name)` — see `docs/storage.md` |
 | `judge` | YAML | output guardrails, tests, supervisor ([judges](judges.md)) |
 | `rules` | YAML | `decide.rules: artifact://…` (reusable decision tables) |
 
@@ -142,6 +143,7 @@ spec:
   trigger:
     http:     { path: /api/refunds, method: POST, public: false, sync_timeout: 30s }
     schedule: "0 * * * *"                # optional cron (UTC)
+    tenants: [acme, globex]              # multi_tenant mode: one scheduled run per tenant
     mcp:      { enabled: true }          # optional MCP export (api.md)
     input:    { order_id: uuid, reason: str, message: str }
   start: load_order                      # entry agent; defaults to the first agent
@@ -179,7 +181,8 @@ Every template in a `body` must reference keys produced on **every** path to tha
 - `http`: default-deny — a valid bearer token is required unless `public: true` (which can't be
   combined with `required_scope`/`required_group`, V019). The response is the end's `status`/`body`,
   or `202` with the run descriptor when the run outlives `sync_timeout` or waits on a person.
-- `schedule`: cron in UTC; each slot fires once across all workers.
+- `schedule`: cron in UTC; each slot fires once across all workers. In `multi_tenant` mode add
+  `tenants: [acme, …]`: each slot starts one run per tenant (see `docs/runtime.md`).
 - `mcp.enabled`: lists the workflow as a tool on `/mcp` ([API](api.md)).
 - Every workflow can also be started with `POST /api/workflows/{name}/runs`.
 
@@ -246,16 +249,17 @@ An agent emits exactly one signal per invocation:
 | Engine | Reserved signals |
 |---|---|
 | all except `pending` | `error` (unmapped → V004 warning; the run fails) |
-| `tool` | db `read`/`delete`: `not_found` · db `create`/`update`/`upsert`: `conflict` · http: `http_<status>` (only if mapped) |
+| `tool` | db `read`/`delete`: `not_found` · db `create`/`update`/`upsert`: `conflict` · http: `http_<status>` (only if mapped) · storage `get`/`head`/`copy`: `not_found`; `put`/`copy` (`if_exists: fail`): `conflict`; `put`/`get`/`copy`: `too_large` (optional) |
 | `llm` | `parse_error`, `timeout`, `budget_exceeded`, `guardrail_violation` (with guardrails) |
 | `loop` | `max_iterations`, `budget_exceeded`, `timeout`, `aborted`, `guardrail_violation` (with guardrails) |
 | `decide` | `low_confidence` (with a model) |
 | `human` | `expired` (with `expires`) |
+| `map` | `partial` (a normal signal: only with `on_error: collect`, when routed); an item failing in `fail` mode is `error` (`map_item_failed`) |
 
 `error` carries an `error_type` in the journal: `contract_violation`, `no_rule_matched`,
 `decision_model_unavailable`, `judge_unavailable`, `judge_uncertain`, `tool_args_invalid`,
-`http_error`, `db_error`, `mcp_error`, `code_exception`, `compensation_failed`, `policy_violation`,
-`lease_lost`, `approval_expired`.
+`http_error`, `db_error`, `mcp_error`, `storage_error`, `code_exception`, `compensation_failed`, `policy_violation`,
+`lease_lost`, `approval_expired`, `map_item_failed`, `map_too_many_items`, `max_depth`.
 
 ---
 
@@ -265,11 +269,12 @@ An agent emits exactly one signal per invocation:
 |---|---|---|---|
 | `pending` | none — a typed contract; runs as a typed stub in dev and tests | — | 0 |
 | `code` | an `@agent` Python function | deterministic | 0 |
-| `tool` | `db` / `http` / `mcp` operation | deterministic | 0 |
+| `tool` | `db` / `http` / `mcp` / `storage` operation | deterministic | 0 |
 | `decide` | ordered rules, then an optional decision model | deterministic (rules only) / bounded | 0 → low |
 | `llm` | one structured model call | bounded | $ |
 | `loop` | a bounded tool-using model loop | bounded | $$ |
 | `human` | a form for a person | external | 0 |
+| `map` | a child workflow per item of a list, a few at a time | the child's | the child's × `max_items` |
 
 Only `code` agents need Python. Everything else is configured in YAML. Details and full examples:
 [engines](engines.md), [decide](decide.md), [loop and tools](loop-and-tools.md).
@@ -443,6 +448,16 @@ Severity: **E** error, **W** warning (error under `--strict`). `tuvl validate --
 | V024 | E (ship) | `tuvl.lock` missing or stale |
 | V025 | E | `code` agent `run` not registered, or its signature doesn't match the generated schema |
 | V026 | E | Decision provider not installed, or unpinned hosted decision model (W) |
+| V027 | E (ship) | The image build context isn't the tuvl allowlist, or would contain development files |
+| V028 | E | A model reference (`llm`, `loop`, `decide.model.ref`) is not a defined AgentModel or a provider/model id |
+| V029 | W / E (ship) | A model's credentials aren't declared: literal `api_key`, or an unknown provider without `api_key` |
+| V030 | E | A `tool: storage` agent names a store that no `kind: Storage` file declares |
+| V031 | E | A write op (`put`, `copy`, `delete`, `presign` PUT) targets a `readonly` store |
+| V032 | E | A literal storage `key` or `to_key` is unsafe: absolute, `..`, empty segment, control character |
+| V033 | E | `presign.expires_in` exceeds the store's `presign_max_seconds` |
+| V034 | E | A `kind: Storage` file is invalid: provider fields, a literal secret instead of `${ENV}`, or a non-https endpoint |
+| V035 | E | `map`: `over` is not a list input; the workflow is unknown, is this workflow, or lacks the `as`/`with` inputs; a required child input is not supplied |
+| V036 | E | `map`: the mapped workflow has a `human` or `pending` agent, or a loop tool that needs approval |
 
 `tuvl mcp`'s `explain_error` tool explains any code.
 

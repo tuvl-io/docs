@@ -24,6 +24,40 @@ development file in the image is refused (V027).
 
 The container runs in production mode: no dev routes, no Insight UI, JSON logs, telemetry on.
 
+## Only what the project uses
+
+The image holds `tuvl` plus the extras your project needs and nothing else. `tuvl ship` decides from
+files, before the build, so the same project always produces the same image:
+
+| Extra | Installed when |
+|---|---|
+| `mcp` | a `use: mcp` tool, a `loop` MCP server, or a workflow with `trigger.mcp.enabled` |
+| `redis` | a `kind: DataSource` with `type: redis`, or an agent imports `redis` |
+| `vector` | a Collection or Embedding document, `tuvl.data_search` / `tuvl.data_ingest`, or an agent imports `pgvector` |
+| `otel-grpc` | `.tuvl/telemetry.yaml` sets `otlp_protocol: grpc` |
+
+`codegen` and `test` are development tools and never enter an image. Blob storage and every model
+provider are part of `tuvl` and add nothing. A project with none of the triggers above ships the bare
+install, about 65 MB of Python packages instead of the 320 MB of 2.0.0b4.
+
+```text
+✓ tuvl extras: mcp
+    mcp: workflows/triage.yaml: agent lookup calls an MCP server
+  not installed: redis, vector, otel-grpc
+```
+
+- **Your own packages.** `tuvl ship` reads the imports in `agents/*.py`. A package that
+  `pyproject.toml` does not declare stops the ship, because the container would fail mid-run;
+  `uv add` it. Declared packages that no agent imports are listed and kept; remove them from
+  `pyproject.toml` to slim the image.
+- **What the image carries.** The chosen extras are written into `deploy/Dockerfile` as
+  `tuvl[...]==<locked version>` and recorded as the image label `io.tuvl.extras`:
+  `docker inspect --format '{{ index .Config.Labels "io.tuvl.extras" }}' <image>`.
+- **Something the scan cannot see.** `--extra mcp` (or `redis`, `vector`, `otel-grpc`) adds an extra,
+  for example for a feature an environment variable turns on.
+- **A kept Dockerfile.** Generated files are kept unless you pass `--force`. If a kept
+  `deploy/Dockerfile` lacks an extra the project now needs, the ship stops and says so.
+
 ## Options
 
 | Option | Meaning |
@@ -33,6 +67,7 @@ The container runs in production mode: no dev routes, no Insight UI, JSON logs, 
 | `--push` | Push the image after a successful build |
 | `--force` | Overwrite existing generated files |
 | `--strict` | Treat validation warnings as errors |
+| `--extra NAME` | Also install a tuvl extra (`mcp`, `redis`, `vector`, `otel-grpc`). Repeatable |
 | `--with-laya` / `--without-laya` | Include the Laya decision server in the chart. Default: on when an AgentModel uses `provider: laya` |
 
 ## Deploy
@@ -71,8 +106,21 @@ The chart does not include Redis. Run more than one worker (`split=true`, or sev
 you need one: point a `type: redis` datasource at it with `REDIS_HOST`, `REDIS_PORT` and
 `REDIS_PASSWORD`. See [Redis configuration](../configuration/redis.md).
 
+## Storage in the chart
+
+A `kind: Storage` store on local disk gets a persistent volume and `fsGroup` in the chart. Cloud
+stores (S3, Azure, GCS) need no volume, only their credentials in the secret. `storage/` is on the
+image allowlist; a project shipped before storage existed needs `tuvl ship --force` once. See
+[Blob Storage](../internals/storage.md).
+
+## Coming: `tuvl deploy`
+
+A `tuvl deploy` command is planned and is not available yet. Today you deploy the chart that
+`tuvl ship` writes with `helm`, as above.
+
 ## See also
 
 - [CLI reference](../internals/cli.md)
+- [Blob Storage](../internals/storage.md)
 - [AI Models](../configuration/agents.md)
 - [Installation](installation.md)

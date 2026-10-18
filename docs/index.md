@@ -64,12 +64,12 @@ spec:
 
 <div class="grid cards" markdown>
 
--   **Seven engines, one contract**
+-   **Eight engines, one contract**
 
     ---
 
-    `code`, `tool` (DB/HTTP/MCP), `decide` (rules, then a model), `llm`, `loop` (bounded tool
-    use), `human`, and `pending` contracts. Swap an engine without touching the graph.
+    `code`, `tool` (DB/HTTP/storage/MCP), `decide` (rules, then a model), `llm`, `loop` (bounded tool
+    use), `map` (a workflow per list item), `human`, and `pending` contracts. Swap an engine without touching the graph.
 
 -   **Deterministic first**
 

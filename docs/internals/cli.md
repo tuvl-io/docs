@@ -9,6 +9,7 @@ directory everywhere.
 | Command | Options | |
 |---|---|---|
 | `tuvl init [NAME]` | `--sample`, `--preset gemini\|openai\|anthropic\|ollama`, `--decision-model laya\|none`, `-y/--yes`, `--multi-tenant`, `--no-ai-skills` | Scaffold a project. A preset writes `llms/default.yaml` with a current model id, reading the key from the environment. `--sample` is a ticket-triage project (spec, TaskPlan, tests, lock) that passes the CI gate as created. `--decision-model laya` adds `llms/laya.yaml`, `LAYA_API_*` in `.env` and a `compose.yaml` that runs laya-serve locally (asked interactively, default no). `-y` accepts every default |
+| `tuvl storage` | `check [name]`, `ls <name> [prefix]` | Check each `kind: Storage` store by writing, reading back and deleting a probe object (read-only stores are only listed), or list a store's objects. See `docs/storage.md` |
 | `tuvl validate` | `--strict`, `--json` | Contracts, data flow, types, policy, artifacts, lock; prints each workflow's determinism profile and worst-case tokens. `--strict` fails on warnings. Ends with **needs models**: every model the workflows use, its provider and the environment variables it reads (or "no LLM required"); V028 = unknown model reference, V029 = undeclared credentials (an error at ship time) |
 | `tuvl codegen [WORKFLOW]` | `--check` | Schemas, code-agent stubs (body-preserving merge), prompt placeholders, spec tests. `--check` writes nothing and exits 1 on drift |
 | `tuvl lock` | `--check`, `--mcp/--no-mcp` | Pin model ids, artifact hashes, judge/decision models and MCP tool schemas in `tuvl.lock` |
@@ -55,10 +56,38 @@ These talk to a running server: `-u/--url` (`TUVL_URL`, default `http://localhos
 
 | Command | Options | |
 |---|---|---|
-| `tuvl ship` | `-t/--tag`, `--no-build`, `--push`, `--force`, `--strict`, `--with-laya/--without-laya` | Gate (validate, no `pending` agents — V010 is an error at ship time, current lock), then `.dockerignore` as an **allowlist** (only models, workflows, agents, artifacts, datasources, llms, federation, config, lock and `.tuvl/system.yaml` / `telemetry.yaml` enter the image; specs, task lists, tests, agent rules and skills, compose files and anything else stay out — V027 refuses development files), `deploy/Dockerfile` (pins the locked tuvl version) and a Helm chart (`split: true` for api + worker Deployments; a Laya Deployment + Service, with `LAYA_API_BASE` set for the engine, when a model uses `provider: laya` or with `--with-laya` — `laya.enabled` in values.yaml) and `docker build` |
+| `tuvl ship` | `-t/--tag`, `--no-build`, `--push`, `--force`, `--strict`, `--extra`, `--with-laya/--without-laya` | Gate (validate, no `pending` agents — V010 is an error at ship time, current lock), then `.dockerignore` as an **allowlist** (only models, workflows, agents, artifacts, datasources, llms, federation, config, lock and `.tuvl/system.yaml` / `telemetry.yaml` enter the image; specs, task lists, tests, agent rules and skills, compose files and anything else stay out — V027 refuses development files), `deploy/Dockerfile` (pins the locked tuvl version and installs only the extras the project uses: `mcp` for `use: mcp` tools, loop MCP servers and MCP export, `redis` for a redis datasource, `vector` for collections and `tuvl.data_*`, `otel-grpc` for `otlp_protocol: grpc`; it also stops when `agents/*.py` imports a package `pyproject.toml` does not declare. `--extra NAME` adds one the scan cannot see; the choice is recorded as the image label `io.tuvl.extras`) and a Helm chart (`split: true` for api + worker Deployments; a Laya Deployment + Service, with `LAYA_API_BASE` set for the engine, when a model uses `provider: laya` or with `--with-laya` — `laya.enabled` in values.yaml) and `docker build` |
 | `tuvl keys generate` | `-w/--write`, `-f/--force` | A persistent Ed25519 key for signing access tokens (`TUVL_SIGNING_KEY`) |
 | `tuvl db generate-rls` | `-o/--out` | Idempotent row-level-security SQL for tenant-scoped tables |
 | `tuvl db check-rls` | | Exit 1 if a tenant-scoped table lacks its RLS policy |
+
+### Extras: what an image installs
+
+`tuvl` installs lean. Features with their own packages are extras, and `tuvl ship` reads the project and
+installs `tuvl[<only those>]==<locked version>`:
+
+| Extra | Package | `tuvl ship` installs it when |
+|---|---|---|
+| `mcp` | `mcp` | a `use: mcp` tool, a loop `mcp` tool, or a workflow with `trigger.mcp.enabled` |
+| `redis` | `redis` | a `kind: DataSource` with `type: redis`, or `agents/*.py` imports `redis` |
+| `vector` | `pgvector` | a Collection or Embedding document, `tuvl.data_search` / `tuvl.data_ingest`, or an import of `pgvector` |
+| `otel-grpc` | OTLP gRPC exporter | `.tuvl/telemetry.yaml` has `otlp_protocol: grpc` |
+| `codegen`, `test` | `libcst`, `aiosqlite` | never: `tuvl codegen`, `tuvl init --sample` and `tuvl test` are development tools |
+
+`tuvl[standard]` installs Insight and every extra, so a development install needs nothing else. The
+model providers and blob storage (S3, Azure, GCS, local) are part of `tuvl` and need no extra.
+
+`tuvl ship` prints the extras it chose and why and records them as the image label `io.tuvl.extras`
+(`docker inspect` shows what an image carries). Beyond the extras:
+
+- It also scans `agents/*.py`: an import of a package that `pyproject.toml` does not declare aborts the ship,
+  because the image would fail at run time. Declared packages that no agent imports are listed and kept.
+- `--extra NAME` adds an extra the scan cannot see, for example a feature switched on by an environment
+  variable. It accepts `mcp`, `redis`, `vector` and `otel-grpc`.
+- A kept `deploy/Dockerfile` (no `--force`) that lacks an extra the project now needs stops the ship.
+- Using a feature without its extra fails with `pip install 'tuvl[name]'`; the same message appears for
+  `tuvl codegen`, `tuvl test` and `tuvl mcp` on a bare install.
+- A deploy command is planned and does not exist yet; install the chart `tuvl ship` writes with `helm`.
 
 ## The CI gate
 

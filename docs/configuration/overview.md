@@ -9,7 +9,8 @@ tuvl uses YAML files for all configuration. This keeps your logic declarative an
 | `ModelDefinition` | `models/` | Data model schemas |
 | `Workflow` | `workflows/` | Business logic flows |
 | `DataSource` | `datasources/` | Database connections |
-| `AgentModel` | `agents/` | LLM provider presets |
+| `AgentModel` | `llms/` | LLM and decision models |
+| `Storage` | `storage/` | Named blob stores: S3, Azure Blob, GCS, local disk ([Blob Storage](../internals/storage.md)) |
 | `Artifact` | `artifacts/` | Named, versioned assets — prompts, steering, skills, guardrails, hooks, MCP servers — referenced via `artifact://name[@version]` |
 | `SystemConfig` | `.tuvl/system.yaml` | Project-level, boot-time API surface settings |
 

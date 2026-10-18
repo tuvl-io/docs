@@ -104,6 +104,7 @@ nav:
       - CLI Reference: internals/cli.md
       - Project and Catalogue: internals/project.md
       - Models and Providers: internals/models.md
+      - Blob Storage: internals/storage.md
       - Observability: internals/observability.md
   - Insight:
       - Overview: internals/insight.md

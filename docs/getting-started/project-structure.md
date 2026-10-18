@@ -14,6 +14,7 @@ my-project/
 ├── models/                       # kind: ModelDefinition, EmbeddingRegistry, CollectionRegistry
 ├── llms/                         # kind: AgentModel — type llm or decision
 ├── datasources/                  # kind: DataSource
+├── storage/                      # kind: Storage — named blob stores (S3, Azure, GCS, local)
 ├── federation/                   # kind: FederationProvider
 ├── artifacts/                    # prompts, steering, skills (.md); guardrail, hook, mcp, judge, rules (YAML)
 ├── tests/
