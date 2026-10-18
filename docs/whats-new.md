@@ -1,6 +1,6 @@
 # What's new in 2.0
 
-tuvl **2.0.0** (released 20 October 2026; public beta **2.0.0b3** until then — see
+tuvl **2.0.0** (released 20 October 2026; public beta **2.0.0b4** until then — see
 [Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
@@ -72,6 +72,14 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
 
     `tuvl ship` gates on validation and the lock and pins the engine version; the Helm chart can
     split API and worker pods. [CLI](internals/cli.md)
+
+-   **Project identity and the catalogue**
+
+    ---
+
+    `tuvl init` writes `.tuvl/project.yaml` with a self-checking id, author, type and version. Edit it
+    with `tuvl project set` or in Insight, and list the project on [hub.tuvl.io](https://hub.tuvl.io)
+    with `tuvl project register` or the Register button. [Project and Catalogue](internals/project.md)
 
 </div>
 
