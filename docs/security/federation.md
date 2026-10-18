@@ -296,3 +296,34 @@ spec:
 
 Users whose email domain is not in the list receive a `403 Forbidden` at the callback step.
 Leave the field absent (or empty) to allow any domain.
+
+---
+
+## Restricting GitHub logins by handle
+
+For the `github` provider, `allowed_users` limits login to specific GitHub handles (case-insensitive).
+It combines with `allowed_domains`: a login must satisfy every restriction that is set.
+
+```yaml
+spec:
+  provider: github
+  client_id: ${GITHUB_CLIENT_ID}
+  client_secret: ${GITHUB_CLIENT_SECRET}
+  allowed_users:
+    - octocat
+```
+
+---
+
+## Device login for command-line tools
+
+A CLI can sign in without a browser callback. `POST /auth/oauth/github/device/start` returns a `handle`,
+a `user_code`, a `verification_uri`, an `interval` and `expires_in`; GitHub's device code stays on the
+server. The user opens the URI and enters the code while the client polls
+`POST /auth/oauth/github/device/poll {"handle": …}`: `428` while pending, `200` with a token once
+approved (same account linking as the browser flow), `400` when denied or expired. A handle is
+single-use. Tick **Enable Device Flow** on the GitHub OAuth app. `tuvl project register` and Insight's
+Register dialog use this flow.
+
+When `TUVL_OAUTH_UI_REDIRECT_URL` is set, the browser callback now returns the token in the URL
+**fragment** (`#token=…`), not the query string, so it never reaches a server log.

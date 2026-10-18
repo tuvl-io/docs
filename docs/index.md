@@ -5,7 +5,7 @@
 !!! note "tuvl 2.0.0 — released 20 October 2026, public beta now"
     tuvl 2.0 is a redesign with no 1.x compatibility layer: workflows are graphs of typed
     **agents**, every run is durable and journaled, and projects are built from specs. See
-    [what's new](whats-new.md). Until the release, install the public beta **2.0.0b3** — see
+    [what's new](whats-new.md). Until the release, install the public beta **2.0.0b5** — see
     [Installation](getting-started/installation.md#20-public-beta). Versions follow
     [SemVer](https://semver.org).
 
@@ -64,12 +64,12 @@ spec:
 
 <div class="grid cards" markdown>
 
--   **Seven engines, one contract**
+-   **Eight engines, one contract**
 
     ---
 
-    `code`, `tool` (DB/HTTP/MCP), `decide` (rules, then a model), `llm`, `loop` (bounded tool
-    use), `human`, and `pending` contracts. Swap an engine without touching the graph.
+    `code`, `tool` (DB/HTTP/storage/MCP), `decide` (rules, then a model), `llm`, `loop` (bounded tool
+    use), `map` (a workflow per list item), `human`, and `pending` contracts. Swap an engine without touching the graph.
 
 -   **Deterministic first**
 
@@ -136,4 +136,4 @@ spec:
 
 ## License
 
-tuvl is open source software licensed under the MIT license.
+tuvl is open source software licensed under the [Apache License, Version 2.0](license.md).

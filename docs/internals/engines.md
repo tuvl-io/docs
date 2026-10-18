@@ -1,7 +1,8 @@
 # Engines
 
 An agent's **engine** implements its contract. The closed set is `pending`, `code`, `tool`,
-`decide`, `llm`, `loop` and `human`. This page covers `pending`, `code`, `tool`, `llm` and `human`;
+`decide`, `llm`, `loop`, `human` and `map`. This page covers `pending`, `code`, `tool`, `llm`, `human`
+and `map`;
 see [decide](decide.md) and [loop and tools](loop-and-tools.md) for the other two.
 
 Every engine except `pending` can emit `error`. Engine parameters live under a key named after the
@@ -72,9 +73,9 @@ reserved.
 
 ---
 
-## `tool` — database, HTTP and MCP operations
+## `tool` — database, HTTP, MCP and storage operations
 
-One engine, three `use` variants. The **effect is derived**; a declared `effect` may only strengthen
+One engine, four `use` variants. The **effect is derived**; a declared `effect` may only strengthen
 it (V015), except that an HTTP `POST`/`PUT`/`PATCH` may declare `effect: read` (search APIs often
 read via POST).
 
@@ -116,6 +117,20 @@ tool:
 signal is routed; otherwise `error` (`rate_limit` for 429 and `transient` for 5xx are retryable,
 `http_error` otherwise). `${VAR}` reads the environment.
 
+### `use: storage`
+
+```yaml
+tool: { use: storage, store: invoices, op: put, key: "{{ id }}.pdf", body: "{{ pdf_b64 }}", encoding: base64 }
+tool: { use: storage, store: invoices, op: get, key: "{{ id }}.pdf", as: base64 }
+```
+
+`op`: `put`, `get`, `head`, `list`, `copy`, `delete`, `presign`, on a store declared in
+`storage/*.yaml` (S3 and compatible services, Azure Blob, GCS, local disk). The result lands in the
+single output — the blob for `put`/`head`/`copy`, the content for `get`, the items for `list`, the
+URL for `presign` — or is spread by `map`. `get`, `head` and `copy` emit `not_found`; `put` and
+`copy` emit `conflict` unless `if_exists: overwrite`; `delete` is destructive. Object bytes are never
+journaled. Details: `docs/storage.md`.
+
 ### `use: mcp`
 
 ```yaml
@@ -145,7 +160,7 @@ calls get a stable `Idempotency-Key`; MCP calls are at-least-once, so give write
   outputs: { text: str }
   budget:  { timeout: 20s, max_tokens: 1500, retry: { attempts: 2, errors: [parse_error, timeout] } }
   llm:
-    model: default                        # AgentModel name (type llm) or a LiteLLM model id
+    model: default                        # AgentModel name (type llm) or a provider/model id (see `docs/models.md`)
     system: artifact://support-voice@3    # text or a prompt artifact
     prompt: Write a short confirmation of the refund.
     skills: [artifact://refund-policy@2]
@@ -203,3 +218,55 @@ calls get a stable `Idempotency-Key`; MCP calls are at-least-once, so give write
 - `form` fields must equal `outputs`; `route_on` must be a bool or enum output (V016).
 
 In tests, an unmocked human agent stops the run: assert it with `expect.wait: human`.
+
+---
+
+## `map` — a workflow for every item of a list
+
+```yaml
+- id: score_each
+  description: Score every candidate
+  engine: map
+  inputs:  { candidates: "list[json]", job_id: uuid }
+  outputs: { scores: "list[json]" }          # one list: the results, in input order
+  map:
+    over: candidates                         # an input that is a list
+    workflow: score_candidate                # the child workflow, run once per item
+    as: candidate                            # the child's trigger input that receives the item (default: item)
+    with: { job_id: "{{ job_id }}" }         # further child inputs, templates over this agent's inputs
+    concurrency: 4                           # items in flight (1-32, default 4)
+    max_items: 100                           # longer lists fail the agent before any item starts (default 100)
+    on_error: collect                        # fail (default) | collect
+  effect: write                              # the strongest effect of the child; never weaker (V015)
+  routes: { default: rank, partial: review, error: END.failed }
+```
+
+Fan-out and nothing else: tuvl runs the child workflow once per item, a few at a time, and gathers
+the results. The step is one agent of the parent; each item is a **child run** of its own.
+
+- **Each item is a run.** It has its own journal, checkpoints and cost, shows in the run list with
+  `parent_run_id` set, and is replayable on its own. The step journals `map_started`, one `map_item`
+  per item, and `map_finished`.
+- **Idempotent after a crash.** The child of item *i* is keyed `<agent>:<i>`. A parent that is
+  reclaimed by another worker and reaches the step again follows the children already started (or
+  finished) instead of starting new ones, so no item runs twice.
+- **Success is per item.** An item succeeds when its child completes on an end whose status is below
+  400; its result is that end's `body`. The result list keeps the input order.
+- **`on_error: fail`** stops starting new items at the first failed item and emits `error`
+  (`map_item_failed`: which item, why, and how many failed or never started). Items already running
+  finish; their runs stay in the journal.
+- **`on_error: collect`** runs every item. A failed item is `null` in the results, and the agent
+  emits `partial` instead of `default` when the workflow routes `partial` (otherwise `default`).
+  `partial` is only valid with `collect` (V004).
+- **A mapped workflow must finish on its own (V036):** no `human` or `pending` agent and no loop tool
+  that needs approval. A child that waits anyway fails its item.
+- **Bounded.** `concurrency` limits parallel items, `max_items` the list length, and
+  `policy.max_depth` how deeply workflows nest (a workflow cannot map itself, V035). Worst-case
+  tokens in `tuvl validate` are the child's worst case times `max_items`, and the step takes the
+  child's strongest determinism class.
+- **Checks (V035):** `over` is a list input; the workflow exists; `as` and every `with` key are inputs of
+  the child; no required child input is left out; item and input types agree (V007); `outputs` is
+  exactly one list (V007).
+- Items run in this worker's process, in parallel; another worker takes over only through crash
+  recovery. Nothing is shared between items: they are independent runs, so a map is not a fork/join of
+  different branches, only the same workflow over many items.

@@ -77,5 +77,6 @@ tuvl spec check && tuvl validate --strict && tuvl codegen --check && tuvl lock -
   && tuvl test --strict && tuvl spec verify --strict && tuvl spec status --strict
 ```
 
-Next: the [Agentic Manual](../internals/tuvl-agentic-manual.md) and
+Next: the step-by-step [guide from init to ship](guide.md) builds a project of your own, with a coding
+agent or by hand. Then the [Agentic Manual](../internals/tuvl-agentic-manual.md) and
 [spec-driven development](../internals/spec-driven.md).

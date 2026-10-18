@@ -53,8 +53,7 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
+  - pymdownx.tabbed
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
@@ -84,9 +83,11 @@ nav:
   - Why tuvl: why-tuvl.md
   - Main Website: https://tuvl.io
   - Try it Live ↗: https://try.tuvl.online
+  - Hub ↗: https://hub.tuvl.io
   - Getting Started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
+      - 'Guide: Init to Ship': getting-started/guide.md
       - Code Generation: getting-started/codegen.md
       - Shipping to Production: getting-started/shipping.md
       - Project Structure: getting-started/project-structure.md
@@ -101,6 +102,9 @@ nav:
       - Spec-Driven Development: internals/spec-driven.md
       - API — REST, SSE, MCP: internals/api.md
       - CLI Reference: internals/cli.md
+      - Project and Catalogue: internals/project.md
+      - Models and Providers: internals/models.md
+      - Blob Storage: internals/storage.md
       - Observability: internals/observability.md
   - Insight:
       - Overview: internals/insight.md
@@ -124,3 +128,4 @@ nav:
       - Tokens: security/tokens.md
   - Examples: examples/example-projects.md
   - Contributing: contributing.md
+  - License: license.md
