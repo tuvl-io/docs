@@ -14,6 +14,7 @@ my-project/
 ├── models/                       # kind: ModelDefinition, EmbeddingRegistry, CollectionRegistry
 ├── llms/                         # kind: AgentModel — type llm or decision
 ├── datasources/                  # kind: DataSource
+├── storage/                      # kind: Storage — named blob stores (S3, Azure, GCS, local)
 ├── federation/                   # kind: FederationProvider
 ├── artifacts/                    # prompts, steering, skills (.md); guardrail, hook, mcp, judge, rules (YAML)
 ├── tests/
@@ -21,7 +22,7 @@ my-project/
 │   └── fixtures/                 # pinned run journals for replay
 ├── fixtures/judge/               # labelled judge calibration subjects
 ├── .agents/                      # AGENTS.md + skills for coding agents (tuvl skills update)
-└── .tuvl/                        # system.yaml, layout, breakpoints, judge cache, dev session
+└── .tuvl/                        # system.yaml, project.yaml (identity), layout, breakpoints, judge cache, dev session
 ```
 
 Folder names are conventions: tuvl discovers documents recursively and dispatches them by `kind:`.

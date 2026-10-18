@@ -8,7 +8,7 @@ run, because run state lives in Postgres, not in worker memory.
 
 | Table (`tuvl_system_` prefix) | Contents |
 |---|---|
-| `runs` | id, workflow name + content hash, status, trigger (`http`, `api`, `schedule`, `mcp`, `child`, `dev`), principal, tenant, parent run, current agent, lease owner + expiry, tokens used, output, error |
+| `runs` | id, workflow name + content hash, status, trigger (`http`, `api`, `schedule`, `mcp`, `child`, `child:<agent>:<item>` for a `map` item, `dev`), principal, tenant, parent run, current agent, lease owner + expiry, tokens used, output, error |
 | `run_events` | The **journal**: append-only `(run_id, seq)` events with type, agent, payload, tokens and latency |
 | `run_checkpoints` | The context after each completed agent — the resume state |
 | `approvals` | Open human forms and tool-call approvals: run, agent, kind, payload, required group, expiry |
@@ -74,7 +74,7 @@ receives the original agent's inputs and outputs. A failing compensator makes th
 Every event: `{ run_id, seq, ts, type, agent_id, engine, tokens, latency_ms, payload }`.
 
 `run_queued` · `run_started` · `agent_started` · `agent_completed` · `signal` · `llm_turn` ·
-`tool_call` · `tool_result` · `decision` · `judge_verdict` · `approval_requested` ·
+`tool_call` · `tool_result` · `map_started` · `map_item` · `map_finished` · `decision` · `judge_verdict` · `approval_requested` ·
 `approval_decided` · `paused` · `resumed` · `checkpoint` · `compensation_started` ·
 `compensation_completed` · `run_completed` · `run_failed` · `run_aborted`
 
@@ -99,4 +99,32 @@ mode, Insight breakpoints and step mode pause runs through the same mechanism.
 ## Scheduler
 
 `trigger.schedule` (cron, UTC) enqueues one run per slot across all workers, guarded by a Postgres
-advisory lock.
+advisory lock. A slot missed while every process was down is skipped; there is no catch-up.
+
+## Multi-tenant mode
+
+When the project is locked to `multi_tenant`, the run tables carry a `tenant_id` column and every
+run belongs to one tenant:
+
+- **Starting a run needs a tenant.** An HTTP or API run takes it from the caller's token (`tenant`
+  claim); code that starts runs binds it with `tuvl.tenancy.tenant_scope()`. A run started with no
+  tenant is refused (`MissingTenantContextError`) unless `TUVL_REQUIRE_TENANT_CONTEXT=false`.
+- **Workers execute a run under its tenant.** The tenant is bound while the run executes, so its
+  `db` calls, logs, journal rows and child runs carry it, and the runtime engine sets
+  `app.current_tenant_id` for row-level security (`tuvl db generate-rls`).
+- **Callers reach only their own tenant's runs.** Reads, the event stream, export, pause/resume/abort,
+  the run list and approvals are filtered by tenant, whatever scopes the caller holds, `iam:admin`
+  and `runs:control` included. Another tenant's run answers `404`.
+- **Scheduled workflows list their tenants.** A scheduled run has no request to take a tenant from:
+
+  ```yaml
+  trigger:
+    schedule: "0 6 * * *"
+    tenants: [acme, globex]
+  ```
+
+  Each slot enqueues one run per tenant (trigger `schedule:<slot>:<tenant>`), once, across all
+  workers. A scheduled workflow with no `tenants` is not scheduled in multi-tenant mode (the
+  runtime logs `workflow.schedule_needs_tenants`); in single-tenant mode `tenants` is ignored.
+- **Upgrading.** A database first booted in multi-tenant mode by an earlier build lacks the column;
+  the runtime adds it at boot (`ALTER TABLE … ADD COLUMN IF NOT EXISTS`, default `default_tenant`).

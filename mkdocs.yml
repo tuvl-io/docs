@@ -1,5 +1,5 @@
 site_name: tuvl
-site_description: A lightweight, local-first workflow orchestration engine for AI-powered business automation
+site_description: Typed workflows of agents — deterministic where they can be, bounded where they can't — on a durable, journaled runtime, built spec-first.
 site_author: tuvl Team
 site_url: https://tuvl.dev
 
@@ -7,46 +7,15 @@ repo_name: tuvl-io/tuvl
 repo_url: https://github.com/tuvl-io/tuvl
 
 theme:
-  name: material
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: cyan
-      accent: cyan
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: cyan
-      accent: cyan
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-  font:
-    text: Inter
-    code: JetBrains Mono
-  features:
-    - navigation.instant
-    - navigation.tracking
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - navigation.sections
-    - navigation.expand
-    - navigation.top
-    - navigation.footer
-    - search.suggest
-    - search.highlight
-    - content.code.copy
-    - content.code.annotate
-    - content.tabs.link
-  icon:
-    repo: fontawesome/brands/github
-  logo: assets/logo.png
+  name: shadcn
+  custom_dir: overrides
+  icon: assets/logo-icon.svg
   favicon: assets/favicon.ico
+  show_datetime: false
+  katex_options: {}
 
 plugins:
-  - search
+  - shadcn/search
   - mkdocstrings:
       handlers:
         python:
@@ -69,9 +38,6 @@ markdown_extensions:
       smart_enable: all
   - pymdownx.caret
   - pymdownx.details
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -87,35 +53,22 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
+  - pymdownx.tabbed
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
 
 extra:
-  analytics:
-    provider: google
-    property: G-7NBSPKBZSP
-    feedback:
-      title: Was this page helpful?
-      ratings:
-        - icon: material/thumb-up-outline
-          name: Yes
-          data: 1
-          note: Thanks for your feedback!
-        - icon: material/thumb-down-outline
-          name: No
-          data: 0
-          note: Thanks — we'll work on improving this page.
-  social:
-    - icon: fontawesome/solid/globe
-      link: https://tuvl.io
-      name: tuvl.io
-    - icon: fontawesome/brands/github
-      link: https://github.com/tuvl-io/tuvl
-    - icon: fontawesome/brands/discord
-      link: https://discord.gg/tuvl
+  footer_links:
+    - { title: Website, url: "https://tuvl.io" }
+    - { title: Try it live, url: "https://try.tuvl.online" }
+    - { title: GitHub, url: "https://github.com/tuvl-io/tuvl" }
+    - { title: Examples, url: "https://github.com/tuvl-io/examples" }
+    - { title: PyPI, url: "https://pypi.org/project/tuvl/" }
+    - { title: Discord, url: "https://discord.gg/tuvl" }
+  contact:
+    developer: developer@tuvl.io
+    security: security@tuvl.io
   generator: false
 
 extra_css:
@@ -130,9 +83,13 @@ nav:
   - Why tuvl: why-tuvl.md
   - Main Website: https://tuvl.io
   - Try it Live ↗: https://try.tuvl.online
+  - Hub ↗: https://hub.tuvl.io
   - Getting Started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
+      - 'Guide: Init to Ship': getting-started/guide.md
+      - Code Generation: getting-started/codegen.md
+      - Shipping to Production: getting-started/shipping.md
       - Project Structure: getting-started/project-structure.md
       - Build with Coding Agents: getting-started/coding-agents.md
   - Guide:
@@ -145,6 +102,9 @@ nav:
       - Spec-Driven Development: internals/spec-driven.md
       - API — REST, SSE, MCP: internals/api.md
       - CLI Reference: internals/cli.md
+      - Project and Catalogue: internals/project.md
+      - Models and Providers: internals/models.md
+      - Blob Storage: internals/storage.md
       - Observability: internals/observability.md
   - Insight:
       - Overview: internals/insight.md
@@ -168,3 +128,4 @@ nav:
       - Tokens: security/tokens.md
   - Examples: examples/example-projects.md
   - Contributing: contributing.md
+  - License: license.md
