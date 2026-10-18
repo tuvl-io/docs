@@ -8,7 +8,7 @@ ships with it. This applies to the engine (`tuvl`), the UI (`tuvl-insight`), the
 
 ## What changed
 
-| | Releases up to `2.0.0b4` (and `1.x`) | `2.0.0` and later |
+| | Releases up to `2.0.0b4` (and `1.x`) | `2.0.0b5` and later |
 |---|---|---|
 | License | MIT | Apache-2.0 |
 | Use, modify, distribute, sell | Yes | Yes |
@@ -18,7 +18,7 @@ ships with it. This applies to the engine (`tuvl`), the UI (`tuvl-insight`), the
 | Name and logos | Not addressed | Not licensed (§6) |
 
 Releases published under MIT remain available under MIT: a license you received for a version does
-not change. The change applies to `2.0.0` and every later release.
+not change. The change applies to `2.0.0b5` and every later release.
 
 ## What you can do
 
