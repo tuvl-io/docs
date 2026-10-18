@@ -6,6 +6,11 @@ journaled**, and projects are built **spec-first**. There is no 1.x compatibilit
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
 [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
 
+!!! info "License: Apache 2.0 from 2.0.0"
+    tuvl moves from the MIT License to the **Apache License, Version 2.0**, which adds an express
+    patent grant. Using, modifying and selling software built on tuvl is as free as before. Releases
+    through `2.0.0b4` stay available under MIT. [What changes](license.md)
+
 ## Highlights
 
 <div class="grid cards" markdown>
