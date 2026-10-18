@@ -113,10 +113,22 @@ stores (S3, Azure, GCS) need no volume, only their credentials in the secret. `s
 image allowlist; a project shipped before storage existed needs `tuvl ship --force` once. See
 [Blob Storage](../internals/storage.md).
 
-## Coming: `tuvl deploy`
+## Coming: `tuvl deploy` (managed hosting)
 
-A `tuvl deploy` command is planned and is not available yet. Today you deploy the chart that
-`tuvl ship` writes with `helm`, as above.
+`tuvl deploy` is planned as a hosted, managed tuvl engine that runs your backend services, so there
+is no image or cluster to operate. It is not available yet. Today the command only says so, deploys
+nothing and exits with status 1, so a script cannot mistake it for a deployment:
+
+```text
+$ tuvl deploy
+╭─ tuvl deploy ───────────────────────────────────────────╮
+│ Managed hosting is coming soon.                         │
+│ It is not available yet, and nothing was deployed.      │
+│ Until then, build and deploy it yourself: tuvl ship     │
+╰─────────────────────────────────────────────────────────╯
+```
+
+Until it launches, you deploy the chart that `tuvl ship` writes with `helm`, as above.
 
 ## See also
 

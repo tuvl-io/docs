@@ -57,6 +57,7 @@ These talk to a running server: `-u/--url` (`TUVL_URL`, default `http://localhos
 | Command | Options | |
 |---|---|---|
 | `tuvl ship` | `-t/--tag`, `--no-build`, `--push`, `--force`, `--strict`, `--extra`, `--with-laya/--without-laya` | Gate (validate, no `pending` agents — V010 is an error at ship time, current lock), then `.dockerignore` as an **allowlist** (only models, workflows, agents, artifacts, datasources, llms, federation, config, lock and `.tuvl/system.yaml` / `telemetry.yaml` enter the image; specs, task lists, tests, agent rules and skills, compose files and anything else stay out — V027 refuses development files), `deploy/Dockerfile` (pins the locked tuvl version and installs only the extras the project uses: `mcp` for `use: mcp` tools, loop MCP servers and MCP export, `redis` for a redis datasource, `vector` for collections and `tuvl.data_*`, `otel-grpc` for `otlp_protocol: grpc`; it also stops when `agents/*.py` imports a package `pyproject.toml` does not declare. `--extra NAME` adds one the scan cannot see; the choice is recorded as the image label `io.tuvl.extras`) and a Helm chart (`split: true` for api + worker Deployments; a Laya Deployment + Service, with `LAYA_API_BASE` set for the engine, when a model uses `provider: laya` or with `--with-laya` — `laya.enabled` in values.yaml) and `docker build` |
+| `tuvl deploy` | `-d/--project-dir` | Coming soon: deploy to a hosted, managed tuvl engine that runs your backend services. Today it prints a message, deploys nothing and exits 1 |
 | `tuvl keys generate` | `-w/--write`, `-f/--force` | A persistent Ed25519 key for signing access tokens (`TUVL_SIGNING_KEY`) |
 | `tuvl db generate-rls` | `-o/--out` | Idempotent row-level-security SQL for tenant-scoped tables |
 | `tuvl db check-rls` | | Exit 1 if a tenant-scoped table lacks its RLS policy |
@@ -87,7 +88,8 @@ model providers and blob storage (S3, Azure, GCS, local) are part of `tuvl` and 
 - A kept `deploy/Dockerfile` (no `--force`) that lacks an extra the project now needs stops the ship.
 - Using a feature without its extra fails with `pip install 'tuvl[name]'`; the same message appears for
   `tuvl codegen`, `tuvl test` and `tuvl mcp` on a bare install.
-- A deploy command is planned and does not exist yet; install the chart `tuvl ship` writes with `helm`.
+- `tuvl deploy` is for managed hosting and is not available yet: it prints a message and exits 1.
+  Until then, install the chart `tuvl ship` writes with `helm`.
 
 ## The CI gate
 
