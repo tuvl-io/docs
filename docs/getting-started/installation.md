@@ -43,19 +43,19 @@ Before installing tuvl, ensure you have:
 ## 2.0 public beta
 
 tuvl **2.0.0** is released on **20 October 2026**. Until then, 2.0 is available as the public beta
-**2.0.0b4**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
+**2.0.0b5**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
 beta explicitly:
 
 ```bash
 # CLI + dev server + Insight (recommended)
-uv tool install --prerelease allow "tuvl[standard]==2.0.0b4"
+uv tool install --prerelease allow "tuvl[standard]==2.0.0b5"
 
 # CLI only
-uv tool install "tuvl==2.0.0b4"
+uv tool install "tuvl==2.0.0b5"
 ```
 
 `--prerelease allow` is needed because uv only takes a pre-release for packages you name yourself,
-and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b4` indirectly.
+and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b5` indirectly.
 
 The TypeScript client has a matching beta on npm's `beta` channel:
 
@@ -79,7 +79,7 @@ uv tool install "tuvl[standard]"
 ```
 
 !!! tip
-    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, and hot-reload support. Use the base install for production-only deployments where the UI is not needed.
+    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, hot-reload support, the development tools (`tuvl codegen`, `tuvl test`, `tuvl mcp`) and every extra below. The base install is the production server and is about 65 MB installed. `tuvl ship` builds production images from it and adds only the extras your project uses.
 
 Verify the installation:
 
@@ -104,6 +104,28 @@ Or with pip:
 ```bash
 pip install "tuvl[standard]"
 ```
+
+## Extras
+
+The base `tuvl` has no package for a feature you may not use. Install the extra when you use the feature:
+
+| Extra | Adds | You need it for |
+|---|---|---|
+| `tuvl[mcp]` | `mcp` | `use: mcp` tools, a `loop` calling an MCP server, exporting a workflow as an MCP tool, `tuvl mcp` |
+| `tuvl[redis]` | `redis` | a `type: redis` datasource |
+| `tuvl[vector]` | `pgvector` | collections, embeddings and `tuvl.data_search` / `tuvl.data_ingest` |
+| `tuvl[otel-grpc]` | OTLP gRPC exporter | `TUVL_OTLP_PROTOCOL=grpc` (HTTP/protobuf is the default and needs nothing) |
+| `tuvl[codegen]` | `libcst` | `tuvl codegen` and `tuvl init --sample` |
+| `tuvl[test]` | `aiosqlite` | `tuvl test` |
+
+```bash
+uv add "tuvl[mcp,redis]"
+```
+
+Using a feature without its extra fails with the command to run, for example
+`pip install 'tuvl[mcp]'`. You do not choose extras for production by hand: [`tuvl ship`](shipping.md#only-what-the-project-uses)
+reads the project and installs exactly the ones it needs. Model providers and blob storage (S3,
+Azure, GCS, local disk) are built in and need no extra.
 
 ## Optional Dependencies
 
@@ -140,7 +162,7 @@ pip install "tuvl[standard]"
 
 Redis shares OAuth state and the token-revocation list between workers. A single `tuvl dev`
 process works without it (an in-process fallback is used); add it before running more than one
-worker. See [Redis configuration](../configuration/redis.md) for the datasource file.
+worker. Install `tuvl[redis]` to use it. See [Redis configuration](../configuration/redis.md) for the datasource file.
 
 === "macOS (Homebrew)"
 
