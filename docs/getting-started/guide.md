@@ -562,8 +562,9 @@ derived** from the project.
         ```
 
     `depends_on` orders the work (the model before the steps that use it, an example after the steps
-    it runs through). Your hashes will differ from the ones printed here, because they depend on the
-    exact text of your spec.
+    it runs through). The hashes come from the exact text of the spec: if you type the spec above
+    unchanged, the task list passes as printed, and any edit to a section changes its hash (and is
+    reported as P005 until you refresh it, as in [stage 9](#9-change-it-later)).
 
 Look at the board:
 
@@ -796,9 +797,22 @@ TUVL_URL=http://localhost:8885 TUVL_TOKEN=$KEY tuvl runs list       # every run,
 tuvl runs tail <run_id>        # follows a run until it ends (Ctrl-C to stop)
 ```
 
-Every step of every run is journaled, so you can see what happened and replay it. In Insight, the
-**Runs** page shows the same timeline, the approvals inbox, and **Pin as fixture**, which turns a real
-run into a test that replays with zero tokens.
+Every step of every run is journaled, so you can see what happened and replay it. Open Insight
+(`http://localhost:8885/insight/`) to look at the same project:
+
+- **Specs** is the task board from stage 5: nine tasks, all in **Done**.
+- **Workflows → refund_request** draws the graph (`load_order`, `check_amount`, the orange `finance_review`
+  and `record_refund`, and the four ends) and repeats the profile: *4 agents · 3 deterministic ·
+  1 external · worst-case 0 tok*.
+- **Runs** lists every run. Open the parked one to see the approval form and the journal:
+  `load_order → default`, `check_amount` *decided review by rule#2*, `finance_review` *approval
+  requested*. Submitting the form as the user who started the run shows the same refusal as the API.
+  After the lead decides, the journal adds *approval decided by …*, *resumed* and *run completed
+  END.default (201)* with the response, and **Pin as fixture** turns the run into a test that replays
+  with zero tokens.
+
+The parked run is a row in your database, so it also survives restarting the engine: stop `tuvl dev`,
+start it again, and the run is still `waiting_human`.
 
 !!! note "Dev keys are for development"
     In production there is no session key: callers use signed tokens, and `trigger.http.public: true`
