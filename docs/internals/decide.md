@@ -53,7 +53,7 @@ kind: AgentModel
 metadata: { name: triage-classifier }
 spec:
   type: decision
-  provider: litellm                      # laya | jev | litellm
+  provider: llm                          # laya | jev | llm
   model: gemini/gemini-3.1-flash-lite    # pinned in tuvl.lock
 ```
 
@@ -88,21 +88,21 @@ spec:
 
 ### OpenAI-compatible endpoints
 
-A decision model behind an OpenAI-compatible endpoint (a LiteLLM proxy, a self-hosted classifier)
-connects through `provider: litellm`:
+A decision model behind an OpenAI-compatible endpoint (a gateway, a self-hosted classifier)
+connects through `provider: llm`:
 
 ```yaml
 kind: AgentModel
 metadata: { name: hosted-classifier }
 spec:
   type: decision
-  provider: litellm
-  model: openai/my-classifier            # LiteLLM's OpenAI-compatible route
+  provider: llm
+  model: openai/my-classifier            # the OpenAI-compatible route
   api_base: ${CLASSIFIER_API_BASE}
   api_key: ${CLASSIFIER_API_KEY}         # must be an ${ENV_VAR} reference
 ```
 
-- `litellm` asks the model for `{"decision": <one of the choices>, "confidence": <0..1>}` as
+- `llm` asks the model for `{"decision": <one of the choices>, "confidence": <0..1>}` as
   structured output. An `llm`-type AgentModel can also be referenced directly; it uses the same
   adapter.
 - **Where the confidence comes from.** A `type: decision` model's reported `confidence` is used

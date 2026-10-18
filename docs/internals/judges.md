@@ -9,7 +9,7 @@ kind: Artifact
 metadata: { name: refund-reply-quality, version: 2 }
 spec:
   type: judge
-  model: default                           # AgentModel or LiteLLM id; pinned in tuvl.lock
+  model: default                           # AgentModel or provider/model id; pinned in tuvl.lock
   rubric: |
     The reply must state the refund amount and timeline and must not promise
     anything outside the refund policy.

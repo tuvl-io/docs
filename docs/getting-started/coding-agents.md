@@ -14,11 +14,11 @@ except the parts that need judgement.
   | `tuvl-spec` | writing or changing `specs/<name>.md` |
   | `tuvl-plan` | turning a spec into contracts and tasks |
   | `tuvl-task-loop` | **always** — the core loop for implementing tasks |
-  | `agent-code` / `agent-tool` / `agent-llm` / `agent-loop` / `agent-decide` / `agent-human` | implementing an agent with that engine |
+  | `agent-code` / `agent-tool` / `agent-llm` / `agent-loop` / `agent-decide` / `agent-human` / `agent-map` | implementing an agent with that engine |
   | `tuvl-data` | models, fields, access, CRUD |
   | `tuvl-test` | tests, mocks, fixtures, judges |
   | `tuvl-harden` | changing a working workflow safely |
-  | `tuvl-ship` | lock, CI gate, shipping |
+  | `tuvl-ship` | lock, CI gate, shipping (`tuvl ship` installs only the extras the project uses) |
 
 - **`--json` on every read command** (`validate`, `spec status`, `spec diff`, `test`, `runs`, …), with
   documented schemas.
