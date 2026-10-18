@@ -13,6 +13,7 @@ surface per workflow. (gRPC was removed in 2.0.)
 | `GET /api/runs/{id}` | Status, current agent, end, output, error, tokens, pending approval |
 | `GET /api/runs/{id}/events` | **SSE**: journal replay from `?from_seq=`, then live; `?follow=false` stops after the replay |
 | `GET /api/runs/{id}/export` | The run's journal as a replayable fixture |
+| | A workflow that names a disabled or undefined model is not started: `409 {"error": "workflow_unavailable", "reasons": [...]}` (the same for MCP calls and child runs). With `multi_tenant` on, a run belongs to the caller's tenant and other tenants' runs answer `404` |
 | `POST /api/runs/{id}/pause\|resume\|abort\|steer` | Operator control (`runs:control`); steer takes `{ message }` |
 | `GET /api/approvals` | Open approvals the caller may decide |
 | `POST /api/approvals/{id}` | Decide: `{ values }` for a human form, `{ decision: approve\|edit\|reject, edited_args?, message? }` for a tool call |

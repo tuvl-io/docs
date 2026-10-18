@@ -9,7 +9,13 @@ Before installing tuvl, ensure you have:
 - **Python 3.13 or 3.14** — tuvl 2.0 supports `>=3.13,<3.15`. uv picks a compatible interpreter automatically.
 - **uv** — Fast Python package manager (recommended)
 - **PostgreSQL** — For data persistence (optional for development)
+- **Docker** — Optional. The easiest way to run PostgreSQL, Redis and Laya locally, and required by `tuvl ship` to build the production image
+- **Redis** — Optional for `tuvl dev`; needed when you run more than one worker ([why](../configuration/redis.md))
+- **Laya (`tuvl/laya-serve`)** — Optional. A self-hosted decision model for `decide` agents; runs as its own container
 - **Ollama** — For local LLM inference (optional)
+
+!!! note "What you actually need"
+    To try tuvl you need Python and uv, and a PostgreSQL database. Everything else above is opt-in: Redis only matters for multi-worker deployments, and Laya only if a `decide` agent uses it as its decision model.
 
 !!! note "Python 3.14"
     tuvl 1.x was held to Python 3.13 because its token library (`biscuit-python`) had no 3.14 builds. tuvl 2.0 signs tokens as standard JWTs and runs on 3.13 and 3.14 on Linux, macOS and Windows.
@@ -37,19 +43,19 @@ Before installing tuvl, ensure you have:
 ## 2.0 public beta
 
 tuvl **2.0.0** is released on **20 October 2026**. Until then, 2.0 is available as the public beta
-**2.0.0b1**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
+**2.0.0b5**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
 beta explicitly:
 
 ```bash
 # CLI + dev server + Insight (recommended)
-uv tool install --prerelease allow "tuvl[standard]==2.0.0b1"
+uv tool install --prerelease allow "tuvl[standard]==2.0.0b5"
 
 # CLI only
-uv tool install "tuvl==2.0.0b1"
+uv tool install "tuvl==2.0.0b5"
 ```
 
 `--prerelease allow` is needed because uv only takes a pre-release for packages you name yourself,
-and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b1` indirectly.
+and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b5` indirectly.
 
 The TypeScript client has a matching beta on npm's `beta` channel:
 
@@ -73,7 +79,7 @@ uv tool install "tuvl[standard]"
 ```
 
 !!! tip
-    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, and hot-reload support. Use the base install for production-only deployments where the UI is not needed.
+    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, hot-reload support, the development tools (`tuvl codegen`, `tuvl test`, `tuvl mcp`) and every extra below. The base install is the production server and is about 65 MB installed. `tuvl ship` builds production images from it and adds only the extras your project uses.
 
 Verify the installation:
 
@@ -98,6 +104,28 @@ Or with pip:
 ```bash
 pip install "tuvl[standard]"
 ```
+
+## Extras
+
+The base `tuvl` has no package for a feature you may not use. Install the extra when you use the feature:
+
+| Extra | Adds | You need it for |
+|---|---|---|
+| `tuvl[mcp]` | `mcp` | `use: mcp` tools, a `loop` calling an MCP server, exporting a workflow as an MCP tool, `tuvl mcp` |
+| `tuvl[redis]` | `redis` | a `type: redis` datasource |
+| `tuvl[vector]` | `pgvector` | collections, embeddings and `tuvl.data_search` / `tuvl.data_ingest` |
+| `tuvl[otel-grpc]` | OTLP gRPC exporter | `TUVL_OTLP_PROTOCOL=grpc` (HTTP/protobuf is the default and needs nothing) |
+| `tuvl[codegen]` | `libcst` | `tuvl codegen` and `tuvl init --sample` |
+| `tuvl[test]` | `aiosqlite` | `tuvl test` |
+
+```bash
+uv add "tuvl[mcp,redis]"
+```
+
+Using a feature without its extra fails with the command to run, for example
+`pip install 'tuvl[mcp]'`. You do not choose extras for production by hand: [`tuvl ship`](shipping.md#only-what-the-project-uses)
+reads the project and installs exactly the ones it needs. Model providers and blob storage (S3,
+Azure, GCS, local disk) are built in and need no extra.
 
 ## Optional Dependencies
 
@@ -129,6 +157,73 @@ pip install "tuvl[standard]"
       -p 5432:5432 \
       postgres:16-alpine
     ```
+
+### Redis (optional)
+
+Redis shares OAuth state and the token-revocation list between workers. A single `tuvl dev`
+process works without it (an in-process fallback is used); add it before running more than one
+worker. Install `tuvl[redis]` to use it. See [Redis configuration](../configuration/redis.md) for the datasource file.
+
+=== "macOS (Homebrew)"
+
+    ```bash
+    brew install redis
+    brew services start redis
+    ```
+
+=== "Ubuntu/Debian"
+
+    ```bash
+    sudo apt install redis-server
+    sudo systemctl start redis-server
+    ```
+
+=== "Docker"
+
+    ```bash
+    docker run -d --name tuvl-redis -p 6379:6379 redis:7-alpine
+    ```
+
+Then add `datasources/redis-primary.yaml` with `type: redis`, `host: ${REDIS_HOST:localhost}`.
+
+### Laya decision server (optional)
+
+[Laya](https://hub.docker.com/r/tuvl/laya-serve) is an open-weight model that picks one value of a
+`decide` agent's enum with a confidence. It runs on CPU in its own container, offline, with
+verified weights baked in. Use it when you want decisions made on your own infrastructure instead
+of calling a hosted model.
+
+The quickest route is to let `tuvl init` scaffold it:
+
+```bash
+tuvl init my-project --decision-model laya -y
+cd my-project
+docker compose up -d laya        # serves on http://localhost:8000
+```
+
+This writes `llms/laya.yaml` (a `provider: laya` AgentModel), `LAYA_API_*` entries in `.env` and a
+`compose.yaml`. To run the container by hand:
+
+=== "English only (smaller)"
+
+    ```bash
+    docker run -d --name laya -p 127.0.0.1:8000:8000 tuvl/laya-serve:0.4.7-1-en
+    ```
+
+=== "English + multilingual"
+
+    ```bash
+    docker run -d --name laya -p 127.0.0.1:8000:8000 tuvl/laya-serve:0.4.7-1
+    ```
+
+| Image | Use with | Memory |
+|---|---|---|
+| `…-en` | `model: english` | about 2 GiB |
+| full | `model: auto` or `multilingual` | about 3.5 GiB |
+
+The image is about 2.7 GB (CPU PyTorch plus the weights), amd64 and arm64. Check it is up with
+`curl localhost:8000/health`. Details, checkpoints and settings are in
+[AI Models → Laya](../configuration/agents.md) and [Decide](../internals/decide.md).
 
 ### Ollama (Local LLM)
 
@@ -221,5 +316,7 @@ The default `8885` spells **T·U·V·L** on a phone keypad and deliberately avoi
 ## Next Steps
 
 - [Quickstart Guide](quickstart.md) — Build your first workflow
+- [Code generation](codegen.md) — `tuvl codegen`: typed schemas, stubs and tests
+- [Shipping to production](shipping.md) — `tuvl ship`: image, Helm chart, Laya and secrets
 - [Project Structure](project-structure.md) — Understand the project layout
 - [Agentic Manual](../internals/tuvl-agentic-manual.md) — how tuvl projects are written

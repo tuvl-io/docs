@@ -171,6 +171,7 @@ spec:
   # Optional: auth_url / token_url / userinfo_url / scope overrides
   # tenant_id: common       # microsoft only
   # allowed_domains: [example.com]
+  # allowed_users: [octocat]   # github only: login handles, case-insensitive
   # default_role: member
 ```
 
@@ -184,10 +185,18 @@ The flow is OAuth 2.0 authorization-code:
 Account-linking rules in the callback:
 
 - **`email_verified` is required for auto-link.** If an account with the same email already exists but the IdP did not assert the email as verified, the callback returns 403 instead of linking — otherwise an attacker registering an unverified IdP identity under a victim's email could take over the account. For GitHub, only addresses from the verified `/user/emails` list are trusted.
-- `allowed_domains`, when set, rejects any email outside the list (403).
+- `allowed_domains`, when set, rejects any email outside the list (403). `allowed_users` (GitHub) rejects any login handle outside the list (403).
 - New federated users are created passwordless; `default_role`, when set and existing in the IAM database, is auto-assigned so first-time users don't arrive with zero permissions.
 
-The callback returns the same kind of token as password login, or redirects to `TUVL_OAUTH_UI_REDIRECT_URL` with the token as a query param when configured. `TUVL_OAUTH_BASE_URL` sets the redirect-URI origin registered with the IdP.
+The callback returns the same kind of token as password login, or redirects to `TUVL_OAUTH_UI_REDIRECT_URL` with the token in the URL **fragment** (`#token=…`, so it never reaches a server log) when configured. `TUVL_OAUTH_BASE_URL` sets the redirect-URI origin registered with the IdP.
+
+**Device flow (GitHub).** A CLI or other headless client signs in without a browser callback:
+
+1. `POST /auth/oauth/github/device/start` returns `handle`, `user_code`, `verification_uri`, `interval`, `expires_in`. GitHub's device code stays on the server.
+2. The user opens the URI and enters the code.
+3. The client polls `POST /auth/oauth/github/device/poll {"handle": …}` every `interval` seconds: `428` while pending, `200` with a token once approved (same account-linking rules as above), `400` when denied or expired. A handle is single-use.
+
+Tick **Enable Device Flow** on the GitHub OAuth app. `tuvl project register` and Insight's Register dialog use this flow ([project](project.md)).
 
 Provider YAMLs can be managed at runtime via `/auth/admin/federation` (list/get/put/delete, `iam:admin` required); `client_secret` is redacted in read responses.
 
