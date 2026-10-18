@@ -53,8 +53,7 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
+  - pymdownx.tabbed
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
@@ -88,6 +87,7 @@ nav:
   - Getting Started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
+      - 'Guide: Init to Ship': getting-started/guide.md
       - Code Generation: getting-started/codegen.md
       - Shipping to Production: getting-started/shipping.md
       - Project Structure: getting-started/project-structure.md
