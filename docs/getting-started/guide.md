@@ -947,6 +947,23 @@ does not include Postgres, so point `POSTGRES_HOST` at yours. More: [Shipping to
     cluster to operate. `tuvl deploy` is the command for it. It is not available yet: today it prints a
     message, deploys nothing and exits 1. Until then, `tuvl ship` plus `helm` is the way.
 
+### Optional: list it in the catalogue
+
+Every project already carries an identity file, `.tuvl/project.yaml`, with a stable id and your git name
+and email. If you want the project listed in the public catalogue at hub.tuvl.io, look first:
+
+```bash
+tuvl project info
+tuvl project set description "Refund approvals: small refunds at once, large ones wait for a lead."
+tuvl project register          # prints the exact payload and asks; answer n to only look
+```
+
+Registering is public and is tied to the GitHub account you sign in with. **The author name in the
+listing is your git name**, so check it first (`tuvl project set author "…"`). Your email stays
+private unless you add `--public-email`, and nothing about your workflows, models or data is sent. If
+you use a coding agent, it will not register on its own: it only does so when you ask. Details,
+every field and the error messages: [Project and Catalogue](../internals/project.md).
+
 ## Troubleshooting
 
 | You see | It means | Do this |
@@ -980,6 +997,7 @@ does not include Postgres, so point `POSTGRES_HOST` at yours. More: [Shipping to
 | Look at runs | `tuvl runs list`, `tuvl runs tail <id>` |
 | Serve it to a coding agent | `tuvl mcp` |
 | Package it | `tuvl ship -t <image>` |
+| Look at, edit or publish the project's identity | `tuvl project info`, `tuvl project set`, `tuvl project register` |
 
 ## Where next
 

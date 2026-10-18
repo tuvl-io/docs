@@ -240,6 +240,6 @@ tuvl spec check && tuvl validate --strict && tuvl codegen --check && tuvl lock -
   `codegen_write`, `run_workflow`, `pin_fixture`. It refuses `TUVL_ENV=production`.
 - `.agents/skills/` (refreshed by `tuvl skills update [--diff]`, mirrored to `.claude/skills/`):
   `tuvl-spec`, `tuvl-plan`, `tuvl-task-loop`, `agent-code`, `agent-tool`, `agent-llm`, `agent-loop`,
-  `agent-decide`, `agent-human`, `tuvl-data`, `tuvl-test`, `tuvl-harden`, `tuvl-ship`, plus a root
+  `agent-decide`, `agent-human`, `agent-map`, `tuvl-data`, `tuvl-test`, `tuvl-harden`, `tuvl-ship`, plus a root
   `AGENTS.md` with the non-negotiable rules.
 - Every read command has `--json` with a documented schema (`/dev/schema/cli` in dev mode).
