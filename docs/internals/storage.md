@@ -205,10 +205,10 @@ routing `not_found` and `conflict` where they can occur, and V007 checks the out
 ## Command line and Insight
 
 ```bash
-tuvl storage check            # list, put, head, get, delete a probe object in every store
-tuvl storage check invoices
-tuvl storage ls invoices 2026/
-tuvl doctor                   # also lists stores and the environment variables they still need
+tuvl check storage            # list, put, head, get, delete a probe object in every store
+tuvl check storage invoices
+tuvl list objects invoices 2026/
+tuvl check system                   # also lists stores and the environment variables they still need
 ```
 
 **Insight → Configure → Storage** lists the stores, shows missing environment variables, checks a

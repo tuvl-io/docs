@@ -132,7 +132,7 @@ spec:
 ## AI agent instructions
 
 - <a href="assets/AGENTS.txt" download="AGENTS.md">⬇️ Download <code>AGENTS.md</code></a> — the rules for coding agents working in a tuvl project
-- <a href="assets/skills.zip" download="skills.zip">⬇️ Download <code>skills.zip</code></a> — the tuvl 2.0 skill set (unzip to `.agents/skills/`; `tuvl skills update` does this for you)
+- <a href="assets/skills.zip" download="skills.zip">⬇️ Download <code>skills.zip</code></a> — the tuvl 2.0 skill set (unzip to `.agents/skills/`; `tuvl update skills` does this for you)
 
 ## License
 

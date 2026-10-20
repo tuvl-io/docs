@@ -35,7 +35,7 @@ Two complementary records:
 
 - **The journal** (`tuvl_system_run_events`) is the authoritative, durable record of what a run did —
   every agent start/finish, signal, model turn, tool call, decision, judge verdict, approval and
-  pause. It drives the Insight Runs page, `GET /api/runs/{id}/events` (SSE), `tuvl runs tail`,
+  pause. It drives the Insight Runs page, `GET /api/runs/{id}/events` (SSE), `tuvl follow run`,
   replay and test fixtures. See [runtime](runtime.md#journal-events).
 - **OpenTelemetry spans and structured logs** feed your tracing and log backends, correlated by
   `trace_id`/`span_id` and `run_id`.
@@ -144,7 +144,7 @@ that made them. A failed call records the exception on the span.
 ## 6. Metrics
 
 Run-level numbers (runs by status and end, tokens per agent, decision sources, approvals) come from
-the journal and the runs table: `GET /api/runs`, `tuvl runs list --json`, or SQL over
+the journal and the runs table: `GET /api/runs`, `tuvl list runs --json`, or SQL over
 `tuvl_system_runs` / `tuvl_system_run_events`. The one OTel counter is `tuvl.hook.events`
 (meter `tuvl.hooks`), incremented when a `type: hook` artifact with `action: metric` fires
 (`tuvl.hook.name`, `tuvl.hook.event`, `tuvl.workflow.name`).

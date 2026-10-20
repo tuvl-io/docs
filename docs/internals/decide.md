@@ -38,7 +38,7 @@
 | No rule matches, model **unavailable** (down, auth, timeout after retries) | `error` (`decision_model_unavailable`). **Never** a fallback to rules, a default or another model |
 | `shadow: true` | Rules decide (`no_rule_matched` if none matches). The model runs every time; its answer is journaled for comparison and its failures are logged, not errors |
 
-Rules are TEL conditions over the agent's inputs, type-checked by `tuvl validate`. The output enum
+Rules are TEL conditions over the agent's inputs, type-checked by `tuvl lint project`. The output enum
 must equal the set of normal route keys, and every `then` must be one of its values (V012). A rule
 `{ when: "true", then: x }` at the end is the usual default.
 

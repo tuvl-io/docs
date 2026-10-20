@@ -74,7 +74,7 @@ spec:
     outlived the call window (120 s); follow it over REST.
   An end with status ≥ 400, a failure or an abort is an `isError` result.
 
-Export never replaces the REST route. For coding agents *building* a project, see `tuvl mcp`
+Export never replaces the REST route. For coding agents *building* a project, see `tuvl serve mcp`
 ([spec-driven workflow](spec-driven.md#coding-agents)) — a different, dev-only server.
 
 ## `@tuvl/client` (TypeScript)
