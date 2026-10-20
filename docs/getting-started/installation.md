@@ -117,6 +117,9 @@ The base `tuvl` has no package for a feature you may not use. Install the extra 
 | `tuvl[otel-grpc]` | OTLP gRPC exporter | `TUVL_OTLP_PROTOCOL=grpc` (HTTP/protobuf is the default and needs nothing) |
 | `tuvl[codegen]` | `libcst` | `tuvl codegen` and `tuvl init --sample` |
 | `tuvl[test]` | `aiosqlite` | `tuvl test` |
+| `tuvl[review]` | `ruff` | `tuvl review` |
+| `tuvl[pdf]` | `pypdf` | `tuvl spec import` of PDF ideas (Word and Markdown need nothing extra) |
+| `tuvl[tui]` | `textual` | the terminal UI that `tuvl dev` starts on a terminal |
 
 ```bash
 uv add "tuvl[mcp,redis]"
