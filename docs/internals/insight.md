@@ -29,6 +29,10 @@ tuvl dev --auto-login    # skip the key screen on this machine
 ## Workflows: the canvas
 
 - **Start card**: trigger (HTTP path/method/public, schedule, MCP export) and the typed input.
+  Its panel has an **API** and a **Schedule** checkbox (both can be on). Unticking API keeps the path and
+  unmounts the route; the schedule takes a cron expression (checked as you type, with the next three
+  fire times), one field per trigger input for what scheduled runs start with, and shows the last
+  scheduled run and whether the scheduler is running.
 - **Agent cards**: engine, determinism class, `id`, description, input/output contract, budget and
   retry chips, one outlet per routable signal. Red ports mark inputs not produced upstream.
 - **End cards**: one per named output, with status and body.

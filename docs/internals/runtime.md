@@ -101,6 +101,19 @@ mode, Insight breakpoints and step mode pause runs through the same mechanism.
 `trigger.schedule` (cron, UTC) enqueues one run per slot across all workers, guarded by a Postgres
 advisory lock. A slot missed while every process was down is skipped; there is no catch-up.
 
+```yaml
+trigger:
+  schedule:
+    cron: "0 9 * * 1-5"
+    enabled: true            # false pauses it and keeps the settings
+    input: { report: daily } # every scheduled run starts with this; checked against trigger.input
+```
+
+A bare cron string (`schedule: "0 9 * * 1-5"`) is the same schedule with no input. Scheduled runs have
+no caller, so a workflow whose `trigger.input` has required fields needs them in `input`.
+`tuvl validate` reports a mismatch (V019). The schedule is read at boot; in dev the server reloads
+when the YAML changes.
+
 ## Multi-tenant mode
 
 When the project is locked to `multi_tenant`, the run tables carry a `tenant_id` column and every
