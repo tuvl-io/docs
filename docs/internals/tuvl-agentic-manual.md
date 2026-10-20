@@ -141,8 +141,8 @@ metadata:
 spec:
   models: [Order, Refund]                # allow-list for tool:db and ctx.db
   trigger:
-    http:     { path: /api/refunds, method: POST, public: false, sync_timeout: 30s }
-    schedule: "0 * * * *"                # optional cron (UTC)
+    http:     { path: /api/refunds, method: POST, public: false, sync_timeout: 30s }   # enabled: false unmounts it
+    schedule: "0 * * * *"                # optional cron (UTC); or { cron, enabled, input: {…} }
     tenants: [acme, globex]              # multi_tenant mode: one scheduled run per tenant
     mcp:      { enabled: true }          # optional MCP export (api.md)
     input:    { order_id: uuid, reason: str, message: str }
@@ -181,8 +181,13 @@ Every template in a `body` must reference keys produced on **every** path to tha
 - `http`: default-deny — a valid bearer token is required unless `public: true` (which can't be
   combined with `required_scope`/`required_group`, V019). The response is the end's `status`/`body`,
   or `202` with the run descriptor when the run outlives `sync_timeout` or waits on a person.
-- `schedule`: cron in UTC; each slot fires once across all workers. In `multi_tenant` mode add
-  `tenants: [acme, …]`: each slot starts one run per tenant (see `docs/runtime.md`).
+- `http.enabled: false` keeps the route's settings but does not mount it; the workflow can still be
+  started with `POST /api/workflows/{name}/runs`.
+- `schedule`: cron in UTC; each slot fires once across all workers. The object form
+  `{ cron, enabled, input }` adds an off switch and the input every scheduled run starts with —
+  `input` must satisfy `trigger.input` (V019). A workflow can have both an `http` trigger and a
+  schedule. In `multi_tenant` mode add `tenants: [acme, …]`: each slot starts one run per tenant (see
+  `docs/runtime.md`).
 - `mcp.enabled`: lists the workflow as a tool on `/mcp` ([API](api.md)).
 - Every workflow can also be started with `POST /api/workflows/{name}/runs`.
 
