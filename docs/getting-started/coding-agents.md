@@ -1,6 +1,14 @@
 # Build with coding agents
 
-tuvl is designed so a coding agent (Claude Code, Cursor, Codex, Kiro, …) can build a project from a
+There are two ways to work with a coding agent, and both stay open:
+
+- **The open path (this page):** point your agent (Claude Code, Cursor, Codex, Kiro, …) at the project. It uses
+  the skills and `tuvl mcp` and builds what it likes; `tuvl validate`, `tuvl spec verify`, `tuvl ship` and CI
+  still decide what is accepted.
+- **The driven path:** tuvl drives the agent you already have installed, one narrow job at a time on its own
+  branch, from an idea to a packaged project. See [Authoring with a coding agent](../internals/authoring.md).
+
+The rest of this page is the open path. tuvl is designed so a coding agent (Claude Code, Cursor, Codex, Kiro, …) can build a project from a
 spec without guessing: tuvl tells it the state of the project, and deterministic tools do everything
 except the parts that need judgement.
 
@@ -31,8 +39,8 @@ except the parts that need judgement.
 ```
 
 Read tools: `validate`, `spec_status`, `spec_diff`, `get_contract`, `list_agents`, `explain_error`,
-`get_run`, `get_run_events`, plus dry runs of `spec_analyse`, `codegen` and `test`. Add
-`--allow-write` for `spec_apply`, `codegen_write`, `run_workflow` and `pin_fixture`. Run tools talk to
+`get_run`, `get_run_events`, plus `spec_check`, `spec_verify` and dry runs of `codegen` and `test`. Add
+`--allow-write` for `codegen_write`, `run_workflow` and `pin_fixture`. Run tools talk to
 a running server through `TUVL_URL` / `TUVL_TOKEN`. `tuvl mcp` refuses to run in production.
 
 ## The loop

@@ -36,6 +36,12 @@ The workflow uses no language model, so every check in this guide is offline and
     the manual track you do those stages yourself. Every tab below shows both. Stages 7 to 10 are the
     same either way.
 
+!!! tip "Prefer to start from an idea?"
+    This guide writes the spec by hand. If you have a brief (Markdown, PDF or Word) and a coding agent
+    installed, `tuvl spec import brief.pdf` → `tuvl spec gen` → `tuvl spec approve` → `tuvl spec tasks` →
+    `tuvl codegen --spec …` does stages 2 to 6 with your agent, one pull request per task, and the same gate
+    at the end. See [Authoring with a coding agent](../internals/authoring.md).
+
 ## 1. Create the project
 
 ```bash
@@ -214,7 +220,7 @@ a new row has no conflict to provoke
 
 `✗` is blocking and `!` is a warning. S007 is the next thing to do: the spec says `Order` already
 exists, so tuvl expects `models/order.yaml`. Every finding names a line and a rule; the full list
-(S001 to S016) is in the [spec reference](../internals/spec-driven.md#2-check-it).
+(S001 to S021) is in the [spec reference](../internals/spec-driven.md#2-check-it).
 
 ## 3. Data models
 
@@ -985,7 +991,11 @@ every field and the error messages: [Project and Catalogue](../internals/project
 | I want to | Run |
 |---|---|
 | Start a project | `tuvl init <name> -y --preset <provider>` |
-| Start a spec | `tuvl spec new <name>` |
+| Start a spec | `tuvl spec new <name>` (or `tuvl spec import <brief>` then `tuvl spec gen`) |
+| Approve a spec / derive its tasks | `tuvl spec approve <spec>` / `tuvl spec tasks <spec>` |
+| Build the tasks with your coding agent | `tuvl codegen --spec <spec> --all` |
+| Review the agents' Python | `tuvl review` (`--agent` for a second opinion) |
+| See what was done to the project | `tuvl audit log` (or Insight → Audit) |
 | Check the spec / the build against it | `tuvl spec check` / `tuvl spec verify` |
 | See what to do next | `tuvl spec status` (`--json` for agents) |
 | See what changed since the plan | `tuvl spec diff` |
@@ -996,7 +1006,7 @@ every field and the error messages: [Project and Catalogue](../internals/project
 | Run it locally | `tuvl dev --show-key` |
 | Look at runs | `tuvl runs list`, `tuvl runs tail <id>` |
 | Serve it to a coding agent | `tuvl mcp` |
-| Package it | `tuvl ship -t <image>` |
+| Package it | `tuvl ship -t <image>` (`--format archive` for a zip/tar you run with `uv`) |
 | Look at, edit or publish the project's identity | `tuvl project info`, `tuvl project set`, `tuvl project register` |
 
 ## Where next
