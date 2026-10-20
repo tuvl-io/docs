@@ -220,9 +220,9 @@ From TypeScript, `readToken(token)` in `@tuvl/client` returns the claims.
 
 ## Upgrading from 1.x
 
-- **The key carries over.** A 1.x `TUVL_BISCUIT_PRIVATE_KEY` is the same 32-byte Ed25519 key;
-  2.0 still reads it (with a warning) — rename it to `TUVL_SIGNING_KEY` when convenient, or run
-  `tuvl keys generate --write --force` to replace it with a new one.
+- **Set `TUVL_SIGNING_KEY`.** 2.0 no longer reads the 1.x `TUVL_BISCUIT_PRIVATE_KEY`. Its value is the
+  same 32-byte Ed25519 key, so you can move it to `TUVL_SIGNING_KEY` unchanged, or run
+  `tuvl keys generate --write --force` for a new one. Without a key a production server will not start.
 - **Everyone signs in once.** Biscuit tokens issued by 1.x are not accepted by 2.0.
 - **Python 3.14 is supported.** 1.x was held to Python 3.13 by `biscuit-python`'s missing
   3.14 builds; 2.0 runs on 3.13 and 3.14.
