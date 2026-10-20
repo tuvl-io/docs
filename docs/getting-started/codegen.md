@@ -10,6 +10,15 @@ tuvl codegen triage_ticket    # one workflow's stubs, prompts and tests
 tuvl codegen --check          # write nothing; exit 1 if anything would change (the CI gate)
 ```
 
+## Building a whole spec with your coding agent
+
+The commands above are the deterministic part. For an **approved** spec, `tuvl codegen --spec SPEC --all`
+(or `--task 3`, `--task 1,3`) goes further: first, with no tokens spent, it writes the models from `# Data` and a
+workflow skeleton of `pending` steps from `# Flows`, then it asks your installed coding agent to implement each
+task on its own branch (`feature/TASK-…`), checks it (the step is implemented, `validate` and `spec verify`
+agree, the Python passes `tuvl review`), and opens a draft pull request, stacked on the previous one. Nothing is
+merged for you. See [Authoring with a coding agent](../internals/authoring.md).
+
 ## What it generates
 
 | Output | Rule |

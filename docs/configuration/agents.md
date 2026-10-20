@@ -1,9 +1,10 @@
 # AI Models
 
 An `AgentModel` (in `llms/`) names a model so workflows can refer to it. There are two types:
-**`llm`** (the default) for `llm` and `loop` agents, judges and spec analysis, and **`decision`** for
-the `decide` engine. `tuvl init --preset gemini|openai|anthropic|ollama` writes `llms/default.yaml`
-and `llms/analysis.yaml` for you.
+**`llm`** (the default) for `llm` and `loop` agents, and judges, and **`decision`** for
+the `decide` engine. `tuvl init --preset gemini|openai|anthropic|ollama` writes `llms/default.yaml` for you.
+The coding agent that drafts specs and builds tasks is **not** an AI model of the project: it is the one
+installed on your machine (`tuvl agent use`), see [Authoring with a coding agent](../internals/authoring.md).
 
 ## LLM models
 
