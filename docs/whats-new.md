@@ -15,6 +15,15 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
 
 <div class="grid cards" markdown>
 
+-   **Authoring with your coding agent, acceptance without one**
+
+    ---
+
+    `tuvl init` finds the agents you have; `tuvl spec import` numbers an idea, `spec gen` has your agent
+    draft the spec on a branch, a person approves it, `spec tasks` derives the tasks, and `codegen --spec`
+    builds each task on its own pull request. Every step is in a local audit ledger, and `tuvl dev` shows
+    the path in a terminal UI. [Authoring](internals/authoring.md)
+
 -   **Typed agents, eight engines**
 
     ---

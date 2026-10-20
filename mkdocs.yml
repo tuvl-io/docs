@@ -100,6 +100,7 @@ nav:
       - Judges: internals/judges.md
       - Runtime and Journal: internals/runtime.md
       - Spec-Driven Development: internals/spec-driven.md
+      - Authoring with a Coding Agent: internals/authoring.md
       - API — REST, SSE, MCP: internals/api.md
       - CLI Reference: internals/cli.md
       - Project and Catalogue: internals/project.md
