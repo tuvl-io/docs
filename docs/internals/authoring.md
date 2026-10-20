@@ -84,6 +84,18 @@ Whatever the agent is, tuvl then enforces what it cannot be trusted with:
 second opinion as JSON findings; it is advisory unless you pass `--blocking high`. `codegen --spec`
 reviews every task before committing it (`--review static` by default).
 
+## Building the UI
+
+`ui/specs/` (created by `tuvl init`) holds the guidelines for whoever builds the frontend, developer or coding
+agent. `tuvl ui spec` writes it from the implemented project, with no model: an index that recommends
+`@tuvl/client` (install, generating types, sign-in, the rules for a UI), one file per workflow whose tasks are
+done (the endpoint and who may call it, the request, every end's status and body, the `202` run lifecycle, the
+approval form of human steps, real examples from the acceptance cases, a `client.execute(...)` snippet and a
+checklist), one for the models with CRUD routes, and `ui-contract.json` with the same facts as data.
+`codegen --spec` adds a workflow's file in the commit of the task that completes it, so what is documented is
+what exists. Write your own notes below the marker at the end of a file; they survive regeneration.
+`tuvl ui spec --check` fails when the files are stale (use it in CI).
+
 ## Shipping
 
 `tuvl ship` re-runs the gate first: specs under approval approved and unchanged, `spec check` and
