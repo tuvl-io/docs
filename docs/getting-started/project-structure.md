@@ -5,9 +5,10 @@ my-project/
 ├── pyproject.toml / uv.lock      # Python dependencies (uv)
 ├── tuvl.lock                     # pinned model ids, artifact hashes, MCP schemas (tuvl lock)
 ├── .env / .env.example           # secrets and connection settings — never in YAML
+├── idea/                         # IDEA-XX-NNNN/: numbered, immutable copies of the briefs (tuvl spec import)
 ├── specs/
-│   ├── triage-ticket.md          # intent: flows, policies, acceptance examples
-│   └── triage-ticket.tasks.yaml  # task list, written by the coding agent — statuses are derived
+│   ├── SPEC-XX-0004-01.md        # intent: flows, policies, acceptance examples; front matter holds the approval
+│   └── SPEC-XX-0004-01.tasks.yaml  # task list (TASK-XX-0004-01-NNN), derived — statuses are derived from the project
 ├── workflows/                    # kind: Workflow (version: tuvl/v2)
 ├── agents/                       # code agents: one @agent function per file
 │   └── _generated/schemas.py     # typed In/Out models (tuvl codegen) — never hand-edited
@@ -22,7 +23,8 @@ my-project/
 │   └── fixtures/                 # pinned run journals for replay
 ├── fixtures/judge/               # labelled judge calibration subjects
 ├── .agents/                      # AGENTS.md + skills for coding agents (tuvl skills update)
-└── .tuvl/                        # system.yaml, project.yaml (identity), layout, breakpoints, judge cache, dev session
+└── .tuvl/                        # system.yaml, project.yaml (identity), layout, breakpoints, judge cache, dev session;
+                                  # git-ignored on your machine: agent.yaml, audit/, trace/, live/, worktrees/
 ```
 
 Folder names are conventions: tuvl discovers documents recursively and dispatches them by `kind:`.
@@ -31,7 +33,7 @@ Folder names are conventions: tuvl discovers documents recursively and dispatche
 
 | You write | tuvl generates |
 |---|---|
-| `specs/*.md` | `specs/*.tasks.yaml` (spec analysis) |
+| `specs/*.md` (or `tuvl spec gen` drafts it from an idea, and you approve it) | `specs/*.tasks.yaml` (`tuvl spec tasks`, or written by your agent) |
 | workflow YAML (or edit it in Insight) | `agents/_generated/`, code-agent stubs, prompt placeholders |
 | code-agent function bodies | `tests/<workflow>/*.yaml` from spec examples |
 | hand-written tests, mocks | `tuvl.lock`, `tests/fixtures/*.journal.json` (pinned runs) |

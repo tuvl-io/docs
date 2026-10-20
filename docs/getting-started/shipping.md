@@ -1,12 +1,24 @@
 # Shipping to production
 
-`tuvl ship` turns a project into a container image and a Helm chart. It is the same gate as CI:
-nothing ships that does not validate.
+`tuvl ship` turns a project into a container image and a Helm chart, or into a runnable archive. It is the
+same gate as CI: nothing ships that does not validate.
 
 ```bash
 tuvl keys generate --write          # a persistent signing key (TUVL_SIGNING_KEY)
 tuvl ship -t registry.example.com/triage:1.0.0 --push
 ```
+
+## Image, archive, or both
+
+`--format image` (the default) builds the container image, labelled with a hash of the files the runtime
+uses and the commit. `--format archive` writes a reproducible `tar.gz` (or `zip` with `--archive-format zip`)
+with `run.sh`, `RUN.md`, `.env.example` and `BUILD-INFO.json`, which you run with `uv` on a host without
+Docker. `--format both` does both; `--no-image` skips the image build. `--out` sets where files go.
+
+Before either, `ship` runs the deterministic spec gate: every spec under approval is approved and unchanged,
+`spec check` and `spec verify` are clean, tasks are done (`--allow-incomplete` to override), generated files
+are current, the agents' Python has no review errors, `uv.lock` is current and the tree is clean
+(`--allow-dirty`).
 
 ## What it does
 
