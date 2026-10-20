@@ -1,22 +1,22 @@
 # Code generation
 
-`tuvl codegen` writes the parts of a project that follow mechanically from its YAML, so you only
+`tuvl generate code` writes the parts of a project that follow mechanically from its YAML, so you only
 write the parts that need judgement. It is deterministic: no model is called, and **tuvl never
 writes function bodies**.
 
 ```bash
-tuvl codegen                  # all workflows
-tuvl codegen triage_ticket    # one workflow's stubs, prompts and tests
-tuvl codegen --check          # write nothing; exit 1 if anything would change (the CI gate)
+tuvl generate code                  # all workflows
+tuvl generate code triage_ticket    # one workflow's stubs, prompts and tests
+tuvl generate code --check          # write nothing; exit 1 if anything would change (the CI gate)
 ```
 
 ## Building a whole spec with your coding agent
 
-The commands above are the deterministic part. For an **approved** spec, `tuvl codegen --spec SPEC --all`
+The commands above are the deterministic part. For an **approved** spec, `tuvl generate code --spec SPEC --all`
 (or `--task 3`, `--task 1,3`) goes further: first, with no tokens spent, it writes the models from `# Data` and a
 workflow skeleton of `pending` steps from `# Flows`, then it asks your installed coding agent to implement each
-task on its own branch (`feature/TASK-…`), checks it (the step is implemented, `validate` and `spec verify`
-agree, the Python passes `tuvl review`), and opens a draft pull request, stacked on the previous one. Nothing is
+task on its own branch (`feature/TASK-…`), checks it (the step is implemented, `validate` and `verify spec`
+agree, the Python passes `tuvl review code`), and opens a draft pull request, stacked on the previous one. Nothing is
 merged for you. See [Authoring with a coding agent](../internals/authoring.md).
 
 ## What it generates
@@ -32,7 +32,7 @@ merged for you. See [Authoring with a coding agent](../internals/authoring.md).
 ## The loop for a `code` agent
 
 1. Declare the agent in the workflow YAML (or add a step in Insight): its `run`, `inputs`, `outputs`.
-2. Run `tuvl codegen`. You get a typed stub:
+2. Run `tuvl generate code`. You get a typed stub:
 
     ```python title="agents/score_ticket.py"
     from __future__ import annotations
@@ -49,7 +49,7 @@ merged for you. See [Authoring with a coding agent](../internals/authoring.md).
     ```
 
 3. Replace the `raise` with your logic. Everything above the body is owned by codegen.
-4. Change the contract later (rename an input, add an output) and run `tuvl codegen` again: the
+4. Change the contract later (rename an input, add an output) and run `tuvl generate code` again: the
    signature and types update, and your body stays.
 
 In Insight, choosing the `code` engine for an agent offers **⌘ Generate stub**, which runs the same
@@ -60,11 +60,11 @@ step, and saving the Python file normalizes the decorator and signature through 
 Generated files are committed, so a contract change that was not regenerated is a failing build:
 
 ```bash
-tuvl codegen --check
+tuvl generate code --check
 ```
 
-It is one step of the [CI gate](../internals/spec-driven.md#7-the-ci-gate), alongside `tuvl validate
---strict`, `tuvl lock --check` and `tuvl test --strict`. Run `tuvl codegen` locally and commit the result.
+It is one step of the [CI gate](../internals/spec-driven.md#7-the-ci-gate), alongside `tuvl lint project
+--strict`, `tuvl verify lock` and `tuvl run tests --strict`. Run `tuvl generate code` locally and commit the result.
 
 ## Notes
 

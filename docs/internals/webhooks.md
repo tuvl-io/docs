@@ -34,9 +34,9 @@ spec:
 | `previous_secret` | `${ENV}` of the secret being replaced. While set, each call is signed with both (see Rotation) |
 | `events` | `completed`, `failed`, `aborted`, `waiting` (a person or an approval is needed) |
 | `stages` | Agent ids. One notification each time one of them finishes |
-| `allow_private` | Permit an internal address or plain `http://` (a receiver inside your network). `tuvl validate` warns |
+| `allow_private` | Permit an internal address or plain `http://` (a receiver inside your network). `tuvl lint project` warns |
 
-A webhook must subscribe to something (`events` or `stages`). `tuvl validate` checks the stage ids (V038).
+A webhook must subscribe to something (`events` or `stages`). `tuvl lint project` checks the stage ids (V038).
 
 ## What is sent
 

@@ -322,7 +322,7 @@ a `user_code`, a `verification_uri`, an `interval` and `expires_in`; GitHub's de
 server. The user opens the URI and enters the code while the client polls
 `POST /auth/oauth/github/device/poll {"handle": …}`: `428` while pending, `200` with a token once
 approved (same account linking as the browser flow), `400` when denied or expired. A handle is
-single-use. Tick **Enable Device Flow** on the GitHub OAuth app. `tuvl project register` and Insight's
+single-use. Tick **Enable Device Flow** on the GitHub OAuth app. `tuvl register project` and Insight's
 Register dialog use this flow.
 
 When `TUVL_OAUTH_UI_REDIRECT_URL` is set, the browser callback now returns the token in the URL

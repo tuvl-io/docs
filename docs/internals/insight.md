@@ -13,10 +13,10 @@ tuvl dev --auto-login    # skip the key screen on this machine
 
 | Page | What it does |
 |---|---|
-| **Ideas** | The ideas imported with `tuvl spec import` (`IDEA-XX-NNNN`), newest last: title, who and when, a preview of each file's text (extracted from PDFs and Word files), the specs drawn from it with their approval, and what superseded it. Read-only: import, drafting and approval are CLI actions |
-| **Specs** | Every spec is a tile across the top (task progress, stale/blocked markers, a ✗ badge for blocking `spec check` findings); click one to show it below, double-click (or **Open spec**) to edit it in its own window, with `spec check` findings inline — saving there refreshes the page. A tile of a spec under approval shows its state (**draft**, **approved**, or **approved, changed since** once its body was edited), and above the task board a strip shows the pipeline: idea → spec (who approved it) → task progress. Below: **Tasks** (the list `tuvl spec tasks` derives, statuses derived), **Findings** (blocking, warnings, waivers, unchecked prose) and **Traceability** (`spec verify`: step → agent ✓ / pending / mismatch → the tests that run it, each example's test result with why; a step opens its node on the canvas, and the canvas links back) |
+| **Ideas** | The ideas imported with `tuvl import idea` (`IDEA-XX-NNNN`), newest last: title, who and when, a preview of each file's text (extracted from PDFs and Word files), the specs drawn from it with their approval, and what superseded it. Read-only: import, drafting and approval are CLI actions |
+| **Specs** | Every spec is a tile across the top (task progress, stale/blocked markers, a ✗ badge for blocking `lint spec` findings); click one to show it below, double-click (or **Open spec**) to edit it in its own window, with `lint spec` findings inline — saving there refreshes the page. A tile of a spec under approval shows its state (**draft**, **approved**, or **approved, changed since** once its body was edited), and above the task board a strip shows the pipeline: idea → spec (who approved it) → task progress. Below: **Tasks** (the list `tuvl generate tasks` derives, statuses derived), **Findings** (blocking, warnings, waivers, unchecked prose) and **Traceability** (`verify spec`: step → agent ✓ / pending / mismatch → the tests that run it, each example's test result with why; a step opens its node on the canvas, and the canvas links back) |
 | | A banner on the workflow lists why it cannot run when it names a disabled or undefined model (the API answers `409`) |
-| | On the canvas, **Run** / **Step** are disabled while a model the workflow uses isn't configured (`/health` → `tuvl doctor`) |
+| | On the canvas, **Run** / **Step** are disabled while a model the workflow uses isn't configured (`/health` → `tuvl check system`) |
 | **Workflows** | Canvas and YAML editor for each workflow (below) |
 | | A `code` agent's **Engine** tab is a Python editor for `agents/<file>.py` (⤢ full screen, ⌘S / **Save Python**). Saving is syntax-checked, normalized by codegen (decorator, signature and docstring come from the contract; your body is kept) and reloads the agent. **✦ Assist** writes or changes the body with one of the project's LLM AgentModels: it is given the agent's contract, the fields of its models and the `agent-code` rules, returns the whole file into the editor (↶ undo) and saves nothing; unconfigured models are disabled |
 | **Audit** | This machine's ledger of what was done to the project (`tuvl audit`): import, approval, task derivation, agent runs, branches and pull requests, with refusals. Filter by idea / spec / task id (an idea also shows its specs and tasks), kind and actor; click an event for its JSON; ids link to their pages; **live** polls for new events; the badge says whether the hash chain still holds. Read-only; it holds ids and hashes, never prompts or file contents |
@@ -65,7 +65,7 @@ signals of a code agent become the decision enum when switching to decide). Then
   plus the validate profile before and after;
 - **⌘ Generate stub** runs codegen when the new engine is `code`.
 
-Breakpoints and step mode never apply to these replays or to `tuvl test`.
+Breakpoints and step mode never apply to these replays or to `tuvl run tests`.
 
 ## Artifacts: judges and rules
 
