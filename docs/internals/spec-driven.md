@@ -106,6 +106,11 @@ tokens, deterministic. It reports every finding with its line; blocking findings
 | S014 | ! | A free-text acceptance bullet — listed, not checked |
 | S015 | ✗ | A `decide` rule doesn't compile or type-check against the step's inputs, reads a non-input, or yields a value outside the output enum |
 | S016 | ✗ | A loop tool isn't a `T` step of the flow (or a `## Flow:`/project workflow), an approval condition doesn't compile, or an off-spine step is never used |
+| S017 | ✗ | The spec is `approved` but its body changed since: approve it again (`tuvl spec approve`) or reopen it |
+| S018 | ✗ | `ideas:` names an idea that is not in `idea/` |
+| S019 | ! | The spec `id` is malformed, differs from the file name, or its idea is missing from `ideas:` |
+| S020 | ! | An idea the spec comes from was superseded by a newer one |
+| S021 | ! | A file of an idea changed (or went missing) since it was imported — ideas are immutable |
 | T001 | ! | An example mocks deterministic logic (`code`, `tool db`, `decide` rules) — seed `given:` and `as:` instead |
 
 Prose sections are listed as *unchecked*. A waived signal or end is reported (·) so a reviewer sees it.
@@ -143,8 +148,17 @@ specs/triage-ticket.md
 
 ## 4. The task list
 
-The **coding agent writes the task list** (skill `tuvl-plan`) from the checked spec — tuvl doesn't
-plan with a model. tuvl checks it as part of `tuvl spec check` and derives each task's status.
+`tuvl spec tasks <spec>` **derives the task list** from an *approved* spec — one task per new model,
+step and example, a manual task for each step that calls an external system — with no model. Re-running
+it keeps ids, refreshes section hashes and marks tasks whose step or example left the spec `obsolete`.
+The coding agent (skill `tuvl-plan`) adds only what cannot be derived, such as a `manual` task for a
+policy or credentials. tuvl checks the list as part of `tuvl spec check` and derives each task's status.
+
+A spec is a **draft** until someone runs `tuvl spec approve`, which records who, when and a hash of the
+body in the front matter (`status`, `approved_by`, `approved_at`, `approved_hash`). Editing the body
+afterwards makes the approval stale (S017) and the spec a draft again; the front matter is not hashed.
+`tuvl spec reject --reason` and `tuvl spec reopen` send it back. Anyone on the project may approve; the
+review of the commit that records it is the control. `tuvl spec list` shows each spec's state.
 
 ```yaml
 kind: TaskPlan
