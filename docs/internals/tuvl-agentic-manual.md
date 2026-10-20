@@ -182,6 +182,10 @@ Every template in a `body` must reference keys produced on **every** path to tha
 - `http`: default-deny — a valid bearer token is required unless `public: true` (which can't be
   combined with `required_scope`/`required_group`, V019). The response is the end's `status`/`body`,
   or `202` with the run descriptor when the run outlives `sync_timeout` or waits on a person.
+- `spec.webhooks` declares signed notifications to your own HTTPS endpoints when a run completes, fails,
+  aborts, waits or finishes a named agent: `{ name, url: ${ENV}, secret: ${ENV}, events, stages }`. They carry only
+  a run id and what happened; the receiver pulls the run. Off unless `TUVL_WEBHOOKS_ENABLED=true`. See
+  `docs/webhooks.md`.
 - `http.upload` (`{ store, prefix, max_bytes, max_files, accept }`) lets the route take
   `multipart/form-data`: each `file` / `list[file]` trigger input is stored in the named `kind: Storage`
   store under a generated key and the run receives its reference, never the bytes. A JSON body cannot
@@ -468,6 +472,7 @@ Severity: **E** error, **W** warning (error under `--strict`). `tuvl validate --
 | V034 | E | A `kind: Storage` file is invalid: provider fields, a literal secret instead of `${ENV}`, or a non-https endpoint |
 | V035 | E | `map`: `over` is not a list input; the workflow is unknown, is this workflow, or lacks the `as`/`with` inputs; a required child input is not supplied |
 | V036 | E | `map`: the mapped workflow has a `human` or `pending` agent, or a loop tool that needs approval |
+| V038 | E / W | A webhook's `stages` names an agent the workflow does not have (E); `allow_private` lets it reach internal addresses and plain http (W) |
 | V037 | E / W | File uploads: `http.upload` without a `file` input, an unknown, read-only or too-small store, a `file` nested deeper than `file` / `list[file]`, or a `file` input with MCP export (E); a `file` input on a route with no `upload`, or a public upload (W) |
 
 `tuvl mcp`'s `explain_error` tool explains any code.
