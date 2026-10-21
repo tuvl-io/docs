@@ -18,44 +18,12 @@ Each verb makes one kind of promise, so the name tells you what a command will d
 | `approve` / `reject` / `reopen` | A human decision, recorded in the audit ledger | `spec` |
 | `create` / `import` / `renumber` | Make or bring in specs and ideas | `spec` / `idea` / `idea` |
 | `list` / `show` | Only read | `ideas`, `specs`, `tasks`, `runs`, `agents`, `objects` / `idea`, `run`, `event`, `audit`, `drift`, `project` |
-| `run` | Run a workflow or the tests. `tuvl run` alone starts the production server | `workflow`, `tests` |
+| `run` | Run a workflow or the tests | `workflow`, `tests` |
 | `serve` | Start a server | `app`, `mcp` |
 | `follow` / `pin` / `replay` | Work with runs | `run` / `run` / `runs` |
 | `use` / `set` / `upgrade` / `register` / `update` | Project setup | `agent` / `project` / `project` / `project` / `skills` |
 | `export` / `prune` | Admin | `audit`, `schema` / `traces` |
 | `init`, `dev`, `ship`, `deploy` | One action each | |
-
-### Renamed commands
-
-The old names still work (hidden, with a one-line note on stderr; set `TUVL_NO_RENAME_NOTES=1` to
-silence it). They will be removed after 2.0.x.
-
-| Before | Now |
-|---|---|
-| `validate` | `lint project` |
-| `spec check` / `spec verify` | `lint spec` / `verify spec` |
-| `spec new` / `spec import` / `spec gen` / `spec tasks` | `create spec` / `import idea` / `generate spec` / `generate tasks` |
-| `spec approve` / `reject` / `reopen` | `approve spec` / `reject spec` / `reopen spec` |
-| `spec ideas` / `spec idea` / `spec renumber` | `list ideas` / `show idea` / `renumber idea` |
-| `spec list` / `spec status` / `spec diff` | `list specs` / `list tasks` / `show drift` |
-| `codegen` | `generate code` |
-| `lock` / `lock --check` | `generate lock` / `verify lock` |
-| `ui spec` / `ui spec --check` | `generate ui-spec` / `verify ui-spec` |
-| `keys generate` | `generate key` |
-| `db generate-rls` / `db check-rls` | `generate rls` / `verify rls` |
-| `doctor` | `check system` |
-| `agent test` / `storage check` | `check agent` / `check storage` |
-| `agent list` / `agent use` | `list agents` / `use agent` |
-| `storage ls` | `list objects` |
-| `review` | `review code` |
-| `test` | `run tests` |
-| `run` (the server) | `serve app` (`tuvl run` with no subcommand still starts it) |
-| `mcp` | `serve mcp` |
-| `runs list` / `get` / `tail` / `pin` / `replay` | `list runs` / `show run` / `follow run` (`run workflow` starts one) / `pin run` / `replay runs` |
-| `audit log` / `show` / `verify` / `export` / `prune` | `show audit` / `show event` / `verify audit` / `export audit` / `prune traces` |
-| `project info` / `set` / `init` / `register` | `show project` / `set project` / `upgrade project` / `register project` |
-| `skills update` | `update skills` |
-| `schema export` | `export schema` |
 
 ## Project
 
@@ -139,7 +107,7 @@ installs `tuvl[<only those>]==<locked version>`:
 | `redis` | `redis` | a `kind: DataSource` with `type: redis`, or `agents/*.py` imports `redis` |
 | `vector` | `pgvector` | a Collection or Embedding document, `tuvl.data_search` / `tuvl.data_ingest`, or an import of `pgvector` |
 | `otel-grpc` | OTLP gRPC exporter | `.tuvl/telemetry.yaml` has `otlp_protocol: grpc` |
-| `codegen`, `test` | `libcst`, `aiosqlite` | never: `tuvl generate code`, `tuvl init --sample` and `tuvl run tests` are development tools |
+| `generate code`, `run tests` | `libcst`, `aiosqlite` | never: `tuvl generate code`, `tuvl init --sample` and `tuvl run tests` are development tools |
 
 `tuvl[standard]` installs Insight and every extra, so a development install needs nothing else. The
 model providers and blob storage (S3, Azure, GCS, local) are part of `tuvl` and need no extra.
