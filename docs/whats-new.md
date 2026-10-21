@@ -1,6 +1,6 @@
 # What's new in 2.0
 
-tuvl **2.0.0** (released 20 October 2026; public beta **2.0.0b5** until then — see
+tuvl **2.0.0** (public beta **2.0.0b8** until it ships — see
 [Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
@@ -113,6 +113,23 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     `tuvl init` writes `.tuvl/project.yaml` with a self-checking id, author, type and version. Edit it
     with `tuvl set project` or in Insight, and list the project on [hub.tuvl.io](https://hub.tuvl.io)
     with `tuvl register project` or the Register button. [Project and Catalogue](internals/project.md)
+
+-   **Verb-first commands**
+
+    ---
+
+    Commands read as `tuvl <verb> <noun>`: `tuvl generate code`, `tuvl list specs`, `tuvl verify spec`,
+    `tuvl set project`, `tuvl review code`, `tuvl serve app`. The server shuts down cleanly
+    on a stop signal. [CLI reference](internals/cli.md)
+
+-   **Schedules, uploads and webhooks**
+
+    ---
+
+    API and schedule triggers are switchable and a scheduled run carries its input
+    (`trigger.schedule: { cron, enabled, input }`, validated as V019). The `file` type and
+    `http.upload` take multipart uploads (V037). `spec.webhooks` sends signed, minimal
+    notifications when a run ends. [Webhooks](internals/webhooks.md) · [API](internals/api.md)
 
 -   **A lighter install: built-in model client**
 
