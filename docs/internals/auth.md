@@ -311,7 +311,7 @@ tuvl generate key
 tuvl generate key --write
 ```
 
-- `TUVL_SIGNING_KEY` holds the hex-encoded 32-byte Ed25519 private key (64 hex chars), loaded once per process.
+- `TUVL_SIGNING_KEY` holds the hex-encoded 32-byte Ed25519 private key (64 hex chars), loaded once per process. `TUVL_BISCUIT_PRIVATE_KEY` (the 1.x name, same format) is still read, with a warning to rename it — the key itself carries over unchanged.
 - The derived public key verifies every incoming token; the private key is used only for minting.
 - Keep the key secret and stable: rotating it invalidates every outstanding token (all users re-login). There is no multi-key rollover; rotation is a hard cutover.
 - Because verification is offline, any process holding only the *public* key can verify tuvl tokens — fetch it from `GET /auth/jwks.json` (the `kid` in each token's header names it). Such a verifier can't see logouts or ended sessions.

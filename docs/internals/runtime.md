@@ -98,7 +98,7 @@ mode, Insight breakpoints and step mode pause runs through the same mechanism.
 
 ## Production server and shutdown
 
-`tuvl serve app` (`tuvl run` still works) starts uvicorn and *replaces* the `tuvl` process with it, so in a
+`tuvl serve app` starts uvicorn and *replaces* the `tuvl` process with it, so in a
 container uvicorn is PID 1 and receives SIGTERM itself. On SIGTERM it stops taking requests and lets open
 ones finish for `--graceful-timeout` seconds (20), then the runtime stops claiming runs and waits
 `--drain-timeout` seconds (20) for the running ones. A run still going is interrupted, not failed: its
