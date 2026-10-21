@@ -5,7 +5,7 @@
 !!! note "tuvl 2.0 — public beta now"
     tuvl 2.0 is a redesign with no 1.x compatibility layer: workflows are graphs of typed
     **agents**, every run is durable and journaled, and projects are built from specs. See
-    [what's new](whats-new.md). Until 2.0.0 ships, install the public beta **2.0.0b8** — see
+    [what's new](whats-new.md). Until 2.0.0 ships, install the public beta **2.0.0b7** — see
     [Installation](getting-started/installation.md#20-public-beta). Versions follow
     [SemVer](https://semver.org).
 
