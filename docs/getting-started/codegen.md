@@ -15,7 +15,7 @@ tuvl generate code --check          # write nothing; exit 1 if anything would ch
 The commands above are the deterministic part. For an **approved** spec, `tuvl generate code --spec SPEC --all`
 (or `--task 3`, `--task 1,3`) goes further: first, with no tokens spent, it writes the models from `# Data` and a
 workflow skeleton of `pending` steps from `# Flows`, then it asks your installed coding agent to implement each
-task on its own branch (`feature/TASK-…`), checks it (the step is implemented, `validate` and `verify spec`
+task on its own branch (`feature/TASK-…`), checks it (the step is implemented, `lint project` and `verify spec`
 agree, the Python passes `tuvl review code`), and opens a draft pull request, stacked on the previous one. Nothing is
 merged for you. See [Authoring with a coding agent](../internals/authoring.md).
 

@@ -19,8 +19,8 @@ Signals pick the next agent or a named end. Every run is **durable** and **journ
 restarts, can wait for people, and can be replayed as a test fixture.
 
 Work is **spec-driven**: intent lives in `specs/<name>.md`, in a grammar `tuvl lint spec` checks;
-the coding agent writes the task list and builds; deterministic tooling (`verify spec`, `codegen`,
-`validate`, `test`, `lock`) tracks the project to done. YAML is the single source of truth — the Insight canvas and coding agents edit the
+the coding agent writes the task list and builds; deterministic tooling (`verify spec`, `generate code`,
+`lint project`, `run tests`, `generate lock`) tracks the project to done. YAML is the single source of truth — the Insight canvas and coding agents edit the
 same files.
 
 ---
