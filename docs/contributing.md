@@ -42,7 +42,7 @@ Tests that need Postgres skip without `TUVL_TEST_PG_URL`. CI runs all of the abo
 ## Changing behaviour
 
 - The 2.0 specification is the contract: a change to a document kind, engine, signal or validation
-  rule updates the schema (`contract/schema.py`), `tuvl validate`, codegen, Insight, the docs and
+  rule updates the schema (`contract/schema.py`), `tuvl lint project`, codegen, Insight, the docs and
   the changelog together.
 - Engines, document kinds and artifact types are closed sets — open an issue before proposing one.
 - Add a test for every fix; prefer real Postgres over mocks for runtime behaviour.

@@ -42,20 +42,20 @@ Before installing tuvl, ensure you have:
 
 ## 2.0 public beta
 
-tuvl **2.0.0** is released on **20 October 2026**. Until then, 2.0 is available as the public beta
-**2.0.0b5**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
+tuvl **2.0.0** is the next stable release. Until it ships, 2.0 is available as the public beta
+**2.0.0b7**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
 beta explicitly:
 
 ```bash
 # CLI + dev server + Insight (recommended)
-uv tool install --prerelease allow "tuvl[standard]==2.0.0b5"
+uv tool install --prerelease allow "tuvl[standard]==2.0.0b7"
 
 # CLI only
-uv tool install "tuvl==2.0.0b5"
+uv tool install "tuvl==2.0.0b7"
 ```
 
 `--prerelease allow` is needed because uv only takes a pre-release for packages you name yourself,
-and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b5` indirectly.
+and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b7` indirectly.
 
 The TypeScript client has a matching beta on npm's `beta` channel:
 
@@ -63,7 +63,7 @@ The TypeScript client has a matching beta on npm's `beta` channel:
 npm install @tuvl/client@beta     # 2.0.0-beta.1
 ```
 
-From 20 October the commands below install 2.0.0 directly. Report beta issues on
+Once 2.0.0 is released, the commands below install it directly. Report beta issues on
 [GitHub](https://github.com/tuvl-io/tuvl/issues).
 
 ## Installing tuvl CLI
@@ -79,7 +79,7 @@ uv tool install "tuvl[standard]"
 ```
 
 !!! tip
-    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, hot-reload support, the development tools (`tuvl codegen`, `tuvl test`, `tuvl mcp`) and every extra below. The base install is the production server and is about 65 MB installed. `tuvl ship` builds production images from it and adds only the extras your project uses.
+    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, hot-reload support, the development tools (`tuvl generate code`, `tuvl run tests`, `tuvl serve mcp`) and every extra below. The base install is the production server and is about 65 MB installed. `tuvl ship` builds production images from it and adds only the extras your project uses.
 
 Verify the installation:
 
@@ -111,14 +111,14 @@ The base `tuvl` has no package for a feature you may not use. Install the extra 
 
 | Extra | Adds | You need it for |
 |---|---|---|
-| `tuvl[mcp]` | `mcp` | `use: mcp` tools, a `loop` calling an MCP server, exporting a workflow as an MCP tool, `tuvl mcp` |
+| `tuvl[mcp]` | `mcp` | `use: mcp` tools, a `loop` calling an MCP server, exporting a workflow as an MCP tool, `tuvl serve mcp` |
 | `tuvl[redis]` | `redis` | a `type: redis` datasource |
 | `tuvl[vector]` | `pgvector` | collections, embeddings and `tuvl.data_search` / `tuvl.data_ingest` |
 | `tuvl[otel-grpc]` | OTLP gRPC exporter | `TUVL_OTLP_PROTOCOL=grpc` (HTTP/protobuf is the default and needs nothing) |
-| `tuvl[codegen]` | `libcst` | `tuvl codegen` and `tuvl init --sample` |
-| `tuvl[test]` | `aiosqlite` | `tuvl test` |
-| `tuvl[review]` | `ruff` | `tuvl review` |
-| `tuvl[pdf]` | `pypdf` | `tuvl spec import` of PDF ideas (Word and Markdown need nothing extra) |
+| `tuvl[codegen]` | `libcst` | `tuvl generate code` and `tuvl init --sample` |
+| `tuvl[test]` | `aiosqlite` | `tuvl run tests` |
+| `tuvl[review]` | `ruff` | `tuvl review code` |
+| `tuvl[pdf]` | `pypdf` | `tuvl import idea` of PDF ideas (Word and Markdown need nothing extra) |
 | `tuvl[tui]` | `textual` | the terminal UI that `tuvl dev` starts on a terminal |
 
 ```bash
@@ -269,8 +269,8 @@ Create the sample project and run its checks:
 ```bash
 tuvl init my-project --sample --preset gemini -y   # or openai | anthropic | ollama
 cd my-project
-tuvl validate --strict
-tuvl test
+tuvl lint project --strict
+tuvl run tests
 tuvl dev --auto-login
 ```
 
@@ -319,7 +319,7 @@ The default `8885` spells **T·U·V·L** on a phone keypad and deliberately avoi
 ## Next Steps
 
 - [Quickstart Guide](quickstart.md) — Build your first workflow
-- [Code generation](codegen.md) — `tuvl codegen`: typed schemas, stubs and tests
+- [Code generation](codegen.md) — `tuvl generate code`: typed schemas, stubs and tests
 - [Shipping to production](shipping.md) — `tuvl ship`: image, Helm chart, Laya and secrets
 - [Project Structure](project-structure.md) — Understand the project layout
 - [Agentic Manual](../internals/tuvl-agentic-manual.md) — how tuvl projects are written

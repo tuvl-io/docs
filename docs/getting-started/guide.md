@@ -20,14 +20,14 @@ The workflow uses no language model, so every check in this guide is offline and
 | # | Stage | What happens | Main command |
 |---|---|---|---|
 | 1 | [Create](#1-create-the-project) | A project folder with config, skills and rules | `tuvl init` |
-| 2 | [Spec](#2-write-the-spec) | Intent, data, flow and examples, in one Markdown file | `tuvl spec check` |
-| 3 | [Data](#3-data-models) | The models the spec names | `tuvl validate` |
-| 4 | [Workflow](#4-the-workflow) | The graph of agents | `tuvl validate --strict` |
-| 5 | [Tasks](#5-the-task-list) | One task per model, step and example | `tuvl spec status` |
-| 6 | [Generate and lock](#6-generate-and-lock) | Schemas, tests from the examples, the lock | `tuvl codegen`, `tuvl lock` |
+| 2 | [Spec](#2-write-the-spec) | Intent, data, flow and examples, in one Markdown file | `tuvl lint spec` |
+| 3 | [Data](#3-data-models) | The models the spec names | `tuvl lint project` |
+| 4 | [Workflow](#4-the-workflow) | The graph of agents | `tuvl lint project --strict` |
+| 5 | [Tasks](#5-the-task-list) | One task per model, step and example | `tuvl list tasks` |
+| 6 | [Generate and lock](#6-generate-and-lock) | Schemas, tests from the examples, the lock | `tuvl generate code`, `tuvl generate lock` |
 | 7 | [The gate](#7-the-gate) | Seven checks that must all pass | see below |
 | 8 | [Run](#8-run-it) | The server, a real request, a real approval | `tuvl dev` |
-| 9 | [Change](#9-change-it-later) | A spec change flows through the checks | `tuvl spec diff` |
+| 9 | [Change](#9-change-it-later) | A spec change flows through the checks | `tuvl show drift` |
 | 10 | [Ship](#10-ship-it) | Dockerfile, Helm chart, image | `tuvl ship` |
 
 !!! tip "Who does what"
@@ -38,8 +38,8 @@ The workflow uses no language model, so every check in this guide is offline and
 
 !!! tip "Prefer to start from an idea?"
     This guide writes the spec by hand. If you have a brief (Markdown, PDF or Word) and a coding agent
-    installed, `tuvl spec import brief.pdf` → `tuvl spec gen` → `tuvl spec approve` → `tuvl spec tasks` →
-    `tuvl codegen --spec …` does stages 2 to 6 with your agent, one pull request per task, and the same gate
+    installed, `tuvl import idea brief.pdf` → `tuvl generate spec` → `tuvl approve spec` → `tuvl generate tasks` →
+    `tuvl generate code --spec …` does stages 2 to 6 with your agent, one pull request per task, and the same gate
     at the end. See [Authoring with a coding agent](../internals/authoring.md).
 
 ## 1. Create the project
@@ -86,8 +86,8 @@ refunds/
     allow `codegen_write`, `run_workflow` and `pin_fixture`. Without MCP the agent runs the same
     commands in a shell with `--json`.
 
-    After you upgrade tuvl, `tuvl skills update --diff` shows what would change in the skills and
-    `tuvl skills update` applies it.
+    After you upgrade tuvl, `tuvl update skills --diff` shows what would change in the skills and
+    `tuvl update skills` applies it.
 
 === "By hand"
 
@@ -96,11 +96,11 @@ refunds/
 
 ## 2. Write the spec
 
-The spec is the one document that says what the project is for. `tuvl spec new` writes a template
+The spec is the one document that says what the project is for. `tuvl create spec` writes a template
 that already passes the check:
 
 ```bash
-tuvl spec new refund-request
+tuvl create spec refund-request
 ```
 
 A spec is Markdown. `# Intent` and `# Policies` are prose for people and the agent. Three parts are
@@ -117,11 +117,11 @@ and the `tuvl-example` blocks under `# Acceptance` (each one becomes a test). Th
     > on an order (`order_id`, `amount`, `reason`). If the amount is 100 or less, record it. If it
     > is more, a finance lead (group `finance_lead`, 24 hours) must approve first; rejected or
     > expired means no refund. An unknown order is a 404. Include an example for every end. Do not
-    > build anything yet. Run `tuvl spec check` until it has no blocking findings, then show me.
+    > build anything yet. Run `tuvl lint spec` until it has no blocking findings, then show me.
 
     **Review it before anything is built.** This is the cheapest place to catch a wrong idea:
 
-    - Does every end have the right HTTP status, and an example (`tuvl spec check` warns with S011 if not)?
+    - Does every end have the right HTTP status, and an example (`tuvl lint spec` warns with S011 if not)?
     - Who is allowed to call the flow, and who may approve (S010, S013)?
     - Is the threshold the one you meant, and is it in `# Policies` too?
     - Is every model marked `(new)` or `(existing)` correctly?
@@ -208,7 +208,7 @@ and the `tuvl-example` blocks under `# Acceptance` (each one becomes a test). Th
 Now check it. Nothing is built yet, so the spec is allowed to be ahead of the project:
 
 ```bash
-tuvl spec check
+tuvl lint spec
 ```
 
 ```text
@@ -227,7 +227,7 @@ exists, so tuvl expects `models/order.yaml`. Every finding names a line and a ru
 === "With a coding agent"
 
     Ask for the models with the `tuvl-data` skill: *"Create the models from `# Data` in the spec."* It
-    writes one `ModelDefinition` per model and runs `tuvl spec check` until S007 is gone.
+    writes one `ModelDefinition` per model and runs `tuvl lint spec` until S007 is gone.
 
 === "By hand"
 
@@ -292,7 +292,7 @@ exists, so tuvl expects `models/order.yaml`. Every finding names a line and a ru
     plain `uuid` field.
 
 ```bash
-tuvl spec check          # S007 is gone
+tuvl lint spec          # S007 is gone
 ```
 
 ## 4. The workflow
@@ -314,12 +314,12 @@ named end, and there are no implicit edges.
     engine skill for each step (`agent-tool`, `agent-decide`, `agent-human`). The loop it follows is
     the same one you would:
 
-    1. `tuvl spec status --json` says which task is next and why others are blocked.
+    1. `tuvl list tasks --json` says which task is next and why others are blocked.
     2. Build what the task targets, exactly as the spec line says.
-    3. `tuvl codegen` after any contract change.
-    4. `tuvl validate --json` and `tuvl spec verify --json`; fix every error.
-    5. `tuvl test --json` until a passing test goes through the step.
-    6. Repeat until `tuvl spec status --strict` exits 0.
+    3. `tuvl generate code` after any contract change.
+    4. `tuvl lint project --json` and `tuvl verify spec --json`; fix every error.
+    5. `tuvl run tests --json` until a passing test goes through the step.
+    6. Repeat until `tuvl list tasks --strict` exits 0.
 
     A step it cannot finish stays `pending` (a contract with no implementation) instead of being
     faked. Only a `code` agent needs Python, and then only the function body.
@@ -429,7 +429,7 @@ named end, and there are no implicit edges.
 
     Points to notice:
 
-    - `routes` lists every signal an agent can emit. `tuvl validate` rejects a missing route, so a
+    - `routes` lists every signal an agent can emit. `tuvl lint project` rejects a missing route, so a
       path you forgot is an error, not a surprise at run time.
     - `decide` rules are `{ when, then }`, first match wins, and the last rule is `when: "true"`.
     - `human` has `required_group`, an `expires`, and `route_on: approved`, which turns the
@@ -437,7 +437,7 @@ named end, and there are no implicit edges.
     - `outputs` maps each end to a status and a body. `default` is the success end.
 
 ```bash
-tuvl validate --strict
+tuvl lint project --strict
 ```
 
 ```text
@@ -457,7 +457,7 @@ person (external), and the worst-case token cost is 0 because no model is involv
 !!! warning "A typo is caught here, not in production"
     Writing a decide rule as `- when: "amount <= 100"` with `value: auto` (instead of `then: auto`)
     fails with `[V001] spec.agents[check_amount].decide.rules[0].then: Field required`. Every
-    error carries a code; `tuvl validate` lists them all, and the agent's `explain_error` tool
+    error carries a code; `tuvl lint project` lists them all, and the agent's `explain_error` tool
     explains one.
 
 ## 5. The task list
@@ -470,7 +470,7 @@ derived** from the project.
 | Status | Means |
 |---|---|
 | `todo` | Not built yet (a `pending` agent, a missing file, an example with no test) |
-| `in_progress` | Built, but `validate` or `spec verify` reports a problem |
+| `in_progress` | Built, but `lint project` or `verify spec` reports a problem |
 | `implemented` | Validates cleanly and matches the spec |
 | `tested` | A passing test covers it |
 | `done` | Nothing blocks shipping |
@@ -487,8 +487,8 @@ derived** from the project.
     spec section it came from, and tuvl prints them:
 
     ```bash
-    tuvl spec check --json | jq -r '.specs[0].hash'                       # the spec's hash
-    tuvl spec check --json | jq -r '.specs[0].sections[] | "\(.anchor) \(.hash)"'
+    tuvl lint spec --json | jq -r '.specs[0].hash'                       # the spec's hash
+    tuvl lint spec --json | jq -r '.specs[0].sections[] | "\(.anchor) \(.hash)"'
     ```
 
     ```text
@@ -575,7 +575,7 @@ derived** from the project.
 Look at the board:
 
 ```bash
-tuvl spec status
+tuvl list tasks
 ```
 
 Before the tests exist it shows exactly what is missing and why, for example:
@@ -587,7 +587,7 @@ Before the tests exist it shows exactly what is missing and why, for example:
         no passing Test covers refund_request.load_order
         waiting on T1
   T6   todo        blocked Example: a small refund is recorded
-        no generated test for example 'a small refund is recorded' — run tuvl codegen
+        no generated test for example 'a small refund is recorded' — run tuvl generate code
         waiting on T5
 ```
 
@@ -596,8 +596,8 @@ The reasons are the to-do list. The next stage clears them.
 ## 6. Generate and lock
 
 ```bash
-tuvl codegen
-tuvl lock
+tuvl generate code
+tuvl generate lock
 ```
 
 ```text
@@ -610,13 +610,13 @@ tuvl lock
 wrote tuvl.lock: 0 model(s), 0 artifact(s), 0 judge(s), 0 MCP tool(s)
 ```
 
-`tuvl codegen` writes what follows mechanically from your YAML and spec: typed schemas for every agent
+`tuvl generate code` writes what follows mechanically from your YAML and spec: typed schemas for every agent
 (`agents/_generated/schemas.py`), and **one test per `tuvl-example`** in the spec. It never writes a
 function body. If the project had a `code` agent it would also write its stub and keep your code
 on every later run ([Code generation](codegen.md)). Never edit generated files; change the spec and
 run it again.
 
-`tuvl lock` writes `tuvl.lock`: the tuvl version and, when you have them, the exact model ids,
+`tuvl generate lock` writes `tuvl.lock`: the tuvl version and, when you have them, the exact model ids,
 prompt hashes and MCP tool schemas the project depends on. It is empty of those here, and it still
 matters: `tuvl ship` refuses a stale lock (V024), so a model upgrade can never reach production by
 accident. Commit it.
@@ -626,29 +626,29 @@ accident. Commit it.
 Seven commands decide whether the project is consistent. Run them together; this is also your CI:
 
 ```bash
-tuvl spec check && tuvl validate --strict && tuvl codegen --check && tuvl lock --check \
-  && tuvl test --strict && tuvl spec verify --strict && tuvl spec status --strict
+tuvl lint spec && tuvl lint project --strict && tuvl generate code --check && tuvl verify lock \
+  && tuvl run tests --strict && tuvl verify spec --strict && tuvl list tasks --strict
 ```
 
 | Command | It proves |
 |---|---|
-| `tuvl spec check` | The spec is complete and consistent (S001 to S016) and the task list matches it (P001 to P005) |
-| `tuvl validate --strict` | The workflows are well-formed: routes, types, data flow, policy (V001 to V036). `--strict` makes warnings fail |
-| `tuvl codegen --check` | Generated files are up to date; exits 1 if anything would change |
-| `tuvl lock --check` | `tuvl.lock` matches the project |
-| `tuvl test --strict` | The tests pass; `--strict` also fails a result that only passed through unimplemented steps |
-| `tuvl spec verify --strict` | The workflow matches the spec step by step (R001 to R010) |
-| `tuvl spec status --strict` | Every task is `done` |
+| `tuvl lint spec` | The spec is complete and consistent (S001 to S016) and the task list matches it (P001 to P005) |
+| `tuvl lint project --strict` | The workflows are well-formed: routes, types, data flow, policy (V001 to V036). `--strict` makes warnings fail |
+| `tuvl generate code --check` | Generated files are up to date; exits 1 if anything would change |
+| `tuvl verify lock` | `tuvl.lock` matches the project |
+| `tuvl run tests --strict` | The tests pass; `--strict` also fails a result that only passed through unimplemented steps |
+| `tuvl verify spec --strict` | The workflow matches the spec step by step (R001 to R010) |
+| `tuvl list tasks --strict` | Every task is `done` |
 
 ```text
-$ tuvl test --strict
+$ tuvl run tests --strict
 PASS    a-finance-lead-rejects-a-large-refund (refund_request → END.rejected, 0 tok)
 PASS    a-large-refund-waits-for-a-finance-lead (refund_request → END.?, 0 tok)
 PASS    a-small-refund-is-recorded (refund_request → END.default, 0 tok)
 PASS    an-unknown-order-is-refused (refund_request → END.unknown_order, 0 tok)
 4 passed · 0 stubbed (not counted) · 0 failed
 
-$ tuvl spec verify --strict
+$ tuvl verify spec --strict
   refund_request
     load_order             tool db read Order           :23   ✓ 4 passed
     check_amount           decide rules                 :25   ✓ 3 passed
@@ -656,7 +656,7 @@ $ tuvl spec verify --strict
     record_refund          tool db create Refund        :33   ✓ 1 passed
   0 mismatch(es) · steps implemented 4/4 · exercised by real tests 3/4
 
-$ tuvl spec status --strict
+$ tuvl list tasks --strict
   T1   done        Refund model
   ...
   T9   done        Example: a finance lead rejects a large refund
@@ -668,7 +668,7 @@ Two details are worth understanding:
 - **Tests run offline** against an in-memory database. They mock only what is non-deterministic,
   external or human. Here that is the `finance_review` step, because nobody answers a form in a test.
   Business logic (`tool db`, `decide` rules, `code`) runs for real, and the order is seeded with
-  `given:` in the example. That is why `spec verify` says `3/4` are exercised by real tests: the
+  `given:` in the example. That is why `verify spec` says `3/4` are exercised by real tests: the
   fourth is mocked on purpose.
 - **A mock cannot hide a gap.** If a step is still `pending`, a test that passes through it is
   reported `STUBBED`, does not count, and fails `--strict`.
@@ -799,8 +799,8 @@ curl -s $B/api/runs/$RUN_ID -H "Authorization: Bearer $KEY" | jq -c '{status, en
 ```
 
 ```bash
-TUVL_URL=http://localhost:8885 TUVL_TOKEN=$KEY tuvl runs list       # every run, with its end
-tuvl runs tail <run_id>        # follows a run until it ends (Ctrl-C to stop)
+TUVL_URL=http://localhost:8885 TUVL_TOKEN=$KEY tuvl list runs       # every run, with its end
+tuvl follow run <run_id>        # follows a run until it ends (Ctrl-C to stop)
 ```
 
 Every step of every run is journaled, so you can see what happened and replay it. Open Insight
@@ -830,7 +830,7 @@ The spec stays the source of truth. Suppose finance raises the automatic limit f
 the spec first (the flow's rule and the policy), and let tuvl show you what moved:
 
 ```bash
-tuvl spec check
+tuvl lint spec
 ```
 
 ```text
@@ -840,7 +840,7 @@ tuvl spec check
 ```
 
 ```bash
-tuvl spec verify
+tuvl verify spec
 ```
 
 ```text
@@ -848,7 +848,7 @@ tuvl spec verify
   ✗ R007  :25   `check_amount`: the workflow's rules differ from the spec's
 ```
 
-`tuvl spec diff` lists the stale tasks and the spec sections no task covers. Now the work is clear:
+`tuvl show drift` lists the stale tasks and the spec sections no task covers. Now the work is clear:
 the workflow still says 100, and four tasks point at a section that changed.
 
 === "With a coding agent"
@@ -865,14 +865,14 @@ the workflow still says 100, and four tasks point at a section that changed.
 === "By hand"
 
     Change the rule in `workflows/refund_request.yaml` to `amount <= 200`, then refresh the hashes in
-    the task list from `tuvl spec check --json` (the same commands as stage 5), and rerun the gate:
+    the task list from `tuvl lint spec --json` (the same commands as stage 5), and rerun the gate:
 
     ```bash
-    tuvl spec check && tuvl spec verify --strict && tuvl test --strict && tuvl spec status --strict
+    tuvl lint spec && tuvl verify spec --strict && tuvl run tests --strict && tuvl list tasks --strict
     ```
 
 All four commands exit 0 again. The order matters: **spec first, then the workflow**. If you change
-the workflow first, `spec verify` reports a contradiction until the spec catches up.
+the workflow first, `verify spec` reports a contradiction until the spec catches up.
 
 ## 10. Ship it
 
@@ -889,22 +889,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Install tuvl
-        run: uv tool install --python 3.13 --prerelease=allow "tuvl[standard]>=2.0.0b5,<3"
+        run: uv tool install --python 3.13 --prerelease=allow "tuvl[standard]>=2.0.0b7,<3"
       - name: Gate
         run: |
-          tuvl spec check
-          tuvl validate --strict
-          tuvl codegen --check
-          tuvl lock --check --no-mcp
-          tuvl test --strict
-          tuvl spec verify --strict
-          tuvl spec status --strict
+          tuvl lint spec
+          tuvl lint project --strict
+          tuvl generate code --check
+          tuvl verify lock --no-mcp
+          tuvl run tests --strict
+          tuvl verify spec --strict
+          tuvl list tasks --strict
 ```
 
 Then:
 
 ```bash
-tuvl keys generate --write                       # a persistent signing key for production tokens
+tuvl generate key --write                       # a persistent signing key for production tokens
 tuvl ship -t registry.example.com/refunds:1.0    # add --push to push, --no-build to skip docker
 ```
 
@@ -943,7 +943,7 @@ helm install refunds deploy/chart/refunds --set image.repository=registry.exampl
 helm upgrade refunds deploy/chart/refunds --set split=true --set worker.replicaCount=3
 ```
 
-The secret must hold `TUVL_SIGNING_KEY` (from `tuvl keys generate`), `POSTGRES_PASSWORD`, and the
+The secret must hold `TUVL_SIGNING_KEY` (from `tuvl generate key`), `POSTGRES_PASSWORD`, and the
 variable of every model the workflows use (none here). A production engine refuses to start while
 one is missing. The container runs in production mode: no dev routes, no Insight, JSON logs. The chart
 does not include Postgres, so point `POSTGRES_HOST` at yours. More: [Shipping to production](shipping.md).
@@ -959,13 +959,13 @@ Every project already carries an identity file, `.tuvl/project.yaml`, with a sta
 and email. If you want the project listed in the public catalogue at hub.tuvl.io, look first:
 
 ```bash
-tuvl project info
-tuvl project set description "Refund approvals: small refunds at once, large ones wait for a lead."
-tuvl project register          # prints the exact payload and asks; answer n to only look
+tuvl show project
+tuvl set project description "Refund approvals: small refunds at once, large ones wait for a lead."
+tuvl register project          # prints the exact payload and asks; answer n to only look
 ```
 
 Registering is public and is tied to the GitHub account you sign in with. **The author name in the
-listing is your git name**, so check it first (`tuvl project set author "…"`). Your email stays
+listing is your git name**, so check it first (`tuvl set project author "…"`). Your email stays
 private unless you add `--public-email`, and nothing about your workflows, models or data is sent. If
 you use a coding agent, it will not register on its own: it only does so when you ask. Details,
 every field and the error messages: [Project and Catalogue](../internals/project.md).
@@ -977,11 +977,11 @@ every field and the error messages: [Project and Catalogue](../internals/project
 | `S007  Order is marked (existing) but is not in models/` | The spec names a model that has no `ModelDefinition` | Add `models/order.yaml` |
 | `P003  no task list yet` | There is no `specs/<name>.tasks.yaml` | Write it (stage 5) |
 | `[V001] ...decide.rules[0].then: Field required` | A decide rule is not `{ when, then }` | Use `- { when: "expr", then: value }`, last `when: "true"` |
-| `no generated test for example '...' — run tuvl codegen` | The example has no test yet | `tuvl codegen` |
-| `tuvl.lock is missing` / `[V024] tuvl.lock is out of date` | The lock does not match the project or the installed tuvl | `tuvl lock`, review, commit |
+| `no generated test for example '...' — run tuvl generate code` | The example has no test yet | `tuvl generate code` |
+| `tuvl.lock is missing` / `[V024] tuvl.lock is out of date` | The lock does not match the project or the installed tuvl | `tuvl generate lock`, review, commit |
 | `P005  spec section ... changed since the task was written` | The spec moved after the task list was written | Update the tasks and refresh their hashes |
 | `R007  the workflow's rules differ from the spec's` | The workflow and the spec disagree | Change the spec first, then the workflow |
-| `STUBBED` in `tuvl test --strict` | The test only passed through a `pending` agent | Implement the agent |
+| `STUBBED` in `tuvl run tests --strict` | The test only passed through a `pending` agent | Implement the agent |
 | `403 the principal who triggered this run cannot approve it` | You approved your own run | Approve as another user in the step's group |
 | `Ship aborted — the kept Dockerfile does not install tuvl[...]` | The project now needs an extra the old Dockerfile lacks | `tuvl ship --force` |
 | `needs the 'codegen' extra: pip install 'tuvl[codegen]'` | A development command on a bare install | Install `tuvl[standard]` |
@@ -991,23 +991,23 @@ every field and the error messages: [Project and Catalogue](../internals/project
 | I want to | Run |
 |---|---|
 | Start a project | `tuvl init <name> -y --preset <provider>` |
-| Start a spec | `tuvl spec new <name>` (or `tuvl spec import <brief>` then `tuvl spec gen`) |
-| Approve a spec / derive its tasks | `tuvl spec approve <spec>` / `tuvl spec tasks <spec>` |
-| Build the tasks with your coding agent | `tuvl codegen --spec <spec> --all` |
-| Review the agents' Python | `tuvl review` (`--agent` for a second opinion) |
-| See what was done to the project | `tuvl audit log` (or Insight → Audit) |
-| Check the spec / the build against it | `tuvl spec check` / `tuvl spec verify` |
-| See what to do next | `tuvl spec status` (`--json` for agents) |
-| See what changed since the plan | `tuvl spec diff` |
-| Generate schemas, stubs, tests | `tuvl codegen` (`--check` in CI) |
-| Check the workflows | `tuvl validate --strict` |
-| Run the tests | `tuvl test --strict` |
-| Pin models and tools | `tuvl lock` (`--check` in CI) |
+| Start a spec | `tuvl create spec <name>` (or `tuvl import idea <brief>` then `tuvl generate spec`) |
+| Approve a spec / derive its tasks | `tuvl approve spec <spec>` / `tuvl generate tasks <spec>` |
+| Build the tasks with your coding agent | `tuvl generate code --spec <spec> --all` |
+| Review the agents' Python | `tuvl review code` (`--agent` for a second opinion) |
+| See what was done to the project | `tuvl show audit` (or Insight → Audit) |
+| Check the spec / the build against it | `tuvl lint spec` / `tuvl verify spec` |
+| See what to do next | `tuvl list tasks` (`--json` for agents) |
+| See what changed since the plan | `tuvl show drift` |
+| Generate schemas, stubs, tests | `tuvl generate code` (`--check` in CI) |
+| Check the workflows | `tuvl lint project --strict` |
+| Run the tests | `tuvl run tests --strict` |
+| Pin models and tools | `tuvl generate lock` (`--check` in CI) |
 | Run it locally | `tuvl dev --show-key` |
-| Look at runs | `tuvl runs list`, `tuvl runs tail <id>` |
-| Serve it to a coding agent | `tuvl mcp` |
+| Look at runs | `tuvl list runs`, `tuvl follow run <id>` |
+| Serve it to a coding agent | `tuvl serve mcp` |
 | Package it | `tuvl ship -t <image>` (`--format archive` for a zip/tar you run with `uv`) |
-| Look at, edit or publish the project's identity | `tuvl project info`, `tuvl project set`, `tuvl project register` |
+| Look at, edit or publish the project's identity | `tuvl show project`, `tuvl set project`, `tuvl register project` |
 
 ## Where next
 

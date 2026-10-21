@@ -21,12 +21,12 @@ engine (`code:`, `tool:`, `llm:`, …).
   routes:  { billing: billing_queue, technical: kb_search, general: general_queue }
 ```
 
-- `tuvl validate` checks it fully as a contract (data flow, types, routes). It is a V010 warning.
+- `tuvl lint project` checks it fully as a contract (data flow, types, routes). It is a V010 warning.
 - In dev and in tests it returns a **typed stub**: schema-valid placeholder outputs and its first
   normal signal. Tests override it with `mocks`.
 - `tuvl ship` refuses a project with `pending` agents, and the production runner won't load one.
 
-A `pending` agent is a typed placeholder for a step the spec names but nobody has built yet; `tuvl spec verify` reports it as unfinished and tests through it are *stubbed*, not passed.
+A `pending` agent is a typed placeholder for a step the spec names but nobody has built yet; `tuvl verify spec` reports it as unfinished and tests through it are *stubbed*, not passed.
 
 ---
 
@@ -59,7 +59,7 @@ async def issue_refund(inp: IssueRefundIn, ctx: Ctx) -> IssueRefundOut:
 
 | | |
 |---|---|
-| Signature | `async def f(inp: <Id>In, ctx: Ctx) -> <Id>Out` or `tuple[<Id>Out, str]`. `tuvl codegen` writes the decorator, signature and docstring; you write the body. |
+| Signature | `async def f(inp: <Id>In, ctx: Ctx) -> <Id>Out` or `tuple[<Id>Out, str]`. `tuvl generate code` writes the decorator, signature and docstring; you write the body. |
 | Signals | Returning `Out` emits `default`; `(Out, "signal")` emits that signal (it must be routed); an exception emits `error` (`code_exception`). |
 | `ctx.db` | Unit of work restricted to `spec.models`; read-only when `effect: read` (a write raises). Writes commit with the step's checkpoint. |
 | `ctx` | `ctx.log` (structlog, bound to the run and agent), `ctx.run_id`, `ctx.principal`, `ctx.idempotency_key`, `ctx.http` (shared HTTP client), `ctx.artifact(ref)`, `ctx.params` (rendered `code.with`), `ctx.agent_id` |
@@ -262,7 +262,7 @@ the results. The step is one agent of the parent; each item is a **child run** o
   that needs approval. A child that waits anyway fails its item.
 - **Bounded.** `concurrency` limits parallel items, `max_items` the list length, and
   `policy.max_depth` how deeply workflows nest (a workflow cannot map itself, V035). Worst-case
-  tokens in `tuvl validate` are the child's worst case times `max_items`, and the step takes the
+  tokens in `tuvl lint project` are the child's worst case times `max_items`, and the step takes the
   child's strongest determinism class.
 - **Checks (V035):** `over` is a list input; the workflow exists; `as` and every `with` key are inputs of
   the child; no required child input is left out; item and input types agree (V007); `outputs` is
