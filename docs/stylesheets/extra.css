@@ -65,3 +65,7 @@ a.button.ghost:has(> h1) > h1 {
 @media (max-width: 768px) {
   .tuvl-footer__inner { grid-template-columns: 1fr; gap: 1.75rem; }
 }
+
+/* the header reads "tuvl docs", with the second word in the accent, as on the hub */
+.tuvl-site-tag { color: #0891b2; }
+.dark .tuvl-site-tag { color: #22d3ee; }
