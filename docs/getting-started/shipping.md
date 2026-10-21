@@ -4,7 +4,7 @@
 same gate as CI: nothing ships that does not validate.
 
 ```bash
-tuvl keys generate --write          # a persistent signing key (TUVL_SIGNING_KEY)
+tuvl generate key --write          # a persistent signing key (TUVL_SIGNING_KEY)
 tuvl ship -t registry.example.com/triage:1.0.0 --push
 ```
 
@@ -16,7 +16,7 @@ with `run.sh`, `RUN.md`, `.env.example` and `BUILD-INFO.json`, which you run wit
 Docker. `--format both` does both; `--no-image` skips the image build. `--out` sets where files go.
 
 Before either, `ship` runs the deterministic spec gate: every spec under approval is approved and unchanged,
-`spec check` and `spec verify` are clean, tasks are done (`--allow-incomplete` to override), generated files
+`lint spec` and `verify spec` are clean, tasks are done (`--allow-incomplete` to override), generated files
 are current, the agents' Python has no review errors, `uv.lock` is current and the tree is clean
 (`--allow-dirty`).
 
@@ -48,7 +48,7 @@ files, before the build, so the same project always produces the same image:
 | `vector` | a Collection or Embedding document, `tuvl.data_search` / `tuvl.data_ingest`, or an agent imports `pgvector` |
 | `otel-grpc` | `.tuvl/telemetry.yaml` sets `otlp_protocol: grpc` |
 
-`codegen` and `test` are development tools and never enter an image. Blob storage and every model
+`generate code` and `run tests` are development tools and never enter an image. Blob storage and every model
 provider are part of `tuvl` and add nothing. A project with none of the triggers above ships the bare
 install, about 65 MB of Python packages instead of the 320 MB of 2.0.0b4.
 

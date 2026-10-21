@@ -35,7 +35,7 @@ Statuses: `queued`, `running`, `waiting_human`, `waiting_approval`, `paused`, `c
 
 ### Roles
 
-`tuvl run --role all | api | worker` (Helm: `split: true`):
+`tuvl serve app --role all | api | worker` (Helm: `split: true`):
 
 - `all` serves HTTP and executes the queue (default);
 - `api` serves HTTP and only executes synchronous requests inline;
@@ -78,16 +78,16 @@ Every event: `{ run_id, seq, ts, type, agent_id, engine, tokens, latency_ms, pay
 `approval_decided` · `paused` · `resumed` · `checkpoint` · `compensation_started` ·
 `compensation_completed` · `run_completed` · `run_failed` · `run_aborted`
 
-Read them with `GET /api/runs/{id}/events` (SSE: replay, then live), `tuvl runs tail`, the Insight
+Read them with `GET /api/runs/{id}/events` (SSE: replay, then live), `tuvl follow run`, the Insight
 Runs page, or `RunHandle.events()` in `@tuvl/client`. Checkpoints keep real values (they are the
 resume state); secure fields are redacted on export.
 
 ## Replay and fixtures
 
 The journal is the recording. **Replay** re-executes a run's graph but serves `llm`, `loop`, decide
-model, `tool` and judge results from recorded events. `tuvl runs pin <run_id>` (or 📌 in Insight)
+model, `tool` and judge results from recorded events. `tuvl pin run <run_id>` (or 📌 in Insight)
 exports a run to `tests/fixtures/<workflow>/<name>.journal.json`; a `Test` with `replay:` then runs
-with zero tokens, and `tuvl runs replay <fixture>` fails if the end or output differ. Insight's
+with zero tokens, and `tuvl replay runs <fixture>` fails if the end or output differ. Insight's
 **Change engine** check replays fixtures with only the changed agent live.
 
 ## Operator control
@@ -96,10 +96,42 @@ with zero tokens, and `tuvl runs replay <fixture>` fails if the end or output di
 runner between agents and loop iterations, under the run's lock, so it works across workers. In dev
 mode, Insight breakpoints and step mode pause runs through the same mechanism.
 
+## Production server and shutdown
+
+`tuvl serve app` starts uvicorn and *replaces* the `tuvl` process with it, so in a
+container uvicorn is PID 1 and receives SIGTERM itself. On SIGTERM it stops taking requests and lets open
+ones finish for `--graceful-timeout` seconds (20), then the runtime stops claiming runs and waits
+`--drain-timeout` seconds (20) for the running ones. A run still going is interrupted, not failed: its
+lease expires and another worker resumes it from the last checkpoint. `terminationGracePeriodSeconds` in the
+chart (60) must exceed the sum, and a `preStop` pause lets the load balancer stop sending traffic first.
+
+Behind an ingress, `--forwarded-allow-ips` (`forwardedAllowIps` in the chart) names the proxies whose
+`X-Forwarded-For` is trusted, so `--allow-host` and the logs see the real client. Leave it empty to trust
+only `127.0.0.1`; `*` trusts every sender and lets a client spoof its address. `--limit-max-requests`
+restarts a worker after that many requests. The `Server` response header is off.
+
+The chart runs the pod as a non-root user with no privilege escalation, every capability dropped and the
+runtime-default seccomp profile (`securityContext` in `values.yaml`). `readOnlyRootFilesystem` is off by
+default because some admin features write under `/app`; turn it on once yours do not (a writable `/tmp` is
+mounted when it is on).
+
 ## Scheduler
 
 `trigger.schedule` (cron, UTC) enqueues one run per slot across all workers, guarded by a Postgres
 advisory lock. A slot missed while every process was down is skipped; there is no catch-up.
+
+```yaml
+trigger:
+  schedule:
+    cron: "0 9 * * 1-5"
+    enabled: true            # false pauses it and keeps the settings
+    input: { report: daily } # every scheduled run starts with this; checked against trigger.input
+```
+
+A bare cron string (`schedule: "0 9 * * 1-5"`) is the same schedule with no input. Scheduled runs have
+no caller, so a workflow whose `trigger.input` has required fields needs them in `input`.
+`tuvl lint project` reports a mismatch (V019). The schedule is read at boot; in dev the server reloads
+when the YAML changes.
 
 ## Multi-tenant mode
 
@@ -111,7 +143,7 @@ run belongs to one tenant:
   tenant is refused (`MissingTenantContextError`) unless `TUVL_REQUIRE_TENANT_CONTEXT=false`.
 - **Workers execute a run under its tenant.** The tenant is bound while the run executes, so its
   `db` calls, logs, journal rows and child runs carry it, and the runtime engine sets
-  `app.current_tenant_id` for row-level security (`tuvl db generate-rls`).
+  `app.current_tenant_id` for row-level security (`tuvl generate rls`).
 - **Callers reach only their own tenant's runs.** Reads, the event stream, export, pause/resume/abort,
   the run list and approvals are filtered by tenant, whatever scopes the caller holds, `iam:admin`
   and `runs:control` included. Another tenant's run answers `404`.

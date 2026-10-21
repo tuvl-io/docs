@@ -155,11 +155,11 @@ TUVL_SIGNING_KEY=<64-hex-char Ed25519 private key>
 Generate a key with the CLI:
 
 ```bash
-tuvl keys generate            # prints the key and the .env line to paste
-tuvl keys generate --write    # writes TUVL_SIGNING_KEY into the project .env (mode 0600)
+tuvl generate key            # prints the key and the .env line to paste
+tuvl generate key --write    # writes TUVL_SIGNING_KEY into the project .env (mode 0600)
 ```
 
-!!! warning "Required for `tuvl run`"
+!!! warning "Required for `tuvl serve app`"
     Production mode fails closed if no signing key is set — it will **not** fall back to an
     ephemeral key the way `tuvl dev` does. Keep the key stable: rotating it invalidates every
     existing token.
@@ -220,9 +220,9 @@ From TypeScript, `readToken(token)` in `@tuvl/client` returns the claims.
 
 ## Upgrading from 1.x
 
-- **The key carries over.** A 1.x `TUVL_BISCUIT_PRIVATE_KEY` is the same 32-byte Ed25519 key;
-  2.0 still reads it (with a warning) — rename it to `TUVL_SIGNING_KEY` when convenient, or run
-  `tuvl keys generate --write --force` to replace it with a new one.
+- **Set `TUVL_SIGNING_KEY`.** 2.0 no longer reads the 1.x `TUVL_BISCUIT_PRIVATE_KEY`. Its value is the
+  same 32-byte Ed25519 key, so you can move it to `TUVL_SIGNING_KEY` unchanged, or run
+  `tuvl generate key --write --force` for a new one. Without a key a production server will not start.
 - **Everyone signs in once.** Biscuit tokens issued by 1.x are not accepted by 2.0.
 - **Python 3.14 is supported.** 1.x was held to Python 3.13 by `biscuit-python`'s missing
   3.14 builds; 2.0 runs on 3.13 and 3.14.

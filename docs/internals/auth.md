@@ -196,7 +196,7 @@ The callback returns the same kind of token as password login, or redirects to `
 2. The user opens the URI and enters the code.
 3. The client polls `POST /auth/oauth/github/device/poll {"handle": …}` every `interval` seconds: `428` while pending, `200` with a token once approved (same account-linking rules as above), `400` when denied or expired. A handle is single-use.
 
-Tick **Enable Device Flow** on the GitHub OAuth app. `tuvl project register` and Insight's Register dialog use this flow ([project](project.md)).
+Tick **Enable Device Flow** on the GitHub OAuth app. `tuvl register project` and Insight's Register dialog use this flow ([project](project.md)).
 
 Provider YAMLs can be managed at runtime via `/auth/admin/federation` (list/get/put/delete, `iam:admin` required); `client_secret` is redacted in read responses.
 
@@ -253,7 +253,7 @@ Notes:
 - **CRUD scope derivation** happens in `tuvl/core/api/crud_router.py`: `read_scope = spec.access.read_scope or f"{model_name.lower()}:read"`, and likewise for write (POST/PATCH) and delete. Every CRUD route also runs `bind_principal_context`, so all requests are authenticated even for read.
 - **CRUD group pinning.** `spec.access.read_groups` / `write_groups` / `delete_groups` (a list, or a bare group name) add an IAM-group requirement alongside the scope — both must be satisfied; `require_access(scope, groups)` in `access.py` is the dependency factory each CRUD route depends on, wrapping `authorize_token`. A tier left undeclared cascades from the next-more-privileged tier (`write_groups` falls back to `read_groups`, `delete_groups` falls back to `write_groups`), so pinning only `read_groups` never leaves mutations open to a wider audience than reads. Declaring no groups at all is scope-only. `iam:admin` bypasses every scope and group.
 - **Workflow gates are metadata-only.** Exactly `metadata.required_scope` and `metadata.required_group` gate a workflow — nothing inside `agents:` changes trigger auth. `required_group` names an IAM role; membership in that single group is required (alongside the scope, when both are declared). `iam:admin` bypasses both.
-- **Trigger default-deny.** Every way of starting a run — the workflow's HTTP route, `POST /api/workflows/{name}/runs`, and MCP export — requires a valid bearer token by default, even for a workflow that declares neither `required_scope` nor `required_group`. Anonymous access is an explicit opt-in via `spec.trigger.http.public: true`; `tuvl validate` rejects `public: true` combined with a declared scope or group (V019), and a declared scope/group always wins over `public` at runtime, so a contradictory config fails closed. The decision is one function, `run_denial` in `tuvl/api/auth.py` (over `WorkflowAuthPolicy`, `tuvl/core/auth/workflow_policy.py`), shared by the REST and MCP paths so the enforcement sites can't drift.
+- **Trigger default-deny.** Every way of starting a run — the workflow's HTTP route, `POST /api/workflows/{name}/runs`, and MCP export — requires a valid bearer token by default, even for a workflow that declares neither `required_scope` nor `required_group`. Anonymous access is an explicit opt-in via `spec.trigger.http.public: true`; `tuvl lint project` rejects `public: true` combined with a declared scope or group (V019), and a declared scope/group always wins over `public` at runtime, so a contradictory config fails closed. The decision is one function, `run_denial` in `tuvl/api/auth.py` (over `WorkflowAuthPolicy`, `tuvl/core/auth/workflow_policy.py`), shared by the REST and MCP paths so the enforcement sites can't drift.
 - **Scope discovery.** `GET /admin/scopes` (itself `iam:admin`) returns every enforceable scope grouped by source — `crud` (per model, honoring overrides), `workflows` (per `required_scope`), and `system` (`["iam:admin"]`) — so an admin composing roles doesn't have to grep YAML. The same response's `crud_api_enabled` field reports whether the CRUD kill switch (below) is currently on.
 - **Run visibility.** A principal sees and operates only its own runs unless it holds `iam:admin`; a run it can't read is a 404, not a 403, so ids don't leak.
 - **Artifact uploads are prompt-level trust.** A prompt/steering artifact carries instruction-level authority once a workflow references it, so `artifacts:write` belongs to the same principals who may edit workflows; `iam:admin` bypasses both artifact scopes.
@@ -293,9 +293,9 @@ Two boot-time refusals in `tuvl/core/auth/access.py` keep the shortcut out of pr
 
 When no signing key is configured in dev mode, an ephemeral Ed25519 key pair is generated at startup — tokens become invalid on restart, and a warning says so.
 
-### Production (`tuvl run`)
+### Production (`tuvl serve app`)
 
-Production runs with dev mode off: no dev key, no `/dev` or Insight execution surfaces, signed tokens only. `TUVL_SIGNING_KEY` **must** be set — `TuvlKeyManager` (`tuvl/core/auth/keys.py`) fails closed with a `RuntimeError` pointing at `tuvl keys generate` when the variable is missing outside dev mode.
+Production runs with dev mode off: no dev key, no `/dev` or Insight execution surfaces, signed tokens only. `TUVL_SIGNING_KEY` **must** be set — `TuvlKeyManager` (`tuvl/core/auth/keys.py`) fails closed with a `RuntimeError` pointing at `tuvl generate key` when the variable is missing outside dev mode.
 
 ---
 
@@ -305,10 +305,10 @@ The engine signs and verifies all tokens with a single Ed25519 key pair, managed
 
 ```bash
 # Print a fresh key (and the .env line to paste)
-tuvl keys generate
+tuvl generate key
 
 # Or write it straight into the project .env (mode 0600); --force to overwrite
-tuvl keys generate --write
+tuvl generate key --write
 ```
 
 - `TUVL_SIGNING_KEY` holds the hex-encoded 32-byte Ed25519 private key (64 hex chars), loaded once per process. `TUVL_BISCUIT_PRIVATE_KEY` (the 1.x name, same format) is still read, with a warning to rename it — the key itself carries over unchanged.
@@ -355,5 +355,5 @@ Rules of thumb: 401 always carries `WWW-Authenticate: Bearer` and means "re-auth
 | `tuvl/core/api/admin_router.py` | `/admin/*` guard, `GET /admin/scopes` |
 | `tuvl/core/dev/middleware.py` | `/dev/*` dev-key + IP-allowlist gate |
 | `tuvl/cli/session.py`, `tuvl/cli/commands/dev.py` | Dev security key generation and session file |
-| `tuvl/cli/commands/keys.py` | `tuvl keys generate` |
+| `tuvl/cli/commands/keys.py` | `tuvl generate key` |
 | `tests/core/test_auth_router.py`, `tests/core/test_iam_rest.py` | Behavior pins for login, token lifecycle, and IAM admin |
