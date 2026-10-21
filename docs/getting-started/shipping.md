@@ -48,7 +48,7 @@ files, before the build, so the same project always produces the same image:
 | `vector` | a Collection or Embedding document, `tuvl.data_search` / `tuvl.data_ingest`, or an agent imports `pgvector` |
 | `otel-grpc` | `.tuvl/telemetry.yaml` sets `otlp_protocol: grpc` |
 
-`codegen` and `test` are development tools and never enter an image. Blob storage and every model
+`generate code` and `run tests` are development tools and never enter an image. Blob storage and every model
 provider are part of `tuvl` and add nothing. A project with none of the triggers above ships the bare
 install, about 65 MB of Python packages instead of the 320 MB of 2.0.0b4.
 

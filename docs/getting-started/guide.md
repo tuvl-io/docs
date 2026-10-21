@@ -470,7 +470,7 @@ derived** from the project.
 | Status | Means |
 |---|---|
 | `todo` | Not built yet (a `pending` agent, a missing file, an example with no test) |
-| `in_progress` | Built, but `validate` or `verify spec` reports a problem |
+| `in_progress` | Built, but `lint project` or `verify spec` reports a problem |
 | `implemented` | Validates cleanly and matches the spec |
 | `tested` | A passing test covers it |
 | `done` | Nothing blocks shipping |

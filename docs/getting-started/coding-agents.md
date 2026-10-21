@@ -28,7 +28,7 @@ except the parts that need judgement.
   | `tuvl-harden` | changing a working workflow safely |
   | `tuvl-ship` | lock, CI gate, shipping (`tuvl ship` installs only the extras the project uses) |
 
-- **`--json` on every read command** (`validate`, `list tasks`, `show drift`, `test`, `runs`, …), with
+- **`--json` on every read command** (`lint project`, `list tasks`, `show drift`, `run tests`, `list runs`, …), with
   documented schemas.
 - **`tuvl serve mcp`** — the same operations as MCP tools over stdio.
 

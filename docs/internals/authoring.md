@@ -10,7 +10,7 @@ accepted. There are two ways to work, and both stay open:
 | **Driven path** (this page) | Decide: pick the idea, review the spec, approve it, merge the pull requests. | Numbers everything, gives the agent one narrow job at a time on its own branch, checks the result, records it, opens the pull request. |
 
 The claim is not that the agent is deterministic. **Authoring is free; acceptance is deterministic**: the
-same checks (`validate`, `lint spec`, `verify spec`, `generate code --check`, `review`, the tests) say yes or
+same checks (`lint project`, `lint spec`, `verify spec`, `generate code --check`, `review`, the tests) say yes or
 no, with no model in the loop. The agent's output is only ever a proposal on a branch.
 
 ## The path
@@ -68,7 +68,7 @@ Whatever the agent is, tuvl then enforces what it cannot be trusted with:
   and `artifacts/`. Any other change is reverted and the agent is told which file it may not touch.
 - **Lifecycle fields.** `id`, `ideas`, `status` are put back after the agent runs; an approval it writes is
   removed. An agent cannot approve its own draft, and tuvl never approves for you.
-- **Acceptance.** A draft must pass `lint spec`; a task must leave its step implemented, with `validate`
+- **Acceptance.** A draft must pass `lint spec`; a task must leave its step implemented, with `lint project`
   and `verify spec` agreeing, and the Python without C-rule errors. Findings go back to the agent for
   another try (3 by default). A task that never passes leaves no branch behind.
 - **Pull requests are opened, never merged.** Drafts by default; the stack is based branch on branch.
