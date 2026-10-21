@@ -123,4 +123,4 @@ the `TUVL_EXPOSE_MODEL_CRUD` env var overrides whatever is saved here.
 
 !!! warning "Restart required to apply changes"
     The API surface is mounted once at startup. Save your config here, then
-    restart the engine with `tuvl run` (or `tuvl dev`) for changes to take effect.
+    restart the engine with `tuvl serve app` (or `tuvl dev`) for changes to take effect.

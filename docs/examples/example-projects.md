@@ -20,6 +20,6 @@ browser sandbox at [try.tuvl.online](https://try.tuvl.online).
 ```bash
 git clone https://github.com/tuvl-io/examples && cd examples/support-triage
 cp .env.example .env            # add a model key and Postgres settings
-tuvl validate --strict
+tuvl lint project --strict
 tuvl dev --auto-login
 ```
