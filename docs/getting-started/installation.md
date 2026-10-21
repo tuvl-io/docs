@@ -42,20 +42,20 @@ Before installing tuvl, ensure you have:
 
 ## 2.0 public beta
 
-tuvl **2.0.0** is released on **20 October 2026**. Until then, 2.0 is available as the public beta
-**2.0.0b5**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
+tuvl **2.0.0** is the next stable release. Until it ships, 2.0 is available as the public beta
+**2.0.0b8**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
 beta explicitly:
 
 ```bash
 # CLI + dev server + Insight (recommended)
-uv tool install --prerelease allow "tuvl[standard]==2.0.0b5"
+uv tool install --prerelease allow "tuvl[standard]==2.0.0b8"
 
 # CLI only
-uv tool install "tuvl==2.0.0b5"
+uv tool install "tuvl==2.0.0b8"
 ```
 
 `--prerelease allow` is needed because uv only takes a pre-release for packages you name yourself,
-and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b5` indirectly.
+and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b8` indirectly.
 
 The TypeScript client has a matching beta on npm's `beta` channel:
 
@@ -63,7 +63,7 @@ The TypeScript client has a matching beta on npm's `beta` channel:
 npm install @tuvl/client@beta     # 2.0.0-beta.1
 ```
 
-From 20 October the commands below install 2.0.0 directly. Report beta issues on
+Once 2.0.0 is released, the commands below install it directly. Report beta issues on
 [GitHub](https://github.com/tuvl-io/tuvl/issues).
 
 ## Installing tuvl CLI
