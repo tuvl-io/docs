@@ -889,7 +889,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Install tuvl
-        run: uv tool install --python 3.13 --prerelease=allow "tuvl[standard]>=2.0.0b8,<3"
+        run: uv tool install --python 3.13 --prerelease=allow "tuvl[standard]>=2.0.0b7,<3"
       - name: Gate
         run: |
           tuvl lint spec
