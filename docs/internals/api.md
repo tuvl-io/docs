@@ -19,10 +19,10 @@ surface per workflow. (gRPC was removed in 2.0.)
 | `POST /api/approvals/{id}` | Decide: `{ values }` for a human form, `{ decision: approve\|edit\|reject, edited_args?, message? }` for a tool call |
 | `POST /api/runs/{id}/human/{agent_id}` | Submit a human agent's form (alias) |
 | `/models/{model}/…` | CRUD for models that opt in with `spec.api.crud: [list, read, create, update, delete]` |
-| `/auth/*`, `/admin/*` | Login, IAM, federation; engine admin |
-| `/api/artifacts` | Artifact list/upload |
+| `/auth/*`, `/admin/*` | Login, IAM, federation; engine admin (`admin` is off in production unless you expose it) |
+| `/api/artifacts` | Artifact list/upload (off in production unless you expose it) |
 | `/health` | Liveness and decision-model readiness |
-| `/openapi.json`, `/docs` | OpenAPI generated from the contracts |
+| `/openapi.json`, `/docs`, `/redoc` | OpenAPI generated from the contracts; off in production unless you turn it on |
 
 A run descriptor (`202` body, `GET /api/runs/{id}`):
 
@@ -52,6 +52,45 @@ Each trigger operation is generated from the workflow:
 - one response per end status, typed by `outputs.<end>.type` or inferred from the body template
   (`"{{ ticket.id }}"` takes the declared type of `ticket`'s `id`);
 - `202` with the run descriptor, and `x-tuvl-workflow: <name>` for client generators.
+
+### Which routes a server exposes
+
+Fewer routes are fewer ways in, so a production server mounts only what it needs, and the API
+documentation lists only your own workflows. Both are set in `.tuvl/system.yaml` and can be
+overridden by the environment (the environment wins):
+
+```yaml
+kind: SystemConfig
+spec:
+  api:
+    expose: [auth]         # system route groups to mount in production (runs is always mounted)
+    docs: workflows        # off | workflows | all
+    dev_expose_all: true   # false: the dev server mounts only what production would
+```
+
+| Group | Routes | Dev server | Production default |
+|---|---|---|---|
+| `auth` | `/auth/*`: token, refresh, JWKS, IAM login | mounted | mounted |
+| `runs` | `/api/runs/*`, `/api/approvals/*`, `POST /api/workflows/{name}/runs` | mounted | **always mounted**; it cannot be switched off |
+| `admin` | `/admin/*`: engine administration | mounted | **not mounted** |
+| `artifacts` | `/api/artifacts/*` | mounted | **not mounted** |
+| `system` | `/api/_system/*`: introspection | mounted | **not mounted** |
+
+Your workflow trigger routes, and any `/models/*` CRUD you opted into, are never affected.
+`TUVL_API_EXPOSE=auth,runs,admin` overrides `spec.api.expose`. Add `admin`, `artifacts` or `system`
+to a production server only when something there calls them: the TypeScript client and the CLI use
+`auth` and `runs` (and your workflow routes) only, and `system` is read by Insight alone. `runs` is
+not a choice: every client starts runs through it and every run is followed through it.
+
+The dev server mounts every group, because Insight needs them. Set `spec.api.dev_expose_all: false`
+(`TUVL_DEV_EXPOSE_ALL=false`, or the switch in Insight's Settings → API Access) and it mounts what a
+production server would, with the same documentation default, so you can see that surface; the parts
+of Insight that need the other groups then stop working until you turn it back on.
+
+`spec.api.docs` (`TUVL_API_DOCS`) decides what `/docs`, `/redoc` and `/openapi.json` show:
+`workflows` lists only your workflows and models (no `/auth`, `/admin`, `/api/_system`, `/health`,
+`/dev`); `all` adds the system routes; `off` serves none of the three paths. The dev server defaults
+to `workflows`, production to `off`. `tuvl lint project` checks both settings.
 
 ## MCP export
 
