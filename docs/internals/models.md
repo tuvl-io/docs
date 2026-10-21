@@ -33,7 +33,7 @@ spec:
 | LM Studio, vLLM | `lm_studio/`, `vllm/`, `hosted_vllm/` | none | `http://localhost:1234/v1`, `http://localhost:8000/v1` |
 
 `api_key` on the AgentModel wins over the variable; it must be an `${ENV_VAR}` reference.
-`api_base` overrides the endpoint. `tuvl doctor` lists the variables each model needs.
+`api_base` overrides the endpoint. `tuvl check system` lists the variables each model needs.
 
 ### Cloud providers
 
@@ -54,7 +54,7 @@ These use each vendor's OpenAI-compatible endpoint, so no cloud SDK is installed
 - **Voyage AI** serves embeddings only (the output size is sent as `output_dimension`).
 
 Endpoints and request shapes follow the vendors' documentation (checked 2026-10-17). Ollama is the only
-provider exercised against a live service in tuvl's own tests; run `tuvl doctor --live` against yours
+provider exercised against a live service in tuvl's own tests; run `tuvl check system --live` against yours
 before relying on one.
 
 ## Any other endpoint
@@ -112,4 +112,4 @@ extra network hop to a service you run.
   `llm_error`, which is what a step's `retry.errors` matches. The client does not retry by itself.
 - One OpenTelemetry span per call; see [observability](observability.md#5-model-call-spans).
 
-`tuvl doctor` lists the variables each model needs; `tuvl doctor --live` makes one minimal call per model.
+`tuvl check system` lists the variables each model needs; `tuvl check system --live` makes one minimal call per model.

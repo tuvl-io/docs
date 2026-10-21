@@ -18,7 +18,7 @@ into `.env`. Point `.env` at a PostgreSQL database
 ## 2. Check it
 
 ```bash
-tuvl validate --strict
+tuvl lint project --strict
 ```
 
 ```
@@ -30,8 +30,8 @@ Every workflow gets a **determinism profile** and a **worst-case token cost**. T
 offline, with recorded and mocked results:
 
 ```bash
-tuvl test
-tuvl spec status        # every task derived as done
+tuvl run tests
+tuvl list tasks        # every task derived as done
 ```
 
 ## 3. Open Insight
@@ -55,7 +55,7 @@ curl -X POST localhost:8885/api/tickets/triage \
 ```
 
 The response is the end's body (`201` with the stored ticket), or `202` with a run descriptor when
-the run waits for a person. Follow it with `tuvl runs tail <run_id>` or
+the run waits for a person. Follow it with `tuvl follow run <run_id>` or
 `GET /api/runs/<run_id>/events` (SSE). In dev mode the session key works as an admin token.
 
 ## 5. Change something
@@ -64,17 +64,17 @@ Open `specs/triage-ticket.md` and add a policy. Then hand it to your coding agen
 `tuvl-spec`, `tuvl-plan` and `tuvl-task-loop` skills); tuvl referees the result:
 
 ```bash
-tuvl spec check                      # the spec is well-formed
-tuvl spec diff                       # what changed since the task list was written
-tuvl spec status                     # the tasks, with status derived from the project
+tuvl lint spec                      # the spec is well-formed
+tuvl show drift                       # what changed since the task list was written
+tuvl list tasks                     # the tasks, with status derived from the project
 ```
 
 The agent updates `specs/triage-ticket.tasks.yaml` and implements the tasks (YAML engine blocks;
 Python only for `code` agents). Then run the CI gate:
 
 ```bash
-tuvl spec check && tuvl validate --strict && tuvl codegen --check && tuvl lock --check \
-  && tuvl test --strict && tuvl spec verify --strict && tuvl spec status --strict
+tuvl lint spec && tuvl lint project --strict && tuvl generate code --check && tuvl verify lock \
+  && tuvl run tests --strict && tuvl verify spec --strict && tuvl list tasks --strict
 ```
 
 Next: the step-by-step [guide from init to ship](guide.md) builds a project of your own, with a coding

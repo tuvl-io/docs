@@ -150,7 +150,7 @@ and workflow-trigger auth model this knob sits alongside.
 
 ## Validation
 
-tuvl validates configurations at startup. Invalid files are logged and skipped:
+tuvl lint projects configurations at startup. Invalid files are logged and skipped:
 
 ```
 INFO:     📋  Model loaded: 'User'

@@ -81,7 +81,7 @@ workflow YAML. Every way of starting a run — the workflow's HTTP route,
 a workflow that declares neither.
 
 Anonymous access is an explicit opt-in via `spec.trigger.http.public: true`. Combining `public: true`
-with a declared `required_scope` or `required_group` is a `tuvl validate` error — the engine fails
+with a declared `required_scope` or `required_group` is a `tuvl lint project` error — the engine fails
 closed and always enforces the declared scope/group over `public` at runtime.
 
 ```yaml

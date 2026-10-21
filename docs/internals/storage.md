@@ -126,6 +126,53 @@ async def archive(inp, ctx):
 `presign`. Inside an agent with `effect: read` the store is read-only. Calls move whole objects up to
 `max_object_bytes`.
 
+## Uploads from callers
+
+A trigger can accept `multipart/form-data`. Each `file` input is written to a store and the run gets a
+reference to it, so a person can attach a file in one call:
+
+```yaml
+spec:
+  trigger:
+    http:
+      path: /api/invoices
+      upload: { store: inbox, prefix: in/, max_bytes: 5242880, max_files: 3, accept: [application/pdf, image/*] }
+    input:
+      invoice: file          # form part "invoice"
+      attachments: list[file]?
+      note: str?             # other parts are text; a list or object is sent as JSON text
+  agents:
+    - id: read
+      engine: tool
+      tool: { use: storage, store: inbox, op: get, key: "{{ invoice.key }}", as: base64 }
+      inputs: { invoice: file }
+      outputs: { content: str }
+```
+
+A `file` value has `store`, `key`, `name`, `size`, `content_type` and `sha256`. `{{ invoice.key }}` works
+anywhere an expression does; a code agent reads it with `await ctx.read_file(inp.invoice)`. Agents can
+pass it to a child workflow or a human form.
+
+- **Authenticated first.** The caller is checked before any byte is read, so an unauthorised request
+  stores nothing.
+- **Limits are enforced while the body streams.** `max_bytes` (per file, at most the store's
+  `max_object_bytes`) is `413`, `max_files` and part limits are `400`, a content type outside `accept` is
+  `415`, a field that is not a file input is `422`. `accept` checks the type the client declares.
+- **Keys are generated.** The object lives at `<prefix><random id>/<sanitised name>`; the client's name
+  is kept only as `name`. A file named `../../x` cannot leave the prefix.
+- **A reference cannot be forged.** A JSON body or query that names a `file` input is `422`: the only
+  way to get a reference is to upload through the route (a workflow or schedule can still pass one on).
+- **Nothing is left behind by a refused request.** Files stored for a request whose input is then
+  refused (`422`) are deleted. Files of a run that starts stay: set a lifecycle rule on the prefix to
+  expire them.
+- The same body works on `POST /api/workflows/{name}/runs` (one part per input, no `input` wrapper),
+  which is what `@tuvl/client` uses when an input is a `File` or `Blob`.
+- Files are held in memory while they are stored, so `max_bytes` is also a memory bound. Larger files
+  should go straight to the bucket with a `presign` PUT.
+
+MCP export cannot take a file input. Insight's Run form has a file picker and the trigger panel edits
+the upload settings.
+
 ## Safety
 
 | Concern | Rule |
@@ -148,6 +195,7 @@ async def archive(inp, ctx):
 | V032 | A literal key or `to_key` is safe |
 | V033 | `presign.expires_in` is within the store's `presign_max_seconds` |
 | V034 | The `Storage` file is valid: provider fields, `${ENV}` secrets, `https` endpoint |
+| V037 | `http.upload` is consistent: a `file` input exists, the store exists, is writable and holds `max_bytes` |
 
 An op that is missing a field, or has one it does not take, is a schema error (V001). V004 requires
 routing `not_found` and `conflict` where they can occur, and V007 checks the output type
@@ -157,10 +205,10 @@ routing `not_found` and `conflict` where they can occur, and V007 checks the out
 ## Command line and Insight
 
 ```bash
-tuvl storage check            # list, put, head, get, delete a probe object in every store
-tuvl storage check invoices
-tuvl storage ls invoices 2026/
-tuvl doctor                   # also lists stores and the environment variables they still need
+tuvl check storage            # list, put, head, get, delete a probe object in every store
+tuvl check storage invoices
+tuvl list objects invoices 2026/
+tuvl check system                   # also lists stores and the environment variables they still need
 ```
 
 **Insight → Configure → Storage** lists the stores, shows missing environment variables, checks a
