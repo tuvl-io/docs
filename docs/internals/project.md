@@ -77,7 +77,7 @@ registration, or id differs from the registered one.
 The **Catalogue** card shows the listing state and a **Register** button (**Update listing** once
 listed, and the card says when the project changed since). The dialog shows the exact payload and a
 "show my developer email publicly" checkbox. **Send** registers directly when this machine already
-has a hub login; otherwise it shows a GitHub device code, waits for approval and then registers.
+has a Nest login; otherwise it shows a GitHub device code, waits for approval and then registers.
 The Nest token stays on the dev server and is shared with the CLI's cache.
 
 ## What registration sends
@@ -93,8 +93,8 @@ The Nest token stays on the dev server and is shared with the CLI's cache.
 plus `organization` and, when set, `contact_email`. The Nest lists only the name, version, organization (with its link), type, licence, description and the optional repository link; the author and email stay private. The Nest keys the entry by the
 bare UUID; the check characters never leave your machine. Sign-in is GitHub's device flow (see
 [auth](auth.md)); only the account that first registered an id can update it. The Nest is
-`https://nest.tuvl.io`, or `TUVL_HUB_URL` / `--hub` for a self-hosted one. The login token is cached
-in `~/.config/tuvl/hub.json` (mode 0600).
+`https://nest.tuvl.io`, or `TUVL_NEST_URL` / `--nest` for a self-hosted one. The login token is cached
+in `~/.config/tuvl/nest.json` (mode 0600).
 
 ## Dev API (Insight)
 
