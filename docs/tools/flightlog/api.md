@@ -3,7 +3,7 @@
 # The contract
 
 
-Anything that speaks this can be the collector tuvl talks to; Flightlog is one implementation. All paths are under `<server>/v1`
+Anything that speaks this can be the collector tuvl talks to (the developer's side is in [Developer Telemetry](../../internals/dev-telemetry.md)); Flightlog is one implementation. All paths are under `<server>/v1`
 (plus `/health` and `/ready`). Everything except `/register` carries `Authorization: Bearer <token>`. Bodies are JSON.
 
 | Endpoint | |

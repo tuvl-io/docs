@@ -1,87 +1,134 @@
-# Insight
+# CLI reference
 
-Insight is tuvl's browser UI for building and debugging a project. It is served by `tuvl dev`
-(dev mode only) at `/insight`, talks to the server over REST and SSE, and edits the **same YAML
-files** as your editor and coding agents — there is no separate canvas model.
+Commands are actions: `tuvl <verb> <thing>`. Every command that reports supports `--json` with a stable,
+documented schema (coding agents parse it; `/dev/schema/cli` serves the schemas in dev mode).
+`-d/--project-dir` defaults to the current directory everywhere.
+
+## The verbs
+
+Each verb makes one kind of promise, so the name tells you what a command will do.
+
+| Verb | Promise | Things |
+|---|---|---|
+| `generate` | Writes files. Spends tokens only where a coding agent is involved | `spec`, `tasks`, `code`, `ui-spec`, `lock`, `key`, `rls` |
+| `lint` | Static rules over what you wrote. Offline, zero tokens | `project`, `spec` |
+| `verify` | Is one thing still in step with another? Exits 1 on drift | `spec`, `lock`, `ui-spec`, `rls`, `audit` |
+| `check` | Is it reachable and working right now? Touches the live environment | `system`, `agent`, `storage` |
+| `review` | A judgement of code | `code` |
+| `approve` / `reject` / `reopen` | A human decision, recorded in the audit ledger | `spec` |
+| `create` / `import` / `renumber` | Make or bring in specs and ideas | `spec` / `idea` / `idea` |
+| `list` / `show` | Only read | `ideas`, `specs`, `tasks`, `runs`, `agents`, `objects` / `idea`, `run`, `event`, `audit`, `drift`, `project` |
+| `run` | Run a workflow or the tests | `workflow`, `tests` |
+| `serve` | Start a server | `app`, `mcp` |
+| `follow` / `pin` / `replay` | Work with runs | `run` / `run` / `runs` |
+| `use` / `set` / `upgrade` / `register` / `update` | Project setup | `agent` / `project` / `project` / `project` / `skills` |
+| `export` / `prune` | Admin | `audit`, `schema` / `traces` |
+| `init`, `dev`, `ship`, `deploy` | One action each | |
+
+## Project
+
+| Command | Options | |
+|---|---|---|
+| `tuvl init [NAME]` | `--sample`, `--preset gemini\|openai\|anthropic\|ollama`, `--decision-model laya\|none`, `-y/--yes`, `--multi-tenant`, `--no-ai-skills`, `--agent`, `--no-agent`, `--list-agents`, `--initials`, `--git/--no-git`, `--branch`, `--commit`, `--ci github\|gitlab\|none` | Scaffold a project. A preset writes `llms/default.yaml` with a current model id, reading the key from the environment. `--sample` is a ticket-triage project (spec, TaskPlan, tests, lock) that passes the CI gate as created. `--decision-model laya` adds `llms/laya.yaml`, `LAYA_API_*` in `.env` and a `compose.yaml` that runs laya-serve locally (asked interactively, default no). `-y` accepts every default. It also asks for your initials (they stamp the ids of ideas and specs you create) and, when coding agents are installed, which one tuvl may run for you (`-y` picks none), writes both to `.tuvl/agent.yaml` (git-ignored), and runs `git init` on branch `develop` when git is installed (`--ci github` or `gitlab` also writes the deterministic gate as CI: errors fail on pull requests, everything `--strict` on pushes to `develop`/`main`) and the project is not already inside a repository (`--commit` makes an initial commit) |
+| `tuvl list agents` / `use agent <agent\|none>` / `check agent` | `-d`, `--json` (list), `--force`, `--command` (use) | The coding agents on this machine (Claude Code, Codex, Gemini CLI, Antigravity, Cursor, Copilot CLI, Amp, Qwen Code, Aider, OpenCode, Goose), the one you selected, and whether tuvl can run it: `yes` for an agent tuvl can let draft and build (Claude Code, Codex CLI, Gemini CLI: their headless modes can confine a write to the folder), `review only` for one it can ask to review but never to write (Cursor, Antigravity, Copilot CLI, Amp), `detected, not yet` for the rest. The choice is yours alone, in `.tuvl/agent.yaml` (git-ignored). `check agent` checks the selected agent starts, then runs it once on a trivial task in a scratch folder (a few tokens; `-y` skips the question). `use generic --command '…'` selects any command that reads a prompt on stdin and edits its working directory |
+| `tuvl check storage [name]` / `list objects <name> [prefix]` | | Check each `kind: Storage` store by writing, reading back and deleting a probe object (read-only stores are only listed), or list a store's objects. See `docs/storage.md` |
+| `tuvl lint project` | `--strict`, `--json` | Contracts, data flow, types, policy, artifacts, lock; prints each workflow's determinism profile and worst-case tokens. `--strict` fails on warnings. Ends with **needs models**: every model the workflows use, its provider and the environment variables it reads (or "no LLM required"); V028 = unknown model reference, V029 = undeclared credentials (an error at ship time) |
+| `tuvl generate code [WORKFLOW]` | `--check` | Schemas, code-agent stubs (body-preserving merge), prompt placeholders, spec tests. `--check` writes nothing and exits 1 on drift |
+| `tuvl generate code --spec SPEC --task 3 \| --task 1,3 \| --all` | `--no-agent`, `--agent`, `--max-attempts 3`, `--budget USD`, `--timeout S`, `--model`, `--base`, `--no-pr`, `--ready`, `--continue`, `--keep-worktree`, `--consent`, `--review none\|static\|agent`, `--review-blocking`, `--reviewer` | Build an **approved** spec's models and workflows from its task list. **Phase 1, deterministic, zero tokens:** the missing `models/*.yaml` from `# Data`, a `workflows/<flow>.yaml` skeleton whose steps are all `pending` (trigger, ends, and every step's id, inputs, outputs, routes and budget come from `# Flows`), then the generated schemas, stubs, prompt placeholders and tests; one branch `feature/<SPEC>-scaffold`, never overwriting an existing file. **Phase 2, your coding agent, one task at a time:** for each selected agent task a branch `feature/TASK-…` stacked on the one before, in a worktree; the agent replaces that one pending step and may touch only the workflow, `agents/*.py` and `artifacts/`; tuvl regenerates what is generated and accepts the task only when the step is implemented and `lint project` and `verify spec` agree (findings go back to the agent), then commits and, with a remote and `gh`/`glab`, pushes and opens a draft pull request based on the previous branch. Before a task is committed its Python is reviewed (`--review static`, the default: the C-rules and ruff, errors fail the task and go back to the agent; `agent` adds a second opinion that lands in the pull request and blocks only with `--review-blocking`). Failed tasks leave no branch and stop the run (`--continue` goes on with independent ones). Re-running skips what is built. Task numbers: `3`, `T3`, `003` or the full id. `--no-agent` stops after phase 1. Without `--spec`, `tuvl generate code` never calls an agent |
+| `tuvl generate ui-spec` | `-w/--workflow`, `--all`, `--no-tests`, `--base-url`, `--check`, `--json`, `-d` | Write `ui/specs/` (zero tokens): **how to build the UI on this backend**, for the developers and coding agents who build it. `README.md` (the `@tuvl/client` setup, sign-in, the backend surface: which system routes a production server mounts, shared behaviour, rules for whoever builds the UI), one `<workflow>.md` per workflow whose tasks are done (endpoint, auth, request, every end's status and body, the run lifecycle, the approval form of human steps, real examples from the acceptance cases, a `client.execute(...)` snippet, a checklist), `models.md` for models with CRUD routes (operations, scopes, groups, fields, `secure` flagged), and `ui-contract.json`. `init` creates the folder; `codegen --spec` adds a workflow's file in the commit of the task that completes it. Text below the notes marker in a file is kept. `--check` exits 1 when a file is missing or out of date (add it to CI); a workflow with a pending step or open task gets no file until it is built (`--all` writes it anyway) |
+| `tuvl review code [PATH…]` | `--base REF`, `--spec SPEC`, `--task 3`, `--strict`, `--no-ruff`, `--explain C0xx`, `--json`; second opinion: `--agent`, `--reviewer`, `--blocking off\|high\|medium\|low`, `--post`, `--consent`, `--budget`, `--timeout` | Review the Python of code agents (`agents/*.py`, not `_generated`); `--spec` or `--task` keeps it to the code agents those tasks created (models, steps that are not code, tests and examples have none). **Tier 1, free:** tuvl's rules — C001 shape (`@agent("run") async def f(inp, ctx)`), C002 processes and `eval`, C003 direct network (use `ctx.http`), C004 `os.environ`, C005 file writes (use `ctx.storage`), C006 non-determinism (random, uuid, clock), C007/C008 work or state kept in the module, C009 hard-coded URLs, C010 secrets, C011 a returned signal the workflow does not route, C012 a write in an `effect: read` agent — plus `ruff` (C900) when installed. Errors fail (exit 1), warnings only with `--strict`. **Tier 2, advisory:** `--agent` asks a coding agent that cannot change anything (Claude Code runs with only Read, Glob and Grep) to read the code, the diff and the spec and answer with JSON findings (high / medium / low / info); an answer that is not valid JSON is a failed review, never a pass. Findings only block with `--blocking`. `--post` comments the review on the branch's pull request. The reviewer is another agent than yours when you have one |
+| `tuvl generate lock` | `--check`, `--mcp/--no-mcp` | Pin model ids, artifact hashes, judge/decision models and MCP tool schemas in `tuvl.lock` |
+| `tuvl check system` | `--live`, `--json`, `--only`, `--skip`, `--strict`, `--fix`, `-q`, `--verbose` | Is the project healthy? Runs named check groups, each check ok / warn / fail / skip: `project` (identity record), `env` (Python range, `.env` present and git-ignored, `uv`), `config` (the project loads), `models` (each model, the variables it needs and which are missing; `--live` makes one minimal call per model — Laya/Jev: their `/health`), `storage`, and, where the toolchain is installed, `git` (repository, branch, identity, remote) and `skills` (`AGENTS.md`, `.agents/skills`). `--only` / `--skip` take comma-separated group names. Exit 1 on any failure; `--strict` exits 2 when only warnings remain. `--fix` applies the safe repairs a check offers (`git init -b develop`, adding `.env` to `.gitignore`) and re-checks; nothing destructive. A production server runs the model check at startup and refuses to start on a missing variable; `/health` reports each model's readiness |
+| `tuvl run tests` | `--live`, `--allow-uncertain`, `--strict`, `-k/--only TEXT`, `--json` | Run `Test` documents offline (`--live` lets unmocked model/tool agents call out). Results are PASS, **STUBBED** (expectations met only through unmocked `pending` placeholders — not counted) or FAIL; `--strict` (CI) also fails on stubbed results and untrusted judge calibration |
+| `tuvl show project` | `--json` | The project's identity from `.tuvl/project.yaml`: the immutable, self-checking id (`prj_<uuidv7>-<2 check characters>`, minted by `tuvl init`; the check catches typos and hand edits, it is not a signature), name, author, email, type (`poc\|dev\|production`), version, registry status. Also editable in Insight → Settings → Project. Full reference: [project](project.md) |
+| `tuvl upgrade project` | `--name`, `--new-id` | Create `project.yaml` for a project that predates it. Never changes an existing id; `--new-id` replaces a malformed or copied id and clears its registration |
+| `tuvl set project FIELD VALUE` | | Update `name`, `author`, `email`, `type`, `version`, `description`, `license` or `repo` (validated). The description is Markdown (up to 2000 characters): `VALUE` of `@about.md` reads a file, `-` reads stdin; `show project` renders it |
+| `tuvl register project` | `--hub URL`, `-y` | List the project in the public catalogue. Prints the exact payload first and asks; signs in with GitHub's device flow; the author and email are sent for contact and never shown publicly. Also available as Insight → Settings → Project → Register / Update listing (same payload preview and login) |
+| `tuvl update skills` | `--diff` | Refresh `AGENTS.md` and `.agents/skills/` to this tuvl version (removes 1.x skills; mirrors to `.claude/skills/`) |
+
+## Specs
+
+| Command | Options | |
+|---|---|---|
+| `tuvl verify spec [SPEC_FILE…]` | `--strict`, `--no-tests`, `--json` | Does the implementation match the spec? Zero tokens; rules R001–R010 and a traceability matrix (step → agent → tests). Exits 1 on a mismatch (`--strict`: also on unfinished work) |
+| `tuvl create spec NAME` | `--owner`, `--workflow` | Write `specs/<name>.md` from the template |
+| `tuvl import idea PATH…` | `--title`, `--supersedes`, `--initials`, `--include`, `--exclude`, `--max-size`, `--dry-run`, `--json` | Copy an idea (files or a folder) into `idea/IDEA-<INITIALS>-NNNN/source/` as a numbered, immutable record, with `IDEA.yaml` (file hashes, who, when) and `idea/INDEX.yaml`. Text is extracted from Markdown/text directly, from Word files with no extra install, and from PDFs with `tuvl[pdf]` (a scanned PDF has no text layer and gets a warning; there is no OCR) into `extracted/`. Secret and key files, hidden files, symbolic links and unsupported types are skipped and listed. Ids are `IDEA-SK-0004` → `SPEC-SK-0004-01` → `TASK-SK-0004-01-003`: the spec and task ids inherit the idea's number. Initials come from `.tuvl/agent.yaml` (`--initials` saves them on first use) |
+| `tuvl list ideas` / `show idea ID` | `--json` | List the ideas and the specs generated from each / show one idea's files, hashes and specs |
+| `tuvl list branches [SPEC]` | `--json` | Where the branches of each spec's work stand: the spec, the scaffold and one per agent task, as a tree of what grew from what (branches built apart from each other sit side by side and are marked parallel), with each branch's commits and messages. Each is merged (on the base branch, even if the branch was deleted), open (built, not merged: commits ahead and behind, last commit, pull request) or not built, with what to merge next. tuvl never merges; it prints the command |
+| `tuvl show task TASK-ID` | `--spec SPEC`, `--json` | One task in full: what it builds, what it waits for and the spec section it came from; after a failed `generate code` run, also the report of each attempt (the check it failed, the problems, the end of the agent's output), kept until the task succeeds. A legacy `T3` needs `--spec` |
+| `tuvl renumber idea IDEA` | `--to IDEA-XX-NNNN` | After two developers picked the same number: give the idea a new one (default the next free) and carry its spec and task ids, file names, links and the task lists' spec hash along. `tuvl check system` (group `ideas`) reports duplicate ids and an idea the base branch already numbers differently |
+| `tuvl approve spec SPEC` / `reject spec SPEC --reason …` / `reopen spec SPEC` | `--force` (approve) | Approve a spec (by id, name or file): records who, when and a hash of the body in its front matter; refuses while `lint spec` has errors. Editing the body afterwards makes the approval stale (S017). `reject` sends it back to draft with a reason; `reopen` withdraws an approval |
+| `tuvl generate tasks SPEC` | `--dry-run` | Derive the task list from an **approved** spec, with no model: one task per new model, step and example, a manual task for each external-system step. Keeps ids, refreshes section hashes, marks removed ones `obsolete`; `--dry-run` previews a draft |
+| `tuvl list specs` | `--json` | Each spec's id, status (draft / approved / approved but changed), approver and ideas |
+| `tuvl show audit` / `show event REF` / `verify audit` / `export audit` / `prune traces` | `--entity`, `--actor`, `--kind`, `--since 2d`, `-n`, `--follow`, `--json` (log); `--format json\|csv`, `-o` (export); `--older-than DAYS` (prune) | The local audit ledger `.tuvl/audit/<YYYY-MM>.jsonl` (git-ignored): one hash-chained event per action with side effects — init, agent choice, idea import, id renumber, spec create / approve / reject / reopen (refusals too, with the reason), task derivation. It holds ids, hashes and short details, never file contents, prompts or secrets (full prompts and agent output go to `.tuvl/trace/` by hash). `--entity` on an idea also shows its specs and tasks. `verify` finds an edited, removed or reordered line (exit 1); `prune` deletes old trace files, never the ledger. The ledger belongs to one machine and one developer: what the team shares through git is the spec's own approval fields |
+| `tuvl create spec NAME --idea IDEA-…` | | Also numbers the spec `SPEC-XX-NNNN-NN` after its first idea, links it to the idea(s) and records `status: draft` |
+| `tuvl generate spec --idea IDEA-… \| --from PATH` | `--title`, `--agent`, `--max-attempts 3`, `--budget USD`, `--timeout S`, `--model`, `--base`, `--dry-run`, `--show-prompt`, `-y`, `--consent`, `--no-pr`, `--ready`, `--keep-worktree`, `--here` | A coding agent writes a **draft** spec from an idea. tuvl numbers it (`SPEC-XX-NNNN-NN`), creates branch `spec/<id>` in a worktree under `.tuvl/worktrees/`, builds the prompt (the idea's text, the spec grammar, the rules), runs your agent headlessly, lets it change **only** that spec file (anything else is reverted and fed back), puts back the lifecycle fields it must not set (`id`, `ideas`, `status`, no approval), runs `lint spec` and retries with the findings, then commits and, with a remote and `gh`/`glab`, pushes and opens a draft pull request. It never merges and never approves. `--here` skips the branch and the pull request and writes `specs/<id>.md` into your working folder, uncommitted (the terminal UI uses it, so the draft shows up in the tree). Needs git; the idea must be committed (`spec import --commit`; `--from` does it). With Claude Code the run is restricted at the source (no code-running tools, files confined to the folder, nothing may prompt); `generic` (`tuvl use agent generic --command '…'`) cannot be restricted, only checked afterwards. Idea text is sent to your agent only after you consent once (`--consent`, stored in `.tuvl/agent.yaml`) |
+| `tuvl lint spec [SPEC_FILE…]` | `--strict`, `--json` | Is the spec complete and consistent? Zero tokens; rules S001–S016 with line numbers, plus P001–P005 on its task list ([spec-driven](spec-driven.md#2-check-it)). Exits 1 on a blocking finding (`--strict`: on warnings too) |
+| `tuvl list tasks [SPEC_FILE]` | `--strict`, `--no-tests`, `--json`, `--watch`, `--interval` | Derived task statuses. `--strict` exits 1 unless every live task is done and none is blocked or stale. `--watch` keeps refreshing (recomputing only when a project file changes) and overlays live `generate code` progress (queued, running attempt n/N and its gate, failed, in review) from `.tuvl/live/tasks.json` |
+| `tuvl show drift [SPEC_FILE]` | `--json` | Stale tasks and spec sections no task covers |
+
+## Servers
+
+| Command | Options | |
+|---|---|---|
+| `tuvl dev` | `-p/--port` (8885), `--auto-login`, `--no-tui`, `--show-key`, `--no-browser`, `--no-tui`, `-H/--allow-host` | Dev server with Insight and the dev API, reloading on YAML changes. The session key is stored in `.tuvl/.dev-session` (0600); `--show-key` prints it. **On a terminal it also starts a terminal UI** (`tuvl[tui]`, part of `tuvl[standard]`): a tree of your ideas → specs → tasks (status, and live progress while `generate code` runs), the actions that apply to what you select (check, approve, derive tasks, scaffold, build with your agent, validate, test, ship…), and three logs: the command you ran, the engine, and the audit trail. Every action runs the same `tuvl` command you would type, so the gates and the audit trail are the same; anything that spends your agent's tokens or is hard to undo asks first (`Run it` / `Cancel`) and says so. The project's own actions (lint, test, check, review, run a workflow, import an idea, show the project and the audit log, ship) are listed under every selection. Each command ends with a `tokens ·` line: what your coding agent used (input, output, cost), or that none was. `q` quits and stops the engine, `r` refreshes, `x` stops a running command, `c` copies the last command's output (or the open log) to the clipboard. The logs are selectable too: drag with the mouse, or click in a log and use the keyboard, then copy with `ctrl+c`. `--no-tui`, or no terminal (CI, a pipe, ssh without a tty), runs the engine in this terminal with plain output |
+| `tuvl serve app` | `-p/--port`, `--host`, `-w/--workers`, `--role all\|api\|worker`, `-c/--concurrency` (8), `-H/--allow-host`, `--graceful-timeout`, `--drain-timeout`, `--forwarded-allow-ips`, `--limit-max-requests` | Production server (uvicorn, which replaces the `tuvl` process so it is PID 1 in a container and receives SIGTERM directly). `api` serves HTTP and runs synchronous requests inline; `worker` executes the queue. On SIGTERM it stops taking requests, lets open ones finish for `--graceful-timeout` seconds (20), then waits `--drain-timeout` seconds (20) for running runs; one still going is interrupted and another worker resumes it from its last checkpoint. `--forwarded-allow-ips` names the proxies whose `X-Forwarded-For` is trusted (an IP or CIDR list: set your ingress network so `--allow-host` and the logs see the real client; `*` lets a client spoof its address). `--limit-max-requests` restarts a worker after that many requests. The `Server` header is off. `tuvl run` with no subcommand does the same |
+| `tuvl serve mcp` | `--allow-write` | Dev tools for coding agents over MCP (stdio); `--allow-write` adds `codegen_write`, `run_workflow`, `pin_fixture`. Refuses production |
+
+## Runs
+
+These talk to a running server: `-u/--url` (`TUVL_URL`, default `http://localhost:8885`) and
+`-t/--token` (`TUVL_TOKEN`, needs `runs:read`).
+
+| Command | Options | |
+|---|---|---|
+| `tuvl list runs` | `-w/--workflow`, `-s/--status`, `-n/--limit`, `--json` | Recent runs, newest first |
+| `tuvl show run RUN_ID` | | One run as JSON |
+| `tuvl follow run RUN_ID` / `run workflow NAME` | `-p/--payload JSON` (run workflow) | Follow a run's events until it ends, or start a run of a workflow on the server and follow it; exits 1 if it fails |
+| `tuvl pin run RUN_ID` | `-n/--name` | Export the journal to `tests/fixtures/<workflow>/<name>.journal.json` |
+| `tuvl replay runs FIXTURES…` | `--json` | Re-run pinned journals offline; fail if the end or output differ |
+
+## Shipping and operations
+
+| Command | Options | |
+|---|---|---|
+| `tuvl ship` | `-t/--tag`, `--no-image` (was `--no-build`), `--push`, `--force`, `--strict`, `--extra`, `--with-laya/--without-laya`, `--format image\|archive\|both`, `--archive-format tar.gz\|zip`, `--out`, `--allow-incomplete`, `--allow-dirty` | Gate (validate, no `pending` agents — V010 is an error at ship time, current lock; then, once the files are written, **the deterministic spec gate**: every spec under approval is approved and unchanged, `lint spec` and `verify spec` have no errors, every task is done (`--allow-incomplete`), generated files are current (`codegen --check`, for projects with specs), no C-rule errors in the agents' Python, a current `uv.lock` (an error for the archive), and a clean git tree (`--allow-dirty`; what ship writes itself does not count). A spec with no `status:` only warns), then `.dockerignore` as an **allowlist** (only models, workflows, agents, artifacts, datasources, llms, federation, config, lock and `.tuvl/system.yaml` / `telemetry.yaml` enter the image; specs, task lists, tests, agent rules and skills, compose files and anything else stay out — V027 refuses development files), `deploy/Dockerfile` (pins the locked tuvl version and installs only the extras the project uses: `mcp` for `use: mcp` tools, loop MCP servers and MCP export, `redis` for a redis datasource, `vector` for collections and `tuvl.data_*`, `otel-grpc` for `otlp_protocol: grpc`; it also stops when `agents/*.py` imports a package `pyproject.toml` does not declare. `--extra NAME` adds one the scan cannot see; the choice is recorded as the image label `io.tuvl.extras`) and a Helm chart (`split: true` for api + worker Deployments; a Laya Deployment + Service, with `LAYA_API_BASE` set for the engine, when a model uses `provider: laya` or with `--with-laya` — `laya.enabled` in values.yaml) and `docker build`, labelled `io.tuvl.runtime-hash` (one sha256 over the runtime files) and `io.tuvl.git-commit`. **`--format archive`** instead writes `dist/<name>-<version>.tar.gz` (or `.zip`) plus a `.sha256`: the same runtime files with `run.sh`, `RUN.md`, `.env.example` and `BUILD-INFO.json`, reproducible byte for byte from the same files, for hosts without Docker. On the host: `tar xzf …`, `cp .env.example .env`, fill it in, `./run.sh` (needs `uv`; it installs the locked dependencies and `tuvl==<locked>` with the same extras as the image, and serves on port 8885) |
+| `tuvl deploy` | `-d/--project-dir` | Coming soon: deploy to a hosted, managed tuvl engine that runs your backend services. Today it prints a message, deploys nothing and exits 1 |
+| `tuvl generate key` | `-w/--write`, `-f/--force` | A persistent Ed25519 key for signing access tokens (`TUVL_SIGNING_KEY`) |
+| `tuvl generate rls` | `-o/--out` | Idempotent row-level-security SQL for tenant-scoped tables |
+| `tuvl verify rls` | | Exit 1 if a tenant-scoped table lacks its RLS policy |
+
+### Extras: what an image installs
+
+`tuvl` installs lean. Features with their own packages are extras, and `tuvl ship` reads the project and
+installs `tuvl[<only those>]==<locked version>`:
+
+| Extra | Package | `tuvl ship` installs it when |
+|---|---|---|
+| `mcp` | `mcp` | a `use: mcp` tool, a loop `mcp` tool, or a workflow with `trigger.mcp.enabled` |
+| `redis` | `redis` | a `kind: DataSource` with `type: redis`, or `agents/*.py` imports `redis` |
+| `vector` | `pgvector` | a Collection or Embedding document, `tuvl.data_search` / `tuvl.data_ingest`, or an import of `pgvector` |
+| `otel-grpc` | OTLP gRPC exporter | `.tuvl/telemetry.yaml` has `otlp_protocol: grpc` |
+| `generate code`, `run tests` | `libcst`, `aiosqlite` | never: `tuvl generate code`, `tuvl init --sample` and `tuvl run tests` are development tools |
+
+`tuvl[standard]` installs Insight and every extra, so a development install needs nothing else. The
+model providers and blob storage (S3, Azure, GCS, local) are part of `tuvl` and need no extra.
+
+`tuvl ship` prints the extras it chose and why and records them as the image label `io.tuvl.extras`
+(`docker inspect` shows what an image carries). Beyond the extras:
+
+- It also scans `agents/*.py`: an import of a package that `pyproject.toml` does not declare aborts the ship,
+  because the image would fail at run time. Declared packages that no agent imports are listed and kept.
+- `--extra NAME` adds an extra the scan cannot see, for example a feature switched on by an environment
+  variable. It accepts `mcp`, `redis`, `vector` and `otel-grpc`.
+- A kept `deploy/Dockerfile` (no `--force`) that lacks an extra the project now needs stops the ship.
+- Using a feature without its extra fails with `pip install 'tuvl[name]'`; the same message appears for
+  `tuvl generate code`, `tuvl run tests` and `tuvl serve mcp` on a bare install.
+- `tuvl deploy` is for managed hosting and is not available yet: it prints a message and exits 1.
+  Until then, install the chart `tuvl ship` writes with `helm`.
+
+## The CI gate
 
 ```bash
-tuvl dev                 # http://localhost:8885/insight — asks for the session key
-tuvl dev --auto-login    # skip the key screen on this machine
+tuvl lint spec && tuvl lint project --strict && tuvl generate code --check && tuvl verify lock && tuvl run tests --strict && tuvl verify spec --strict && tuvl list tasks --strict
 ```
-
-## Pages
-
-| Page | What it does |
-|---|---|
-| **Ideas** | The ideas imported with `tuvl import idea` (`IDEA-XX-NNNN`), newest last: title, who and when, a preview of each file's text (extracted from PDFs and Word files), the specs drawn from it with their approval, and what superseded it. Read-only: import, drafting and approval are CLI actions |
-| **Specs** | Every spec is a tile across the top (task progress, stale/blocked markers, a ✗ badge for blocking `lint spec` findings); click one to show it below, double-click (or **Open spec**) to edit it in its own window, with `lint spec` findings inline — saving there refreshes the page. A tile of a spec under approval shows its state (**draft**, **approved**, or **approved, changed since** once its body was edited), and above the task board a strip shows the pipeline: idea → spec (who approved it) → task progress. Below: **Tasks** (the list `tuvl generate tasks` derives, statuses derived), **Findings** (blocking, warnings, waivers, unchecked prose) and **Traceability** (`verify spec`: step → agent ✓ / pending / mismatch → the tests that run it, each example's test result with why; a step opens its node on the canvas, and the canvas links back) |
-| | A banner on the workflow lists why it cannot run when it names a disabled or undefined model (the API answers `409`) |
-| | On the canvas, **Run** / **Step** are disabled while a model the workflow uses isn't configured (`/health` → `tuvl check system`) |
-| **Workflows** | Canvas and YAML editor for each workflow (below) |
-| | A `code` agent's **Engine** tab is a Python editor for `agents/<file>.py` (⤢ full screen, ⌘S / **Save Python**). Saving is syntax-checked, normalized by codegen (decorator, signature and docstring come from the contract; your body is kept) and reloads the agent. **✦ Assist** writes or changes the body with one of the project's LLM AgentModels: it is given the agent's contract, the fields of its models and the `agent-code` rules, returns the whole file into the editor (↶ undo) and saves nothing; unconfigured models are disabled |
-| **Audit** | This machine's ledger of what was done to the project (`tuvl audit`): import, approval, task derivation, agent runs, branches and pull requests, with refusals. Filter by idea / spec / task id (an idea also shows its specs and tasks), kind and actor; click an event for its JSON; ids link to their pages; **live** polls for new events; the badge says whether the hash chain still holds. Read-only; it holds ids and hashes, never prompts or file contents |
-| **Runs** | Live and past runs, journal timeline per agent (loop turns, tool calls, decisions, judge verdicts), approvals inbox with forms and tool-call approve/edit/reject, pause/resume/abort/steer, start a run, pin a run as a fixture, replay fixtures (SAME/DIFF) |
-| **Artifacts** | Prompts, steering, skills, guardrails, hooks, MCP servers; **judge editor** with try/calibrate; **rules editor** with "which rule matches" |
-| **Models**, **Datasources**, **Embeddings**, **Collections** | Data configuration. The Models page edits `secure` (the **Sec** column): a secure field is redacted from logs, spans and model prompts |
-| **AI Models** | `AgentModel`s — LLM (provider/model id, base URL, key reference, parameters) or **Decision** (provider `laya`/`jev`/`llm` + model) |
-| **IAM**, **Federation**, **Settings**, **API Docs** | Users and roles, OAuth providers, system settings (incl. the CRUD kill switch), the **Project** identity and catalogue registration ([project](project.md)), OpenAPI |
-
-## Workflows: the canvas
-
-- **Start card**: trigger (HTTP path/method/public, schedule, MCP export) and the typed input.
-  Its panel has an **API** and a **Schedule** checkbox (both can be on). Unticking API keeps the path and
-  unmounts the route; the schedule takes a cron expression (checked as you type, with the next three
-  fire times), one field per trigger input for what scheduled runs start with, and shows the last
-  scheduled run and whether the scheduler is running.
-- **Agent cards**: engine, determinism class, `id`, description, input/output contract, budget and
-  retry chips, one outlet per routable signal. Red ports mark inputs not produced upstream.
-- **End cards**: one per named output, with status and body.
-- **Palette**: Deterministic (Code, Database op, HTTP call, MCP tool, Vector search, Vector ingest),
-  AI (LLM call, Autonomous loop), Control (Decide, Human approval), Contract only (Pending agent). A new
-  agent is wired after the selected one when that one ended the workflow.
-- **Panel tabs**: Contract (fields with type suggestions and upstream outputs) · Engine (rules table
-  for decide, a YAML block editor per engine) · Budget · Governance · Routes · Probe (run this one
-  agent with hand-entered inputs).
-- **Summary bar**: determinism profile, worst-case tokens and live validation of the draft; a
-  data-flow overlay draws each output key to its consumers.
-- Canvas and YAML tabs edit the same text (comments are kept); node positions are stored in
-  `.tuvl/layout/<workflow>.json`. **Save** writes the file; **Discard** drops the draft.
-
-### Run, debug, pin
-
-- **▶ Run** starts a dev run with an input form; **⏯ Step** pauses before every agent and every loop
-  tool call.
-- Click a card's dot to set a **breakpoint** (`.tuvl/breakpoints.json`): dev runs pause before that
-  agent. While paused, the Runs page shows the agent's input view; edit it and **Continue**.
-- **📌 Pin as fixture** on a finished run writes `tests/fixtures/<workflow>/<name>.journal.json`.
-
-### Change engine
-
-**Change engine…** swaps an agent's engine and keeps its id, inputs, outputs and routes (the
-signals of a code agent become the decision enum when switching to decide). Then:
-
-- **⇄ Check vs fixtures** replays the workflow's pinned fixtures against the **unsaved draft**, with
-  only that agent executing and everything else served from the recording — SAME/DIFF per fixture,
-  plus the validate profile before and after;
-- **⌘ Generate stub** runs codegen when the new engine is `code`.
-
-Breakpoints and step mode never apply to these replays or to `tuvl run tests`.
-
-## Artifacts: judges and rules
-
-- **Judge** — model, rubric, `min_score`, `min_agreement`. **Try**: paste a subject, ask the judge
-  (live, using the draft), then mark the verdict ✓ right / ✗ wrong with a label to add it to the
-  calibration set (`fixtures/judge/<label>.json`). **Calibration**: run the set and see agreement.
-  See [judges](judges.md).
-- **Rules** — an ordered `when → then` table (edit, reorder, add, remove) and a context box that
-  shows which rule matches.
-- **+ New artifact** creates prose artifacts, or judge/rules YAML from a template.
-
-Saving a YAML file reloads the dev server; Insight picks the change up when it is back.
-
-## Dev API
-
-Insight uses `/dev/*` (dev mode only, behind the session key; in dev mode the key is also an
-`iam:admin` token for `/api/*`): project summary, raw text files per area, validate (also for a
-draft), schema, codegen, tests, specs, layout, breakpoints, runs (start, context, pin, replay),
-agent probe, change check, judges and rules. The OpenAPI at `/docs` lists them.
