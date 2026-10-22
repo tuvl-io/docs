@@ -1,6 +1,6 @@
 # Why tuvl
 
-**Deterministic execution. Zero vibes.** tuvl runs typed workflows of agents (code, database and HTTP tools, rules, models, bounded tool loops and people) on a durable, journaled runtime, built from specs. Every route is declared, every model call is budgeted and every run is recorded. The engine refuses anything the contract doesn't declare.
+**Intelligent Workflows. Deterministic Execution.** tuvl runs typed workflows of agents (code, database and HTTP tools, rules, models, bounded tool loops and people) on a durable, journaled runtime, built from specs. Every route is declared, every model call is budgeted and every run is recorded. The engine refuses anything the contract doesn't declare.
 
 This page holds the detail behind the four guarantees on [tuvl.io](https://tuvl.io): how execution, data and access are fenced, how tuvl compares with other tools, and what it means for each person who has to say yes.
 
