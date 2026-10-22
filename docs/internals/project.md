@@ -1,7 +1,7 @@
 # Project identity and the catalogue
 
 Every project made by `tuvl init` carries `.tuvl/project.yaml`: who built it, what it is, and a
-stable id. A project can optionally be listed in the public catalogue (hub.tuvl.io). Nothing is sent
+stable id. A project can optionally be listed in the public catalogue (nest.tuvl.io). Nothing is sent
 anywhere unless you register.
 
 ## The file
@@ -27,7 +27,7 @@ spec:
   license: Apache-2.0             # optional
   repo: https://github.com/acme/screening
   registry:                # written by register, not by hand
-    url: https://hub.tuvl.io
+    url: https://nest.tuvl.io
     id: prj_01a141a1-9446-74f6-81e4-bc37135cfcf1-f8
     registered_at: 2026-10-15T10:00:00Z
     digest: 3f9a1c0b7d2e4a55
@@ -39,7 +39,7 @@ spec:
 | `name` | Required |
 | `type` | `poc`, `dev` or `production` |
 | `version` | Semver (`1.2.3`, `1.2.3-rc.1`) |
-| `author`, `email` | Captured and sent to the hub on registration so the owner can be reached; the hub keeps them private and never shows them. The email must be a valid address if set |
+| `author`, `email` | Captured and sent to the Nest on registration so the owner can be reached; the Nest keeps them private and never shows them. The email must be a valid address if set |
 | `organization`, `organization_url` | The organization the project belongs to, and an optional `http(s)` link to it. Both are shown in the catalogue |
 | `description` | **Markdown**, up to 2000 characters |
 | `repo` | `http(s)` URL if set |
@@ -51,7 +51,7 @@ The file is read fail-open: a project without it boots normally and `tuvl upgrad
 The two trailing characters are derived from the UUID. A typo or a half-edited id fails the check
 and every `tuvl project` command, Insight and register refuse it. This guards against accidents and
 copy-paste damage; it is **not a signature**: anyone can recompute the check. Ownership of a
-listing is decided by the hub, which ties an id to the GitHub account that registered it first.
+listing is decided by the Nest, which ties an id to the GitHub account that registered it first.
 
 A copied project shares its id with the original. Run `tuvl upgrade project --new-id` in the copy to
 mint its own (this also clears the registration).
@@ -64,7 +64,7 @@ tuvl set project author "Jane Doe"
 tuvl set project description @about.md          # read from a file
 cat README.md | tuvl set project description -  # or stdin
 tuvl upgrade project [--name N] [--new-id]
-tuvl register project [--hub URL] [-y]
+tuvl register project [--Nest URL] [-y]
 ```
 
 `info` also reports the registry state: not registered, up to date, changed since the last
@@ -78,7 +78,7 @@ The **Catalogue** card shows the listing state and a **Register** button (**Upda
 listed, and the card says when the project changed since). The dialog shows the exact payload and a
 "show my developer email publicly" checkbox. **Send** registers directly when this machine already
 has a hub login; otherwise it shows a GitHub device code, waits for approval and then registers.
-The hub token stays on the dev server and is shared with the CLI's cache.
+The Nest token stays on the dev server and is shared with the CLI's cache.
 
 ## What registration sends
 
@@ -90,10 +90,10 @@ The hub token stays on the dev server and is shared with the CLI's cache.
 }
 ```
 
-plus `organization` and, when set, `contact_email`. The hub lists only the name, version, organization (with its link), type, licence, description and the optional repository link; the author and email stay private. The hub keys the entry by the
+plus `organization` and, when set, `contact_email`. The Nest lists only the name, version, organization (with its link), type, licence, description and the optional repository link; the author and email stay private. The Nest keys the entry by the
 bare UUID; the check characters never leave your machine. Sign-in is GitHub's device flow (see
-[auth](auth.md)); only the account that first registered an id can update it. The hub is
-`https://hub.tuvl.io`, or `TUVL_HUB_URL` / `--hub` for a self-hosted one. The login token is cached
+[auth](auth.md)); only the account that first registered an id can update it. The Nest is
+`https://nest.tuvl.io`, or `TUVL_HUB_URL` / `--hub` for a self-hosted one. The login token is cached
 in `~/.config/tuvl/hub.json` (mode 0600).
 
 ## Dev API (Insight)
