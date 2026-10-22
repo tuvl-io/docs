@@ -889,7 +889,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Install tuvl
-        run: uv tool install --python 3.13 --prerelease=allow "tuvl[standard]>=2.0.0b7,<3"
+        run: uv tool install --python 3.13 --prerelease=allow "tuvl[standard]>=2.0.0b8,<3"
       - name: Gate
         run: |
           tuvl lint spec
@@ -956,7 +956,7 @@ does not include Postgres, so point `POSTGRES_HOST` at yours. More: [Shipping to
 ### Optional: list it in the catalogue
 
 Every project already carries an identity file, `.tuvl/project.yaml`, with a stable id and your git name
-and email. If you want the project listed in the public catalogue at hub.tuvl.io, look first:
+and email. If you want the project listed in the public catalogue at nest.tuvl.io, look first:
 
 ```bash
 tuvl show project
