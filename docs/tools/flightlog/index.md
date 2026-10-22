@@ -12,7 +12,7 @@
 (ideas, specs, approvals, tasks, coding-agent attempts, branches, gates, ships and the commands they run), keeps it, and
 lets every developer read what the rest of the team did, from their terminal and from Insight.
 
-Flightlog is a separate, self-hosted service. You run it; tuvl sends to it only if the project turns **developer telemetry**
+Flightlog is a separate, self-hosted service. You run it; tuvl sends to it only if the project turns on [**developer telemetry**](../../internals/dev-telemetry.md)
 on (`tuvl set dev-telemetry https://flightlog.example.com`). It is open source under the Apache License 2.0.
 
 - **Small surface.** Four developer endpoints, two health checks and nothing else. No web UI, no admin endpoint, no

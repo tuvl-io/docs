@@ -49,7 +49,7 @@ The file is read fail-open: a project without it boots normally and `tuvl upgrad
 ### The id is self-checking
 
 The two trailing characters are derived from the UUID. A typo or a half-edited id fails the check
-and every `tuvl project` command, Insight and register refuse it. This guards against accidents and
+and every project command (`show`, `set`, `register`), Insight and register refuse it. This guards against accidents and
 copy-paste damage; it is **not a signature**: anyone can recompute the check. Ownership of a
 listing is decided by the hub, which ties an id to the GitHub account that registered it first.
 

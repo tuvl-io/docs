@@ -107,6 +107,7 @@ nav:
       - Models and Providers: internals/models.md
       - Blob Storage: internals/storage.md
       - Webhooks: internals/webhooks.md
+      - Developer Telemetry: internals/dev-telemetry.md
       - Observability: internals/observability.md
   - Insight:
       - Overview: internals/insight.md
