@@ -1,5 +1,5 @@
 site_name: tuvl
-site_description: Typed workflows of agents — deterministic where they can be, bounded where they can't — on a durable, journaled runtime, built spec-first.
+site_description: Intelligent Workflows. Deterministic Execution. Typed workflows of agents — deterministic where they can be, bounded where they can't — on a durable, journaled runtime, built spec-first.
 site_author: tuvl Team
 site_url: https://tuvl.dev
 
@@ -83,7 +83,7 @@ nav:
   - Why tuvl: why-tuvl.md
   - Main Website: https://tuvl.io
   - Try it Live ↗: https://try.tuvl.online
-  - Hub ↗: https://hub.tuvl.io
+  - Nest ↗: https://nest.tuvl.io
   - Getting Started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
@@ -107,6 +107,7 @@ nav:
       - Models and Providers: internals/models.md
       - Blob Storage: internals/storage.md
       - Webhooks: internals/webhooks.md
+      - Developer Telemetry: internals/dev-telemetry.md
       - Observability: internals/observability.md
   - Insight:
       - Overview: internals/insight.md
@@ -128,6 +129,17 @@ nav:
       - IAM: security/iam.md
       - Federation: security/federation.md
       - Tokens: security/tokens.md
+  - Tools:
+      - Overview: tools/index.md
+      - Laya Serve: tools/laya-serve.md
+      - Flightlog:
+          - Overview: tools/flightlog/index.md
+          - Deployment: tools/flightlog/deployment.md
+          - Operations: tools/flightlog/operations.md
+          - Security: tools/flightlog/security.md
+          - Forwarding: tools/flightlog/forwarding.md
+          - The contract: tools/flightlog/api.md
+          - Flightlog on tuvl: tools/flightlog/on-tuvl.md
   - Examples: examples/example-projects.md
   - Contributing: contributing.md
   - License: license.md
