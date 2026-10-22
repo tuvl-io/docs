@@ -128,6 +128,17 @@ nav:
       - IAM: security/iam.md
       - Federation: security/federation.md
       - Tokens: security/tokens.md
+  - Tools:
+      - Overview: tools/index.md
+      - Laya Serve: tools/laya-serve.md
+      - Flightlog:
+          - Overview: tools/flightlog/index.md
+          - Deployment: tools/flightlog/deployment.md
+          - Operations: tools/flightlog/operations.md
+          - Security: tools/flightlog/security.md
+          - Forwarding: tools/flightlog/forwarding.md
+          - The contract: tools/flightlog/api.md
+          - Flightlog on tuvl: tools/flightlog/on-tuvl.md
   - Examples: examples/example-projects.md
   - Contributing: contributing.md
   - License: license.md
