@@ -1,6 +1,6 @@
 # What's new in 2.0
 
-tuvl **2.0.0** (public beta **2.0.0b7** until it ships — see
+tuvl **2.0.0** (public beta **2.0.0b8** until it ships — see
 [Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
@@ -10,6 +10,47 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     tuvl moves from the MIT License to the **Apache License, Version 2.0**, which adds an express
     patent grant. Using, modifying and selling software built on tuvl is as free as before. Releases
     through `2.0.0b4` stay available under MIT. [What changes](license.md)
+
+## New in 2.0.0b8
+
+<div class="grid cards" markdown>
+
+-   **Commands are actions: `tuvl <verb> <thing>`**
+
+    ---
+
+    The pipeline reads in order: `init`, `import idea`, `generate spec`, `approve spec`, `generate tasks`,
+    `generate code`, `verify spec`, `run tests`, `ship`. Each verb makes one promise: `generate` writes files,
+    `lint` runs static rules, `verify` checks that two things are in step, `check` asks whether something works
+    now, `list` and `show` only read. The earlier names are gone; run `tuvl generate code` once after upgrading.
+    [Command reference](internals/cli.md)
+
+-   **Specs and tasks in Insight and the terminal UI**
+
+    ---
+
+    Approve, send back, reopen and derive tasks from Insight or the terminal UI. A task opens in a panel you
+    can drag and pop out, with what it builds, what it waits for and the spec section it came from. **Graph**
+    draws the tasks as a tree in execution order. A blocked task says why; a failed run keeps a report of
+    every attempt. `tuvl show task` prints the same. [Insight](internals/insight.md)
+
+-   **Webhooks and file uploads**
+
+    ---
+
+    A workflow can send a signed notification when a run completes, fails or waits for a person, and a trigger
+    can accept `multipart/form-data` and pass the run a reference, never the bytes.
+    [Webhooks](internals/webhooks.md), [API](internals/api.md)
+
+-   **Production server and keys**
+
+    ---
+
+    `tuvl serve app` shuts down cleanly behind an ingress and exposes only the route groups you choose
+    (`spec.api.expose`). `TUVL_SIGNING_KEY` is the only name for the signing key; the 1.x
+    `TUVL_BISCUIT_PRIVATE_KEY` is no longer read. [Authentication](internals/auth.md)
+
+</div>
 
 ## Highlights
 
