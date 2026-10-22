@@ -32,11 +32,11 @@ The **Project** page edits `.tuvl/project.yaml`: the identity `tuvl init` gave t
 | Description | Markdown, up to 2000 characters, with an **Edit / Preview** toggle |
 | License, Repository | Optional; the repository must be an `http(s)` URL |
 
-The **Catalogue** card below the form shows whether the project is listed on [hub.tuvl.io](https://hub.tuvl.io):
+The **Catalogue** card below the form shows whether the project is listed on [nest.tuvl.io](https://nest.tuvl.io):
 not listed, up to date, changed since the last registration, or id changed. **Register** (or **Update
 listing** once listed) opens a dialog with the exact payload that will be sent and a *Show my developer
-email publicly* checkbox. **Send** registers directly when this machine already has a hub login;
-otherwise it shows a GitHub device code, waits for you to approve it and then registers. The hub token
+email publicly* checkbox. **Send** registers directly when this machine already has a Nest login;
+otherwise it shows a GitHub device code, waits for you to approve it and then registers. The Nest token
 stays on the dev server, never in the browser.
 
 The same actions are available from the CLI: see [Project and Catalogue](../internals/project.md).

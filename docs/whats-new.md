@@ -152,7 +152,7 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     ---
 
     `tuvl init` writes `.tuvl/project.yaml` with a self-checking id, author, type and version. Edit it
-    with `tuvl set project` or in Insight, and list the project on [hub.tuvl.io](https://hub.tuvl.io)
+    with `tuvl set project` or in Insight, and list the project on [nest.tuvl.io](https://nest.tuvl.io)
     with `tuvl register project` or the Register button. [Project and Catalogue](internals/project.md)
 
 -   **Verb-first commands**
