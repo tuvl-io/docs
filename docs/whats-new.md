@@ -50,6 +50,37 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     (`spec.api.expose`). `TUVL_SIGNING_KEY` is the only name for the signing key; the 1.x
     `TUVL_BISCUIT_PRIVATE_KEY` is no longer read. [Authentication](internals/auth.md)
 
+-   **Nest: the public catalogue**
+
+    ---
+
+    Applications built with tuvl can be listed at [nest.tuvl.io](https://nest.tuvl.io). `tuvl register project` shows the exact
+    payload first and asks; sign-in is GitHub's device flow. Run your own with `--nest URL` or `TUVL_NEST_URL`.
+    [Project and catalogue](internals/project.md)
+
+-   **Tools: Laya Serve and Flightlog**
+
+    ---
+
+    A new [Tools](tools/index.md) section. **Laya Serve** is the container image of the Laya decision model that `decide` agents can
+    use. **Flightlog** is the collector for developer telemetry, as a small Python service and as a tuvl project.
+
+-   **Developer telemetry (optional)**
+
+    ---
+
+    Share what developers do on a project through a collector your team runs, and see what the others did in Insight and with
+    `tuvl list team-activity`. A token per developer, initials from registration, token rotation, and a private certificate authority.
+    [Developer telemetry](internals/dev-telemetry.md)
+
+-   **Failures and branches in Insight**
+
+    ---
+
+    A failed task keeps a report of what was tried and why it failed. Tasks are drawn as a graph, and a tree of branches shows
+    parallel work, commits and what should merge first. Long jobs started from Insight survive a reload.
+    [Insight](internals/insight.md)
+
 </div>
 
 ## Highlights
