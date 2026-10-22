@@ -1,6 +1,6 @@
 # What's new in 2.0
 
-tuvl **2.0.0** (public beta **2.0.0b7** until it ships — see
+tuvl **2.0.0** (public beta **2.0.0b8** until it ships — see
 [Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
@@ -10,6 +10,78 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     tuvl moves from the MIT License to the **Apache License, Version 2.0**, which adds an express
     patent grant. Using, modifying and selling software built on tuvl is as free as before. Releases
     through `2.0.0b4` stay available under MIT. [What changes](license.md)
+
+## New in 2.0.0b8
+
+<div class="grid cards" markdown>
+
+-   **Commands are actions: `tuvl <verb> <thing>`**
+
+    ---
+
+    The pipeline reads in order: `init`, `import idea`, `generate spec`, `approve spec`, `generate tasks`,
+    `generate code`, `verify spec`, `run tests`, `ship`. Each verb makes one promise: `generate` writes files,
+    `lint` runs static rules, `verify` checks that two things are in step, `check` asks whether something works
+    now, `list` and `show` only read. The earlier names are gone; run `tuvl generate code` once after upgrading.
+    [Command reference](internals/cli.md)
+
+-   **Specs and tasks in Insight and the terminal UI**
+
+    ---
+
+    Approve, send back, reopen and derive tasks from Insight or the terminal UI. A task opens in a panel you
+    can drag and pop out, with what it builds, what it waits for and the spec section it came from. **Graph**
+    draws the tasks as a tree in execution order. A blocked task says why; a failed run keeps a report of
+    every attempt. `tuvl show task` prints the same. [Insight](internals/insight.md)
+
+-   **Webhooks and file uploads**
+
+    ---
+
+    A workflow can send a signed notification when a run completes, fails or waits for a person, and a trigger
+    can accept `multipart/form-data` and pass the run a reference, never the bytes.
+    [Webhooks](internals/webhooks.md), [API](internals/api.md)
+
+-   **Production server and keys**
+
+    ---
+
+    `tuvl serve app` shuts down cleanly behind an ingress and exposes only the route groups you choose
+    (`spec.api.expose`). `TUVL_SIGNING_KEY` is the only name for the signing key; the 1.x
+    `TUVL_BISCUIT_PRIVATE_KEY` is no longer read. [Authentication](internals/auth.md)
+
+-   **Nest: the public catalogue**
+
+    ---
+
+    Applications built with tuvl can be listed at [nest.tuvl.io](https://nest.tuvl.io). `tuvl register project` shows the exact
+    payload first and asks; sign-in is GitHub's device flow. Run your own with `--nest URL` or `TUVL_NEST_URL`.
+    [Project and catalogue](internals/project.md)
+
+-   **Tools: Laya Serve and Flightlog**
+
+    ---
+
+    A new [Tools](tools/index.md) section. **Laya Serve** is the container image of the Laya decision model that `decide` agents can
+    use. **Flightlog** is the collector for developer telemetry, as a small Python service and as a tuvl project.
+
+-   **Developer telemetry (optional)**
+
+    ---
+
+    Share what developers do on a project through a collector your team runs, and see what the others did in Insight and with
+    `tuvl list team-activity`. A token per developer, initials from registration, token rotation, and a private certificate authority.
+    [Developer telemetry](internals/dev-telemetry.md)
+
+-   **Failures and branches in Insight**
+
+    ---
+
+    A failed task keeps a report of what was tried and why it failed. Tasks are drawn as a graph, and a tree of branches shows
+    parallel work, commits and what should merge first. Long jobs started from Insight survive a reload.
+    [Insight](internals/insight.md)
+
+</div>
 
 ## Highlights
 
@@ -111,7 +183,7 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     ---
 
     `tuvl init` writes `.tuvl/project.yaml` with a self-checking id, author, type and version. Edit it
-    with `tuvl set project` or in Insight, and list the project on [hub.tuvl.io](https://hub.tuvl.io)
+    with `tuvl set project` or in Insight, and list the project on [nest.tuvl.io](https://nest.tuvl.io)
     with `tuvl register project` or the Register button. [Project and Catalogue](internals/project.md)
 
 -   **Verb-first commands**
