@@ -956,7 +956,7 @@ does not include Postgres, so point `POSTGRES_HOST` at yours. More: [Shipping to
 ### Optional: list it in the catalogue
 
 Every project already carries an identity file, `.tuvl/project.yaml`, with a stable id and your git name
-and email. If you want the project listed in the public catalogue at hub.tuvl.io, look first:
+and email. If you want the project listed in the public catalogue at nest.tuvl.io, look first:
 
 ```bash
 tuvl show project

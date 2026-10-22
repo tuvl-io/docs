@@ -4,7 +4,7 @@ tuvl is licensed under the **Apache License, Version 2.0**. The full text is in
 [`LICENSE`](https://github.com/tuvl-io/tuvl/blob/main/LICENSE), and
 [`NOTICE`](https://github.com/tuvl-io/tuvl/blob/main/NOTICE) lists the third-party material that
 ships with it. This applies to the engine (`tuvl`), the UI (`tuvl-insight`), the TypeScript client
-(`@tuvl/client`), the examples, the Laya server image build files, the hub and this documentation.
+(`@tuvl/client`), the examples, the Laya server image build files, the Nest and this documentation.
 
 ## What changed
 
