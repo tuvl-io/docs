@@ -6,13 +6,20 @@ The same collector, built as a tuvl project: three models, four workflows and fo
 real service with its own tokens, tenants and run journal, and it speaks the same contract as the [Python build](index.md), so developers'
 tuvl works against either.
 
-| | Python build | tuvl build |
-|---|---|---|
-| Source | 1,133 lines, 445 of tests | 106 lines of Python, 145 of YAML |
-| Database | SQLite or PostgreSQL | PostgreSQL |
-| Has | register, `/me`, ingest, team feed, token rotation, retention, export, SIEM forwarding, backup, TLS, rate limits, admin log | register, ingest, team feed, create-team |
-| Auth | its own tokens | tuvl JWT and IAM; every call is a journaled run |
-| Gaps | none known | no `/me`, rotation, retention, forwarding or rate limits |
+**Python build** (the one to run)
+
+- 1,133 lines of source and 445 of tests.
+- SQLite or PostgreSQL.
+- The whole contract, plus retention, export, forwarding, backup, TLS and rate limits.
+- Its own tokens.
+
+**tuvl build** (the worked example)
+
+- 106 lines of Python and 145 of YAML.
+- PostgreSQL only.
+- Register, ingest, team feed and create-team.
+- tuvl JWT and IAM; every call is a journaled run.
+- Not built yet: `/me`, rotation, retention, forwarding, rate limits.
 
 ## Run it
 
