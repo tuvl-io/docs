@@ -1,0 +1,79 @@
+/* tuvl docs — styles for the shadcn theme */
+
+/* grid cards (markdown lists inside <div class="grid cards">) */
+.grid.cards > ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+.grid.cards > ul > li {
+  border: 1px solid var(--border, rgba(127, 127, 127, 0.25));
+  border-radius: 0.6rem;
+  padding: 1rem 1.1rem;
+  margin: 0;
+}
+.grid.cards > ul > li > hr { margin: 0.6rem 0; opacity: 0.4; }
+.grid.cards > ul > li p { margin: 0.4rem 0 0; }
+
+/* tuvl identity: a larger feather and wordmark in the top bar (shadcn theme) */
+a.button.ghost:has(> span > svg):has(> h1) {
+  height: auto;
+  min-height: 2.75rem;
+  gap: 0.75rem;
+  padding-inline: 0.5rem;
+}
+a.button.ghost:has(> h1) > span,
+a.button.ghost:has(> h1) > span svg {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  min-width: 2.25rem;
+  flex: none;
+}
+a.button.ghost:has(> h1) > h1 {
+  font-size: 1.75rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* footer: brand, project links and contact (tuvl.io) */
+.tuvl-footer {
+  border-top: 1px solid var(--border, rgba(127, 127, 127, 0.25));
+  margin-top: 3rem;
+}
+.tuvl-footer__inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 2.5rem;
+}
+.tuvl-footer__brand p { margin: 0.5rem 0 0; font-size: 0.875rem; line-height: 1.55; opacity: 0.8; max-width: 26rem; }
+.tuvl-footer__logo { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: inherit; text-decoration: none; }
+.tuvl-footer__mark { display: inline-flex; width: 2rem; height: 2rem; }
+.tuvl-footer__mark svg { width: 100%; height: 100%; }
+.tuvl-footer__col { display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.875rem; }
+.tuvl-footer__title { font-weight: 600; margin-bottom: 0.25rem; }
+.tuvl-footer__col a { color: inherit; opacity: 0.75; text-decoration: none; }
+.tuvl-footer__col a:hover { opacity: 1; text-decoration: underline; }
+.tuvl-footer__small { font-size: 0.75rem; opacity: 0.6; }
+.tuvl-footer__col .tuvl-footer__small { margin-bottom: 0.6rem; }
+@media (max-width: 768px) {
+  .tuvl-footer__inner { grid-template-columns: 1fr; gap: 1.75rem; }
+}
+
+/* the header reads "tuvl docs", with the second word in the accent, as on the Nest */
+.tuvl-site-tag { color: #0891b2; }
+.dark .tuvl-site-tag { color: #22d3ee; }
+
+/* tool pages: the docs header lockup (feather, "tuvl" and the tool's name in the accent) */
+.tool-logo { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 1rem; }
+.tool-logo img { height: 2.25rem; width: auto; }
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1.25rem; margin: 1.5rem 0; }
+.tool-card { border: 1px solid var(--border, rgba(127,127,127,.3)); border-radius: 0.75rem; padding: 1.25rem; }
+.tool-card .tool-logo { font-size: 1.25rem; }
+.tool-card .tool-logo img { height: 1.75rem; }
