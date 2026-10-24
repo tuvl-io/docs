@@ -1,15 +1,49 @@
 # What's new in 2.0
 
-tuvl **2.0.0** (public beta **2.0.0b8** until it ships — see
+tuvl **2.0.0** (public beta **2.0.0b9** until it ships — see
 [Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
 [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
 
-!!! info "License: Apache 2.0 from 2.0.0b5"
-    tuvl moves from the MIT License to the **Apache License, Version 2.0**, which adds an express
-    patent grant. Using, modifying and selling software built on tuvl is as free as before. Releases
-    through `2.0.0b4` stay available under MIT. [What changes](license.md)
+!!! info "License: Apache 2.0"
+    tuvl is licensed under the **Apache License, Version 2.0**, which includes an express patent grant.
+    Using, modifying and selling software built on tuvl is free. [The license](license.md)
+
+## New in 2.0.0b9
+
+<div class="grid cards" markdown>
+
+-   **Collections in workflows**
+
+    ---
+
+    A `loop` agent can search a collection as a tool (`- collection: kb_docs`): the model supplies the query, and `top_k` and
+    the filter are fixed in the YAML. In Insight the vector search and ingest steps pick their collection from the configured ones,
+    and a **Retrieve and answer** step adds a search routed into an answering model that cites its sources.
+    [Loop and tools](internals/loop-and-tools.md), [Embeddings & Collections](insight/embeddings-collections.md)
+
+-   **A better agent panel in Insight**
+
+    ---
+
+    An `llm` or `loop` agent picks its AI model from the configured presets, takes its prompt, steering, skills, MCP servers and
+    judge from stored artifacts pinned to a version, and the whole agent can be edited as YAML. [Insight](internals/insight.md)
+
+-   **Ideas from Insight**
+
+    ---
+
+    Upload an idea (files, a folder or text) on the Ideas page and **generate a spec** from it with your coding agent, after
+    asking for consent. [Authoring](internals/authoring.md)
+
+-   **Provenance on PyPI**
+
+    ---
+
+    `tuvl` and `tuvl-insight` are published with PEP 740 attestations again, and the release fails if PyPI has none for any file.
+
+</div>
 
 ## New in 2.0.0b8
 

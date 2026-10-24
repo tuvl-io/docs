@@ -3,9 +3,11 @@
 <div class="tool-logo"><img src="../../assets/logo-icon.svg" alt=""><span>tuvl <span class="tuvl-site-tag">flightlog</span></span></div>
 
 !!! warning "Pre-release"
-    Flightlog is built and tested (24 tests on SQLite, 40 on PostgreSQL) but not published yet: there is no PyPI package or public
-    repository to install from. Until the first release, build it from the checkout (`pip install "./python[postgres]"`). The commands
-    and endpoints below are what the first release will ship.
+    Flightlog is built and tested (24 tests on SQLite, 40 on PostgreSQL for the Python build; 21 end-to-end tests for the tuvl build).
+    The **tuvl build is published as a Docker image**, [`tuvl/flightlog`](https://hub.docker.com/r/tuvl/flightlog) (amd64 and arm64):
+    see [Flightlog on tuvl](on-tuvl.md#run-the-image). The **Python build** is not published yet: there is no PyPI package or public
+    repository for it, so build it from the checkout (`pip install "./python[postgres]"`). The commands and endpoints below are what
+    its first release will ship.
 
 
 **The log of every flight a team's work takes.** Flightlog receives what each developer does on a [tuvl](https://tuvl.dev) project

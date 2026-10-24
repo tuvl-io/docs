@@ -10,7 +10,40 @@ PostgreSQL, tuvl 2.0 and, for revocation that survives a restart, Redis.
 revocation, export, retention, an admin log, a forwarding status, and two forwarders: https with a bearer token, and JSON lines to S3,
 Azure, GCS or a directory. 21 end-to-end tests cover it, and `tuvl ship` passes tuvl's code review gate.
 
-## Run it
+## Run the image
+
+The tuvl build is on Docker Hub as `tuvl/flightlog` (`0.1.0` and `latest`; amd64 and arm64): the production image `tuvl ship` writes,
+non-root, with only the runtime files. It needs PostgreSQL (tried with 16), and Redis if revoked tokens must stay revoked across restarts.
+
+```yaml
+# compose.yaml
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: flightlog, POSTGRES_PASSWORD: change-me, POSTGRES_DB: flightlog }
+    volumes: [db:/var/lib/postgresql/data]
+  redis:
+    image: redis:7-alpine
+  flightlog:
+    image: tuvl/flightlog:0.1.0
+    depends_on: [db, redis]
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: flightlog
+      POSTGRES_USER: flightlog
+      POSTGRES_PASSWORD: change-me
+      REDIS_HOST: redis
+      TUVL_SIGNING_KEY: ${TUVL_SIGNING_KEY}      # openssl rand -hex 32; keep it, it signs every token
+    ports: ["127.0.0.1:8885:8885"]
+volumes:
+  db:
+```
+
+`TUVL_SIGNING_KEY=$(openssl rand -hex 32) docker compose up -d` creates the tables on first start. Put TLS in front of it (a reverse
+proxy) and publish port 8885 only to that proxy, then follow the steps below. Settings that are YAML (retention, token lifetime, approval,
+the rate limit, forwarding) are changed in the project and the image rebuilt with `tuvl ship`.
+
+## Run it from the project
 
 ```bash
 cp .env.example .env                  # POSTGRES_*, REDIS_*, TUVL_SIGNING_KEY (tuvl generate key)
