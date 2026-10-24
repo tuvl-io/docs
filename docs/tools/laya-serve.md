@@ -88,11 +88,19 @@ project uses it (or with `--with-laya`). See [Decide](../internals/decide.md) â†
 
 ## Where to get it
 
-The image is on Docker Hub as [`tuvl/laya-serve`](https://hub.docker.com/r/tuvl/laya-serve) (`0.4.7` and `0.4.7-en`, amd64 and arm64).
+The image is on Docker Hub as [`tuvl/laya-serve`](https://hub.docker.com/r/tuvl/laya-serve) (`0.4.7-2` and `0.4.7-2-en`, with `latest` and `latest-en`; amd64 and arm64).
 The build files are in [tuvl-io/laya-serve](https://github.com/tuvl-io/laya-serve): CI builds and smoke-tests every push on native
 amd64 and arm64 runners, and a `v*` tag publishes both architectures. The image version is the Laya version it serves, which also
-pins the weights; a rebuild of the same version adds a build number (`v0.4.7-1`).
+pins the weights; a rebuild of the same version adds a build number (`v0.4.7-1`, `v0.4.7-2`).
 
-## Licence
+## Credits and licence
 
-MIT for the build files; the image redistributes Apache-2.0 Laya code and weights.
+**Laya** is developed by [Convai Innovations](https://huggingface.co/convaiinnovations) ([source](https://github.com/NandhaKishorM/laya)).
+The image redistributes the `laya` package and the Laya weights (`convaiinnovations/laya`), both Apache-2.0. Laya is built on two open
+encoders, which the image contains in fine-tuned form: **ModernBERT-large** by Answer.AI, LightOn and collaborators
+([arXiv:2412.13663](https://arxiv.org/abs/2412.13663)) for the English and typed-decisions checkpoints, and **mmBERT-base** by the Johns
+Hopkins University Center for Language and Speech Processing ([arXiv:2509.06888](https://arxiv.org/abs/2509.06888)) for the multilingual
+one. The `/v1/systemone` protocol follows the TypeSafe Jev API; Jev is named only to describe compatibility.
+
+The build files in `laya-serve` are Apache-2.0. The image also contains PyTorch, Transformers, FastAPI and Uvicorn, each under its own
+licence. tuvl is not affiliated with or endorsed by Convai Innovations, Answer.AI, LightOn, Johns Hopkins University or TypeSafe.

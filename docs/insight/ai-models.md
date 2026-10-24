@@ -126,6 +126,9 @@ models) a `decide` agent:
   routes: { default: END, parse_error: END.failed, timeout: END.failed, budget_exceeded: END.failed, error: END.failed }
 ```
 
+In the workflow editor, select the agent and open its **Prompt** (or **Loop**) tab: the **AI model** dropdown lists the presets configured
+here, marks disabled ones, and offers *Other* for a `provider/model` id of your own.
+
 The **Decision** toggle on this page creates `type: decision` models (`laya`, `jev` or `llm`) for
 the [decide engine](../internals/decide.md). For a hosted decision model, set its API base and an
 `${ENV_VAR}` API key there too.
