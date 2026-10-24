@@ -115,6 +115,7 @@ nav:
       - Datasources: insight/datasources.md
       - AI Models: insight/ai-models.md
       - Embeddings & Collections: insight/embeddings-collections.md
+      - Memory: insight/memory.md
       - IAM: insight/iam.md
       - Federation: insight/federation.md
       - API Docs: insight/api-docs.md

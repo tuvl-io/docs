@@ -55,6 +55,13 @@ Each tool's **effect** is derived (the agent's, the child workflow's strongest, 
 shown to the model and in Insight. Write/destructive MCP calls are at-least-once; V015 asks for an
 approval or `compensate`.
 
+### Calls in the same turn
+
+When a model turn asks for several MCP tools that are marked `readOnlyHint` and need no approval, they run at the same
+time: the turn takes about as long as the slowest. Events and the transcript keep the order the model asked in, and
+`budget.max_tool_calls` and `max_calls` are counted as before. Writes, approvals, and agent, workflow and collection tools
+still run one at a time (they share the run's database session).
+
 ### In-loop approval
 
 1. The model requests a call that matches `approval`.
