@@ -120,5 +120,20 @@ Search and ingest are built-in `code` agents with typed contracts:
   routes: { default: END, error: END.failed }
 ```
 
+In the workflow editor, a search or ingest step has a **Collection** dropdown listing the collections configured here, with the embedding each
+one uses, and the **+ Add step** palette has **Retrieve and answer**: a search routed into an `llm` step that answers only from the passages and
+returns its `sources`.
+
+A `loop` agent can also search a collection as a tool, with no wrapper agent:
+
+```yaml
+loop:
+  model: default
+  steering: Answer from the knowledge base only.
+  tools:
+    - collection: hr_knowledge_base      # offered to the model as search_hr_knowledge_base(query)
+      top_k: 3
+```
+
 Pass `hits` to an `llm` agent as an input to ground its answer. See the knowledge-base-qa
 [example](../examples/example-projects.md).

@@ -33,7 +33,14 @@ tuvl ship                      the gate again, then the image and/or a runnable 
 ```
 
 Everything except the agent's own steps costs no tokens. `tuvl dev` shows the same path as a tree
-(ideas → specs → tasks) in a terminal UI, and Insight shows it read-only in the browser.
+(ideas → specs → tasks) in a terminal UI, and Insight shows it in the browser and does the same things.
+
+**In Insight, on the Ideas page:** **Upload idea** takes files, a folder or text you write there and runs `tuvl import idea` on
+them (the same numbering from your initials, the same hashes and audit entry; with several files the idea is titled from the first,
+so give it a title). **Generate a spec with my agent** runs `tuvl generate spec --idea` with the agent you chose (`tuvl use agent`),
+shows its output as it goes, and asks for your consent the first time. The draft goes into the project uncommitted, so the Specs
+page shows it at once, or onto a `spec/<id>` branch with nothing pushed (then the idea must be committed: tick **Commit it to
+git** when you upload). Then approve the spec and derive its tasks from the same page.
 
 ### Ids
 `IDEA-SK-0004` → `SPEC-SK-0004-01` → `TASK-SK-0004-01-003`: a spec and a task carry their idea's number,
