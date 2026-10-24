@@ -44,6 +44,22 @@ data: {"run_id":"…","seq":7,"ts":"…","type":"decision","agent_id":"triage","
 Event types are listed in [runtime](runtime.md#journal-events). Reconnect with `Last-Event-ID` (or
 `?from_seq=`) to resume without gaps.
 
+With `?drafts=true`, while an agent is writing its answer the stream also carries two events that are **not journaled** and have no `id` (without it the stream is exactly the journal, so existing clients are unaffected):
+
+```
+event: token_delta
+data: {"run_id":"…","agent_id":"draft_email","delta":"Hello","replay":false}
+
+event: token_reset
+data: {"run_id":"…","agent_id":"draft_email"}
+```
+
+`token_delta` adds `delta` to that agent's draft. `token_reset` means the agent is starting its answer again (a retry, or another worker after a
+crash): discard the draft. A client that connects while an agent is running first receives the draft so far as one `token_delta` with
+`replay: true`; it does not get drafts of agents that already finished, and an ended run replays only its journal. Drafts are not kept, exported or
+replayed, and the final result is in the journal and the run output as always, so a client that missed deltas loses nothing. They need the
+same `runs:read` access as the rest of the stream.
+
 ### OpenAPI from contracts
 
 Each trigger operation is generated from the workflow:

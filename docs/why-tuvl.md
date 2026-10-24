@@ -6,8 +6,8 @@ This page holds the detail behind the four guarantees on [tuvl.io](https://tuvl.
 
 ## Workflow execution: every path is declared
 
-- **Eight engines, one contract.** Every agent declares typed `inputs`, `outputs` and the signals it emits. Its engine is `code`, `tool`, `decide`, `llm`, `loop`, `map`, `human` or `pending`. Custom logic goes into a `code` agent (a typed Python function), not into the framework.
-- **Checked before it runs.** `tuvl lint project` applies 38 rules covering routes, data flow, types, expressions and policy. It prints each workflow's determinism profile and worst-case token cost. Every signal must be routed; there are no implicit edges. `tuvl lint spec` and `tuvl verify spec` hold the build to its spec in the same way.
+- **Nine engines, one contract.** Every agent declares typed `inputs`, `outputs` and the signals it emits. Its engine is `code`, `tool`, `decide`, `llm`, `loop`, `map`, `parallel`, `human` or `pending`. Custom logic goes into a `code` agent (a typed Python function), not into the framework.
+- **Checked before it runs.** `tuvl lint project` applies 43 rules covering routes, data flow, types, expressions and policy. It prints each workflow's determinism profile and worst-case token cost. Every signal must be routed; there are no implicit edges. `tuvl lint spec` and `tuvl verify spec` hold the build to its spec in the same way.
 - **Rules before models.** A `decide` agent evaluates its rules first and asks a decision model only when none match. A typed-decision model such as self-hosted Laya returns calibrated probabilities, not text. An unavailable model is an `error`, never a silent fallback, and a doubtful answer routes `low_confidence`.
 - **Models stay bounded.** `llm` and `loop` agents must declare token, time and iteration budgets. A model can only pick one of the routes you declared: its choice is constrained to the declared signals, and anything else routes `parse_error`. Every abnormal exit (`max_iterations`, `budget_exceeded`, `timeout`, `aborted`) is a routable signal.
 - **Loops are governed.** Tools are agents, child workflows or allow-listed MCP tools, with schemas derived from their contracts. A risky call pauses for a person's approval, a supervisor can pause, steer or abort, and calibrated judges fail closed.
@@ -58,7 +58,7 @@ Visual builders are a good canvas for a human exploring. Code-first frameworks a
 ## Who it's for
 
 **Engineers: a mechanism you can audit.**
-Typed agent contracts and eight engines form a closed set, checked by 38 validation rules before anything runs. The stack is FastAPI, Postgres with pgvector, a built-in model client for every major provider, and OpenTelemetry. Durable runs are rows in your Postgres, with no extra workflow server and no torch or langchain dependency. Run `tuvl dev` on a laptop, and `tuvl ship` for a container and Helm chart. Start with the [Agentic Manual](internals/tuvl-agentic-manual.md).
+Typed agent contracts and nine engines form a closed set, checked by 43 validation rules before anything runs. The stack is FastAPI, Postgres with pgvector, a built-in model client for every major provider, and OpenTelemetry. Durable runs are rows in your Postgres, with no extra workflow server and no torch or langchain dependency. Run `tuvl dev` on a laptop, and `tuvl ship` for a container and Helm chart. Start with the [Agentic Manual](internals/tuvl-agentic-manual.md).
 
 **Product managers: scope that ships this sprint.**
 Start from a spec in plain language. The task board's progress is derived from the project, not self-reported. `human` agents put sign-off *inside* the workflow: the run waits, durably, for days if needed, and the approval is on record. When someone asks "why did the AI do that?", you open the run and show them.
