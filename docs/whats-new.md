@@ -1,6 +1,6 @@
 # What's new in 2.0
 
-tuvl **2.0.0** (public beta **2.0.0b9** until it ships — see
+tuvl **2.0.0** (public beta **2.0.0b10** until it ships — see
 [Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
@@ -11,9 +11,6 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     Using, modifying and selling software built on tuvl is free. [The license](license.md)
 
 ## New in 2.0.0b10
-
-!!! info "Not published yet"
-    These are on the engine's `version2` branch and ship in **2.0.0b10**. The published beta is still 2.0.0b9.
 
 <div class="grid cards" markdown>
 
