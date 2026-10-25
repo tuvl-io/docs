@@ -1,6 +1,6 @@
 # What's new in 2.0
 
-tuvl **2.0.0** (public beta **2.0.0b9** until it ships — see
+tuvl **2.0.0** (public beta **2.0.0b10** until it ships — see
 [Installation](getting-started/installation.md#20-public-beta)) is a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
 workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
@@ -9,6 +9,58 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
 !!! info "License: Apache 2.0"
     tuvl is licensed under the **Apache License, Version 2.0**, which includes an express patent grant.
     Using, modifying and selling software built on tuvl is free. [The license](license.md)
+
+## New in 2.0.0b10
+
+<div class="grid cards" markdown>
+
+-   **Answers that stream**
+
+    ---
+
+    `llm: { stream_tokens: true }` sends the text of one output field to the run's event stream while the model writes it.
+    The result, validation, token count and retries are the same as without it; a rejected or retried answer tells the client
+    to drop the draft; and the validator refuses it next to an output guardrail, because text a guardrail could still refuse
+    must not be shown. Insight shows the draft under the running step, and `@tuvl/client` has `handle.onToken(...)`.
+    Existing clients are unchanged: drafts come only with `?drafts=true`.
+    [API](internals/api.md), [Engines](internals/engines.md)
+
+-   **Steps that run side by side**
+
+    ---
+
+    The new `parallel` engine runs two to sixteen read-only branches (database reads, HTTP GETs, storage reads, `llm`, read-only
+    `code`) at the same time and joins their outputs, so a step takes as long as its slowest branch. The branches are declared in
+    the YAML, checked before anything runs (V040-V042), priced as the sum of their budgets, journaled branch by branch and mocked
+    one by one in offline tests; a worker killed mid-fan-out is resumed on another. A `loop` also runs the read-only tool calls of
+    one model turn together. [Engines](internals/engines.md#parallel-different-read-only-lookups-at-the-same-time)
+
+-   **Agents that remember, under your rules**
+
+    ---
+
+    `llm.memory` and `loop.memory` put an owner's earlier turns into the prompt and store the result afterwards. The owner is
+    the signed-in user, the tenant or a named input, chosen in YAML and never by the model; recalled text is fenced as data;
+    secure fields are refused; the recalled tokens count against the policy's cost cap; and every recall is journaled. A person
+    can be forgotten (`tuvl prune memory`, or a button in Insight), and `retention` and `tuvl.memory_compact` keep it small.
+    [Engines](internals/engines.md#remembering-across-runs-llmmemory-loopmemory), [Memory in Insight](insight/memory.md)
+
+-   **A Memory page and a parallel step in Insight**
+
+    ---
+
+    Browse what agents remember, per collection and owner, and forget one memory or one person. The canvas has a
+    **Run lookups in parallel** preset, and the run timeline names each branch with its time.
+    [Insight](internals/insight.md)
+
+-   **Skills for what b8 and b9 added**
+
+    ---
+
+    The coding-agent skill set now covers triggers, file uploads, webhooks and per-signal outputs (`tuvl-workflow`), the
+    collection tool, and the new streaming, parallel and memory features. `tuvl update skills` adds them to a project.
+
+</div>
 
 ## New in 2.0.0b9
 
@@ -130,11 +182,11 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     builds each task on its own pull request. Every step is in a local audit ledger, and `tuvl dev` shows
     the path in a terminal UI. [Authoring](internals/authoring.md)
 
--   **Typed agents, eight engines**
+-   **Typed agents, nine engines**
 
     ---
 
-    `code`, `tool` (db / http / storage / mcp), `decide`, `llm`, `loop`, `map`, `human`, `pending` — one
+    `code`, `tool` (db / http / storage / mcp), `decide`, `llm`, `loop`, `map`, `parallel`, `human`, `pending` — one
     contract (`inputs`, `outputs`, signals) for all of them. Named ends replace `Response` steps.
     [Engines](internals/engines.md)
 

@@ -112,7 +112,7 @@ trace.
 | `tuvl.run_id` | `tuvl.run` | The run |
 | `tuvl.workflow` | `tuvl.run`, `tuvl.agent` | Workflow name |
 | `tuvl.agent` | `tuvl.agent` | Agent id |
-| `tuvl.engine` | `tuvl.agent` | `code`, `tool`, `decide`, `llm`, `loop`, `human`, `map`, `pending` |
+| `tuvl.engine` | `tuvl.agent` | `code`, `tool`, `decide`, `llm`, `loop`, `human`, `map`, `parallel`, `pending` |
 | `tuvl.determinism` | `tuvl.agent` | `deterministic`, `bounded`, `external`, `pending` |
 | `tuvl.signal` | `tuvl.agent` | The emitted signal |
 | `tuvl.tokens` | `tuvl.agent` | Tokens used by the invocation |

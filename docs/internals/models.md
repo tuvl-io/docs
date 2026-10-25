@@ -110,6 +110,10 @@ extra network hop to a service you run.
   `gemini/gemini-embedding-001`, `ollama/nomic-embed-text`, `cohere/embed-v4.0`, `voyage/voyage-3`).
 - Failures are classified as `timeout`, `rate_limit` (HTTP 429), `transient` (connection errors, 5xx) or
   `llm_error`, which is what a step's `retry.errors` matches. The client does not retry by itself.
+- Streaming: `tuvl.llm.astream(...)` takes the arguments of `acompletion` and yields `TextDelta` events while the model writes, then one
+  `StreamEnd` carrying the same `Completion` a plain call returns (so token counts and finish reason match). A structured response streams
+  as pieces of the JSON text. `timeout` is the longest silence between chunks, not the whole call. A model that "thinks" before it answers
+  streams nothing until its answer starts.
 - One OpenTelemetry span per call; see [observability](observability.md#5-model-call-spans).
 
 `tuvl check system` lists the variables each model needs; `tuvl check system --live` makes one minimal call per model.

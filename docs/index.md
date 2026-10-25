@@ -5,7 +5,7 @@
 !!! note "tuvl 2.0 — public beta now"
     tuvl 2.0 is a redesign with no 1.x compatibility layer: workflows are graphs of typed
     **agents**, every run is durable and journaled, and projects are built from specs. See
-    [what's new](whats-new.md). Until 2.0.0 ships, install the public beta **2.0.0b9** — see
+    [what's new](whats-new.md). Until 2.0.0 ships, install the public beta **2.0.0b10** — see
     [Installation](getting-started/installation.md#20-public-beta). Versions follow
     [SemVer](https://semver.org).
 
@@ -64,12 +64,13 @@ spec:
 
 <div class="grid cards" markdown>
 
--   **Eight engines, one contract**
+-   **Nine engines, one contract**
 
     ---
 
     `code`, `tool` (DB/HTTP/storage/MCP), `decide` (rules, then a model), `llm`, `loop` (bounded tool
-    use), `map` (a workflow per list item), `human`, and `pending` contracts. Swap an engine without touching the graph.
+    use), `map` (a workflow per list item), `parallel` (different lookups at once), `human`, and `pending` contracts.
+    Swap an engine without touching the graph.
 
 -   **Deterministic first**
 
@@ -84,6 +85,21 @@ spec:
 
     Runs survive restarts, wait for people, pause and resume on any worker, and compensate on
     rollback. Every run is journaled.
+
+-   **Fast where it can be**
+
+    ---
+
+    Declared `parallel` steps run read-only lookups side by side and a step takes as long as its slowest branch;
+    an `llm` answer can stream to the user as it is written, without changing the result you validate.
+
+-   **Memory you can govern**
+
+    ---
+
+    An agent can remember a person across sessions: the owner is chosen in YAML, never by the model, recalled text
+    is fenced as data, secure fields are refused, and the cost is bounded before it runs. Forget one memory or one
+    person from Insight or `tuvl prune memory`.
 
 -   **Record, replay, test**
 

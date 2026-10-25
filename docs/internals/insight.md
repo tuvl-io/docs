@@ -23,6 +23,7 @@ starts a [terminal UI](cli.md#servers) that runs the same commands.
 | **Models** | Data models: fields, relations, access and the CRUD operations exposed |
 | **AI Models** | The model presets (`llms/`) agents refer to as `model: default`, with provider and key variable |
 | **Embeddings**, **Collections** | The vector search setup that `tuvl.data_search`, `tuvl.data_ingest` and a loop's `collection:` tool use. A banner appears when pgvector is not available |
+| **Memory** | What agents remember across runs, per collection: the owners, each memory with the agent and run that wrote it, a filter by owner, and **Forget** for one memory or (after a second click) everything of one owner. Reads and deletes through the dev API; `tuvl prune memory` does the same from the command line |
 | **Datasources**, **Storage** | PostgreSQL, Redis and blob stores; a store can be checked (write, read back, delete a probe object) and its objects browsed from the page |
 | **IAM**, **Federation** | Users, roles, scopes and groups; Google, GitHub, Microsoft or custom sign-in providers |
 | **API Docs** | The OpenAPI generated from your workflows' contracts |
@@ -35,7 +36,7 @@ Selecting an agent on the canvas opens a panel with these tabs:
 
 | Tab | Holds |
 |---|---|
-| **Engine** (named **Rules**, **Prompt**, **Loop**, **Tool**, **Approval** by engine) | The engine's own settings. An `llm` or `loop` agent picks its **AI model** from the configured presets (or types a `provider/model` id), and writes its system prompt, prompt or steering in place or takes it from a stored artifact pinned to a version; skills, MCP servers and collections it may search are listed here too. A `tuvl.data_search` or `tuvl.data_ingest` step picks its **collection** |
+| **Engine** (named **Rules**, **Prompt**, **Loop**, **Tool**, **Approval** by engine) | The engine's own settings. An `llm` or `loop` agent also has **Remember across runs**: the memory collection, whose memory (the signed-in user, the tenant or an input), how many recent and related memories, the prompt budget, what is stored and how long it is kept. An `llm` or `loop` agent picks its **AI model** from the configured presets (or types a `provider/model` id), and writes its system prompt, prompt or steering in place or takes it from a stored artifact pinned to a version; skills, MCP servers and collections it may search are listed here too. A `tuvl.data_search` or `tuvl.data_ingest` step picks its **collection** |
 | **Contract** | The agent's typed inputs and outputs |
 | **Routes** | Where each signal goes |
 | **Budget** | Tokens, time and iterations |

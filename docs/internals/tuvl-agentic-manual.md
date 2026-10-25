@@ -269,6 +269,7 @@ An agent emits exactly one signal per invocation:
 | `decide` | `low_confidence` (with a model) |
 | `human` | `expired` (with `expires`) |
 | `map` | `partial` (a normal signal: only with `on_error: collect`, when routed); an item failing in `fail` mode is `error` (`map_item_failed`) |
+| `parallel` | `partial` (only with `on_error: collect`, when routed); a branch failing in `fail` mode is `error` (`parallel_branch_failed`) |
 
 `error` carries an `error_type` in the journal: `contract_violation`, `no_rule_matched`,
 `decision_model_unavailable`, `judge_unavailable`, `judge_uncertain`, `tool_args_invalid`,
@@ -289,6 +290,7 @@ An agent emits exactly one signal per invocation:
 | `loop` | a bounded tool-using model loop | bounded | $$ |
 | `human` | a form for a person | external | 0 |
 | `map` | a child workflow per item of a list, a few at a time | the child's | the child's × `max_items` |
+| `parallel` | several different read-only agents at the same time | the strongest branch's | the sum of the branches |
 
 Only `code` agents need Python. Everything else is configured in YAML. Details and full examples:
 [engines](engines.md), [decide](decide.md), [loop and tools](loop-and-tools.md).
@@ -472,6 +474,11 @@ Severity: **E** error, **W** warning (error under `--strict`). `tuvl lint projec
 | V034 | E | A `kind: Storage` file is invalid: provider fields, a literal secret instead of `${ENV}`, or a non-https endpoint |
 | V035 | E | `map`: `over` is not a list input; the workflow is unknown, is this workflow, or lacks the `as`/`with` inputs; a required child input is not supplied |
 | V036 | E | `map`: the mapped workflow has a `human` or `pending` agent, or a loop tool that needs approval |
+| V039 | E | `llm.stream_tokens` with an output guardrail, or `stream_field` missing, ambiguous or not a `str` output |
+| V040 | E | `parallel`: a branch is not read-only (a write or destructive tool, a code agent with a write effect, an MCP tool) |
+| V041 | E | `parallel`: a branch reads an input the step does not take, two branches produce the same output, or the step's outputs are not exactly the branches' (optional with `on_error: collect`) |
+| V042 | E | `parallel` under `transaction: per_run` |
+| V043 | E | `memory`: an owner named from input on a public trigger; `write` names a field the agent does not have or one that carries secure model fields |
 | V038 | E / W | A webhook's `stages` names an agent the workflow does not have (E); `allow_private` lets it reach internal addresses and plain http (W) |
 | V037 | E / W | File uploads: `http.upload` without a `file` input, an unknown, read-only or too-small store, a `file` nested deeper than `file` / `list[file]`, or a `file` input with MCP export (E); a `file` input on a route with no `upload`, or a public upload (W) |
 
