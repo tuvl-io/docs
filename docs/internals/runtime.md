@@ -12,6 +12,7 @@ run, because run state lives in Postgres, not in worker memory.
 | `run_events` | The **journal**: append-only `(run_id, seq)` events with type, agent, payload, tokens and latency |
 | `run_checkpoints` | The context after each completed agent — the resume state |
 | `approvals` | Open human forms and tool-call approvals: run, agent, kind, payload, required group, expiry |
+| `run_deltas` | The **live draft** of an agent's answer while it is still being written: text pieces and resets, written in batches by the worker and read by the event stream. Not part of the journal. Rows stay for a minute after the run ends (a client may still be reading the last pieces) and a sweep then removes them; a run that never finished loses them after a day |
 
 Statuses: `queued`, `running`, `waiting_human`, `waiting_approval`, `paused`, `completed`, `failed`,
 `aborted`, `compensated` (`compensating` while compensators run).
@@ -74,7 +75,8 @@ receives the original agent's inputs and outputs. A failing compensator makes th
 Every event: `{ run_id, seq, ts, type, agent_id, engine, tokens, latency_ms, payload }`.
 
 `run_queued` · `run_started` · `agent_started` · `agent_completed` · `signal` · `llm_turn` ·
-`tool_call` · `tool_result` · `map_started` · `map_item` · `map_finished` · `decision` · `judge_verdict` · `approval_requested` ·
+`tool_call` · `tool_result` · `map_started` · `map_item` · `map_finished` · `parallel_started` · `parallel_branch` · `parallel_finished` ·
+`memory_recalled` · `memory_written` · `memory_compacted` · `decision` · `judge_verdict` · `approval_requested` ·
 `approval_decided` · `paused` · `resumed` · `checkpoint` · `compensation_started` ·
 `compensation_completed` · `run_completed` · `run_failed` · `run_aborted`
 
