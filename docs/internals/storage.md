@@ -96,7 +96,8 @@ agents:
 | `presign` | `key`, `method` (`GET`, `PUT`), `expires_in` | the URL | read (`GET`), write (`PUT`) |
 
 - A **blob** is `{store, key, size, content_type, etag, sha256, modified}`, declared as `json`. The
-  key is relative to the store's prefix. `sha256` is computed on `put`.
+  key is relative to the store's prefix. `sha256` is computed on `put`. A `local` store keeps it in `.meta/<key>.json` beside the file, so `head`
+  and `list` do not read the file again; a file written by an older version is hashed when it is read.
 - `key`, `to_key`, `prefix`, `cursor`, `body` and `metadata` are templates (`{{ x }}`).
 - With several outputs, `map` fills each from the result, as `http.map` does:
   `map: { text: content, size: blob.size }`. `get` exposes `content` and `blob`; `list` exposes

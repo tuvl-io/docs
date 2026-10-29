@@ -14,6 +14,11 @@ run, because run state lives in Postgres, not in worker memory.
 | `approvals` | Open human forms and tool-call approvals: run, agent, kind, payload, required group, expiry |
 | `run_deltas` | The **live draft** of an agent's answer while it is still being written: text pieces and resets, written in batches by the worker and read by the event stream. Not part of the journal. Rows stay for a minute after the run ends (a client may still be reading the last pieces) and a sweep then removes them; a run that never finished loses them after a day |
 
+On boot tuvl builds the indexes on the vector store, and `run_deltas (created_at)` for the draft sweep, including the partial indexes agent memory
+uses (by `memory_key` and by `step`). They are built with
+`CREATE INDEX CONCURRENTLY IF NOT EXISTS`, so upgrading a deployment with a large table does not block writes. One process builds them (an
+advisory lock; the others skip) and an index an interrupted build left invalid is rebuilt.
+
 Statuses: `queued`, `running`, `waiting_human`, `waiting_approval`, `paused`, `completed`, `failed`,
 `aborted`, `compensated` (`compensating` while compensators run).
 
