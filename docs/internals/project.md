@@ -86,7 +86,7 @@ The Nest token stays on the dev server and is shared with the CLI's cache.
 {
   "id": "01a141a1-9446-74f6-81e4-bc37135cfcf1",
   "name": "screening", "author": "Jane Doe", "organization": "Acme", "organization_url": "https://acme.example", "type": "dev", "version": "0.1.0",
-  "description": "…", "license": "Apache-2.0", "repo": "https://…", "tuvl_version": "2.0.0b4"
+  "description": "…", "license": "Apache-2.0", "repo": "https://…", "tuvl_version": "2.0.0"
 }
 ```
 
@@ -103,6 +103,7 @@ Served by `tuvl dev` only; not mounted in production.
 | Route | |
 |---|---|
 | `GET /dev/project` | the record plus `registration_state` (404 if the project has none) |
+| `GET /dev/project/summary` | what the project holds: workflows, models, specs, tests, lock |
 | `PUT /dev/project` | update editable fields; the id and registry block are ignored |
 | `POST /dev/project/register/preview` | the payload that would be sent |
 | `POST /dev/project/register` | register, or start a device login (`status: login_required`) |

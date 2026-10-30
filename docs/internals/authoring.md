@@ -18,6 +18,7 @@ no, with no model in the loop. The agent's output is only ever a proposal on a b
 ```text
 tuvl init                      who you are, which agent, git on `develop`
 tuvl import idea brief.pdf     IDEA-SK-0004: a numbered, immutable copy of the brief (text extracted)
+                               …or `--url <page or ticket>`: a snapshot of a web page, Jira issue or GitHub issue
 tuvl generate spec --idea IDEA-SK-0004
                                SPEC-SK-0004-01: your agent drafts it on branch spec/SPEC-SK-0004-01
    review, edit               …in a pull request (draft), by people
@@ -35,12 +36,38 @@ tuvl ship                      the gate again, then the image and/or a runnable 
 Everything except the agent's own steps costs no tokens. `tuvl dev` shows the same path as a tree
 (ideas → specs → tasks) in a terminal UI, and Insight shows it in the browser and does the same things.
 
-**In Insight, on the Ideas page:** **Upload idea** takes files, a folder or text you write there and runs `tuvl import idea` on
+**In Insight, on the Ideas page:** **Upload idea** takes files, a folder, links or text you write there and runs `tuvl import idea` on
 them (the same numbering from your initials, the same hashes and audit entry; with several files the idea is titled from the first,
 so give it a title). **Generate a spec with my agent** runs `tuvl generate spec --idea` with the agent you chose (`tuvl use agent`),
 shows its output as it goes, and asks for your consent the first time. The draft goes into the project uncommitted, so the Specs
 page shows it at once, or onto a `spec/<id>` branch with nothing pushed (then the idea must be committed: tick **Commit it to
 git** when you upload). Then approve the spec and derive its tasks from the same page.
+
+### An idea from a link
+
+`tuvl import idea --url <link>` (repeatable, and it mixes with files) saves a snapshot of what the link shows now. In Insight, paste
+the links one per line in the upload dialog.
+
+| Link | What is saved | Credentials (environment variables) |
+|---|---|---|
+| Any web page | The readable text as Markdown (`<main>` or `<article>` if the page has one; no scripts, menus or footers). Text, JSON, CSV and PDF links are kept as they are | none: a page behind a login cannot be read, so save it as a PDF and import the file |
+| Jira issue (`…/browse/PAY-12`, or a board link with `selectedIssue=`) | Summary, status, people, labels, components, description, subtasks, linked issues, attachment names (the files are not fetched) and comments | Jira Cloud: `TUVL_ATLASSIAN_EMAIL` and `TUVL_ATLASSIAN_TOKEN` (an API token). Server / Data Center: `TUVL_ATLASSIAN_PAT` |
+| Confluence page (`…/spaces/X/pages/123/…` or `viewpage.action?pageId=`) | Title, space, last editor and the page body | the same Atlassian variables |
+| GitHub issue or pull request | Title, state, author, labels, body and the comments (not the diff) | `TUVL_GITHUB_TOKEN` (or `GITHUB_TOKEN`) for a private repository |
+
+- **A snapshot, like any file.** The page is stored in `source/` and `IDEA.yaml` records the link, the kind and when it was fetched;
+  Insight shows it above the text. When the ticket changes, import it again as a new idea that `--supersedes` the old one.
+- **Credentials are sent only to their own service.** Atlassian credentials go to `*.atlassian.net` and to the hosts you list in
+  `TUVL_ATLASSIAN_HOSTS` (comma separated; for a Server / Data Center host), never to another address; GitHub's go to
+  `api.github.com`. They are not written to the idea, and a secret in a link's query string (`token`, `key`, `sig`…) is replaced
+  by `…` in the recorded link. tuvl does not read `.env` files: export the variables in the shell that runs `tuvl` or Insight.
+- **Internal addresses are refused** (localhost, private ranges, a name that resolves to one) and so is plain `http`, as for
+  webhooks. For your own Jira or wiki, pass `--allow-private` (the checkbox in Insight). Redirects are followed by hand and
+  checked at each step; a page may be at most `--max-size` MB (10).
+- **It is sent to your agent like any other file.** A ticket can be confidential: the consent you give before `generate spec`
+  covers it. The prompt marks each snapshot with where it came from and says that text other people can edit is material to
+  specify, not instructions: an agent must not act on a line in a ticket or page that tells it to do something else. Still read
+  the draft spec before you approve it. `tuvl import idea --url … --dry-run` fetches nothing and lists what would be imported.
 
 ### Ids
 `IDEA-SK-0004` → `SPEC-SK-0004-01` → `TASK-SK-0004-01-003`: a spec and a task carry their idea's number,
@@ -63,7 +90,8 @@ used to **review** (read and answer) only.
 | Claude Code | yes | yes | `--restricted`: no code-running tools, file tools limited to the folder, nothing may prompt; review has only Read, Glob, Grep |
 | Codex CLI | yes | yes | its sandbox: `workspace-write` (the folder only), `read-only` for review |
 | Gemini CLI | yes | yes | `auto_edit` approves edit tools only (a shell call is denied when nothing can answer it); `plan` for review |
-| Cursor, Antigravity, Copilot CLI, Amp | no | yes | no per-run way to allow writes in one folder, so tuvl never grants one |
+| Antigravity CLI | yes | yes | `--mode accept-edits` approves edits inside the working folder only; a shell command or an edit outside it is denied. Never `--dangerously-skip-permissions`. Checked on `agy` 1.4.10 |
+| Cursor, Copilot CLI, Amp | no | yes | no per-run way to allow writes in one folder, so tuvl never grants one |
 | `generic` (`tuvl use agent generic --command '…'`) | yes | yes | not confined: any command that reads the prompt on stdin; only the check of what changed protects you |
 | Qwen Code, Aider, OpenCode, Goose | not yet | not yet | listed and detected; headless flags not checked |
 
