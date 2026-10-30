@@ -1,12 +1,21 @@
 # Contributing
 
-Thank you for your interest in contributing to tuvl!
+Thank you for your interest in contributing to tuvl! By taking part you agree to the
+[Code of Conduct](https://github.com/tuvl-io/tuvl/blob/main/CODE_OF_CONDUCT.md).
+
+## Before you start
+
+- **A bug fix or a small improvement:** open a pull request.
+- **A new feature, or a change to behaviour:** open an issue first and describe what you need. Document kinds,
+  engines and artifact types are closed sets, so a design discussion comes before code.
+- **A security problem:** do not open an issue; follow the
+  [security policy](https://github.com/tuvl-io/tuvl/blob/main/SECURITY.md).
 
 ## Development setup
 
 ### Prerequisites
 
-- Python 3.13 (`>=3.13,<3.14`; see [Installation → Troubleshooting](getting-started/installation.md#troubleshooting))
+- Python 3.13 or 3.14 (see [Installation → Troubleshooting](getting-started/installation.md#troubleshooting))
 - [uv](https://docs.astral.sh/uv/)
 - PostgreSQL 16+ with pgvector, and Redis
 - Node.js 20+ and pnpm (Insight)
@@ -52,10 +61,21 @@ Tests that need Postgres skip without `TUVL_TEST_PG_URL`. CI runs all of the abo
 
 1. **Fork** the repository
 2. **Create a branch** for your feature: `git checkout -b feature/my-feature`
-3. **Make your changes** with clear commit messages
+3. **Make your changes** with clear commit messages, each [signed off](#sign-your-commits)
 4. **Add tests** for new functionality
 5. **Run tests** to ensure everything passes
-6. **Submit a PR** with a clear description
+6. **Submit a PR** with a clear description, linking the issue it closes
+
+A maintainer reviews the pull request on the repository. tuvl is developed in a private repository and each release
+is published as a tagged snapshot, so a merged change is applied there and appears in the next tagged release; it
+keeps your authorship.
+
+### Sign your commits
+
+tuvl uses the [Developer Certificate of Origin](https://github.com/tuvl-io/tuvl/blob/main/DCO): you certify that you
+wrote the change, or have the right to submit it, under the project's license. Add a `Signed-off-by` line to each
+commit with `git commit -s`. A pull request whose commits are not signed off will be asked to add it
+(`git rebase --signoff main`).
 
 ### Commit Messages
 
@@ -69,29 +89,7 @@ test: cover per-run transactions
 refactor: simplify repository pattern
 ```
 
-### PR Description Template
-
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Documentation update
-- [ ] Refactoring
-
-## Testing
-- [ ] Unit tests added/updated
-- [ ] Integration tests pass
-- [ ] Manual testing performed
-
-## Checklist
-- [ ] Code follows project style
-- [ ] Self-reviewed code
-- [ ] Documentation updated
-- [ ] No breaking changes (or documented)
-```
+The repository's pull request template lists the checks (tests, docs, sign-off) a reviewer looks for.
 
 ## Documentation
 
@@ -106,9 +104,8 @@ uv run mkdocs build --strict
 ## Getting Help
 
 - **Issues**: [GitHub Issues](https://github.com/tuvl-io/tuvl/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/tuvl-io/tuvl/discussions)
-- **Discord**: [Join our Discord](https://discord.gg/tuvl)
+- **Anything else**: [developer@tuvl.io](mailto:developer@tuvl.io)
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [Apache License, Version 2.0](license.md).
+By contributing, you agree that your contributions are licensed under the [Apache License, Version 2.0](license.md), and your sign-off certifies the DCO. You keep the copyright in your contribution.
