@@ -20,13 +20,15 @@ except the parts that need judgement.
   | Skill | Use it when |
   |---|---|
   | `tuvl-spec` | writing or changing `specs/<name>.md` |
-  | `tuvl-plan` | turning a spec into contracts and tasks |
+  | `tuvl-plan` | writing and maintaining the task list from a checked spec |
   | `tuvl-task-loop` | **always** — the core loop for implementing tasks |
-  | `agent-code` / `agent-tool` / `agent-llm` / `agent-loop` / `agent-decide` / `agent-human` / `agent-map` | implementing an agent with that engine |
+  | `agent-code` / `agent-tool` / `agent-llm` / `agent-loop` / `agent-decide` / `agent-human` / `agent-map` / `agent-parallel` | implementing an agent with that engine |
+  | `tuvl-workflow` | the workflow around the agents: triggers (http, schedule, mcp), file uploads, ends, policy, webhooks, per-signal outputs |
   | `tuvl-data` | models, fields, access, CRUD |
   | `tuvl-test` | tests, mocks, fixtures, judges |
+  | `tuvl-review` | reviewing the Python of code agents (the C-rules, then judgement) |
   | `tuvl-harden` | changing a working workflow safely |
-  | `tuvl-ship` | lock, CI gate, shipping (`tuvl ship` installs only the extras the project uses) |
+  | `tuvl-ship` | lock, CI gate, shipping (`tuvl ship` installs only the tuvl extras the project uses) |
 
 - **`--json` on every read command** (`lint project`, `list tasks`, `show drift`, `run tests`, `list runs`, …), with
   documented schemas.

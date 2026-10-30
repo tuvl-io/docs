@@ -10,7 +10,7 @@ less is recorded straight away. A larger one waits for a finance lead, who appro
 The workflow uses no language model, so every check in this guide is offline and free.
 
 !!! info "What you need"
-    - tuvl installed ([Installation](installation.md)); during the beta, `uv tool install --prerelease allow "tuvl[standard]"`.
+    - tuvl installed ([Installation](installation.md)); `uv tool install "tuvl[standard]"`.
     - PostgreSQL, only for [Run it](#8-run-it). Everything before that is offline.
     - Docker, only if you build the image in [Ship it](#10-ship-it). Writing the Dockerfile and chart needs none.
     - For the agent track: a coding agent that reads `AGENTS.md` (Claude Code, Cursor, Codex, Kiro, ...).
@@ -37,8 +37,8 @@ The workflow uses no language model, so every check in this guide is offline and
     same either way.
 
 !!! tip "Prefer to start from an idea?"
-    This guide writes the spec by hand. If you have a brief (Markdown, PDF or Word) and a coding agent
-    installed, `tuvl import idea brief.pdf` → `tuvl generate spec` → `tuvl approve spec` → `tuvl generate tasks` →
+    This guide writes the spec by hand. If you have a brief (Markdown, PDF or Word, or a web page, Jira issue or GitHub issue
+    given with `--url`) and a coding agent installed, `tuvl import idea brief.pdf` → `tuvl generate spec` → `tuvl approve spec` → `tuvl generate tasks` →
     `tuvl generate code --spec …` does stages 2 to 6 with your agent, one pull request per task, and the same gate
     at the end. See [Authoring with a coding agent](../internals/authoring.md).
 
@@ -889,7 +889,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Install tuvl
-        run: uv tool install --python 3.13 --prerelease=allow "tuvl[standard]>=2.0.0b10,<3"
+        run: uv tool install --python 3.13 "tuvl[standard]>=2.0.0,<3"
       - name: Gate
         run: |
           tuvl lint spec
@@ -911,7 +911,7 @@ tuvl ship -t registry.example.com/refunds:1.0    # add --push to push, --no-buil
 ```text
 Step 1/3 — validate
 ✓ Validation passed
-✓ tuvl.lock is current (tuvl 2.0.0b5)
+✓ tuvl.lock is current (tuvl 2.0.0)
 ✓ tuvl extras: none — the base install is enough
   not installed: mcp, redis, vector, otel-grpc
 Step 2/3 — deploy artifacts

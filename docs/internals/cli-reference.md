@@ -105,13 +105,15 @@ Arguments: `<name>`
 
 ### `tuvl import idea`
 
-Copy an idea (files or a folder) into idea/IDEA-<initials>-NNNN/ as a numbered, immutable record.
+Copy an idea (files, a folder, or a snapshot of a URL) into idea/IDEA-<initials>-NNNN/ as a numbered, immutable record.
 
-Arguments: `<paths>`
+Arguments: `[paths]`
 
 | Option | Value | Default | What it does |
 |---|---|---|---|
 | `--project-dir`, `-d` | PATH | `.` | tuvl project directory |
+| `--url` | TEXT (repeatable) |  | A web page, Jira issue, Confluence page or GitHub issue to snapshot (repeatable) |
+| `--allow-private` |  |  | Let --url reach internal addresses (your own Jira or wiki) |
 | `--title` | TEXT |  | Idea title (default: first heading) |
 | `--supersedes` | TEXT |  | The idea this one replaces (IDEA-XX-NNNN) |
 | `--initials` | TEXT |  | Your initials (saved on first use) |

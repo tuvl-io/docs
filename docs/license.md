@@ -47,5 +47,6 @@ PyTorch (BSD); see the `NOTICE` in `laya-serve`.
 
 ## Contributing
 
-Contributions are accepted under Apache-2.0 (§5), without any additional terms. See
-[Contributing](contributing.md).
+Contributions are accepted under Apache-2.0 (§5) with a Developer Certificate of Origin sign-off
+(`git commit -s`), and no other terms: there is no contributor license agreement, and you keep the
+copyright in your contribution. See [Contributing](contributing.md).

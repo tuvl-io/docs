@@ -40,31 +40,11 @@ Before installing tuvl, ensure you have:
     pip install uv
     ```
 
-## 2.0 public beta
+## Upgrading from 1.x
 
-tuvl **2.0.0** is the next stable release. Until it ships, 2.0 is available as the public beta
-**2.0.0b10**. A plain `uv tool install tuvl` still installs the latest 1.x release, so ask for the
-beta explicitly:
-
-```bash
-# CLI + dev server + Insight (recommended)
-uv tool install --prerelease allow "tuvl[standard]==2.0.0b10"
-
-# CLI only
-uv tool install "tuvl==2.0.0b10"
-```
-
-`--prerelease allow` is needed because uv only takes a pre-release for packages you name yourself,
-and `tuvl[standard]` pulls in `tuvl-insight 2.0.0b10` indirectly.
-
-The TypeScript client has a matching beta on npm's `beta` channel:
-
-```bash
-npm install @tuvl/client@beta     # 2.0.0-beta.2
-```
-
-Once 2.0.0 is released, the commands below install it directly. Report beta issues on
-[GitHub](https://github.com/tuvl-io/tuvl/issues).
+`uv tool install tuvl` installs tuvl 2.0.0. There is no 1.x compatibility layer: a 1.x workflow fails to
+load with an error pointing at the 2.0 format (see [what's new](../whats-new.md)). To move an existing
+install, run `uv tool upgrade tuvl`. The TypeScript client is `npm install @tuvl/client`.
 
 ## Installing tuvl CLI
 
