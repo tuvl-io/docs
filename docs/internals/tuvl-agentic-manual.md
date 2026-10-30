@@ -398,7 +398,8 @@ spec:
 - `tuvl run tests` is **offline**: `tool: db` and `code` agents run for real against an in-memory database
   seeded by `given:`, with the `as:` caller as the principal; an unmocked `human` agent stops the run
   (assert with `expect.wait`); unmocked model/HTTP/MCP agents fail with a hint to mock or replay them
-  (`--live` lets them call out).
+  (`--live` lets them call out). That database is in autocommit, so it keeps writes Postgres would roll
+  back (an agent's error outcome, a retried attempt, a `per_run` rollback): test rollback against Postgres.
 - **Honest results:** a test whose path goes through an unmocked `pending` agent (a typed placeholder)
   is **stubbed**, not passed — it is reported, doesn't count towards task status, and fails
   `tuvl run tests --strict` (the CI gate).

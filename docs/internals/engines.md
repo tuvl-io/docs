@@ -164,6 +164,11 @@ The effect comes from the server's `readOnlyHint`/`destructiveHint`, else `write
 structured content (or parsed text) fills a single output, or spreads an object across several.
 The tool's input schema is pinned in `tuvl.lock`.
 
+Each worker process keeps the MCP session open between calls, one per tenant and server (a stdio
+server is started once, not per call). A change to the server's artifact or to an environment
+variable it reads opens a new session; a session that dies is replaced on the next call. An unused
+session closes after `TUVL_MCP_IDLE_SECONDS` (default 300); `0` opens a new session for every call.
+
 ### Side effects and crashes
 
 Runs are at-least-once per agent ([runtime](runtime.md)). `tool: db` writes on the primary

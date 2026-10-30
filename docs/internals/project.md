@@ -103,6 +103,7 @@ Served by `tuvl dev` only; not mounted in production.
 | Route | |
 |---|---|
 | `GET /dev/project` | the record plus `registration_state` (404 if the project has none) |
+| `GET /dev/project/summary` | what the project holds: workflows, models, specs, tests, lock |
 | `PUT /dev/project` | update editable fields; the id and registry block are ignored |
 | `POST /dev/project/register/preview` | the payload that would be sent |
 | `POST /dev/project/register` | register, or start a device login (`status: login_required`) |
