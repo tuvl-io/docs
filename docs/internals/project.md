@@ -86,7 +86,7 @@ The Nest token stays on the dev server and is shared with the CLI's cache.
 {
   "id": "01a141a1-9446-74f6-81e4-bc37135cfcf1",
   "name": "screening", "author": "Jane Doe", "organization": "Acme", "organization_url": "https://acme.example", "type": "dev", "version": "0.1.0",
-  "description": "…", "license": "Apache-2.0", "repo": "https://…", "tuvl_version": "2.0.0b4"
+  "description": "…", "license": "Apache-2.0", "repo": "https://…", "tuvl_version": "2.0.0"
 }
 ```
 

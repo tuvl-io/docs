@@ -1,8 +1,8 @@
 # Quickstart
 
 This walks through the sample project: a support-ticket triage workflow with a spec, a task list,
-tests and a lock that pass the CI gate as created. During the 2.0 beta, install tuvl as shown in
-[Installation](installation.md#20-public-beta) first.
+tests and a lock that pass the CI gate as created. Install tuvl as shown in
+[Installation](installation.md) first.
 
 ## 1. Create the project
 
