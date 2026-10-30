@@ -37,8 +37,8 @@ The workflow uses no language model, so every check in this guide is offline and
     same either way.
 
 !!! tip "Prefer to start from an idea?"
-    This guide writes the spec by hand. If you have a brief (Markdown, PDF or Word) and a coding agent
-    installed, `tuvl import idea brief.pdf` → `tuvl generate spec` → `tuvl approve spec` → `tuvl generate tasks` →
+    This guide writes the spec by hand. If you have a brief (Markdown, PDF or Word, or a web page, Jira issue or GitHub issue
+    given with `--url`) and a coding agent installed, `tuvl import idea brief.pdf` → `tuvl generate spec` → `tuvl approve spec` → `tuvl generate tasks` →
     `tuvl generate code --spec …` does stages 2 to 6 with your agent, one pull request per task, and the same gate
     at the end. See [Authoring with a coding agent](../internals/authoring.md).
 

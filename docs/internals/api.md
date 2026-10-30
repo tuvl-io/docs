@@ -44,6 +44,10 @@ data: {"run_id":"…","seq":7,"ts":"…","type":"decision","agent_id":"triage","
 Event types are listed in [runtime](runtime.md#journal-events). Reconnect with `Last-Event-ID` (or
 `?from_seq=`) to resume without gaps.
 
+A new event reaches the stream as soon as it commits when the run is written by the same process that serves the stream. Writes from
+another worker process are picked up by a poll once a second, so allow up to a second there. An idle stream costs about one query batch
+a second.
+
 With `?drafts=true`, while an agent is writing its answer the stream also carries two events that are **not journaled** and have no `id` (without it the stream is exactly the journal, so existing clients are unaffected):
 
 ```

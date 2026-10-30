@@ -60,7 +60,10 @@ enough.
   resolved and refused if **any** address is loopback, private, link-local (including the cloud metadata
   address), carrier-grade NAT, multicast or reserved, then the connection goes to the address that was
   checked, so a second lookup cannot return something else.
-- **No redirects, no proxies from the environment, no response body read.** A `3xx` is a failure.
+- **No redirects, no proxies from the environment, no response body kept.** A `3xx` is a failure. A
+  body of up to 16 KiB with a declared length is read and dropped, so the connection can be reused.
+- **Connections are reused only for the same destination.** A kept-alive connection serves the same host
+  name and checked address only; each notification is still resolved and checked before it is sent.
 - **Fixed request.** Authors cannot add headers or change the body.
 - **Nothing sensitive is stored.** The outbox holds the webhook's name and the event, not the URL or the
   secret; both are read from the current declaration when sending, so removing or rotating takes effect
