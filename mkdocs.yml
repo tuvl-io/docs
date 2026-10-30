@@ -103,6 +103,7 @@ nav:
       - Authoring with a Coding Agent: internals/authoring.md
       - API — REST, SSE, MCP: internals/api.md
       - CLI Reference: internals/cli.md
+      - CLI Options (every flag): internals/cli-reference.md
       - Project and Catalogue: internals/project.md
       - Models and Providers: internals/models.md
       - Blob Storage: internals/storage.md
