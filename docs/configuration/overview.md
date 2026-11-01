@@ -124,8 +124,9 @@ field is equivalent to `enabled: true`.
 
 ## SystemConfig (`.tuvl/system.yaml`)
 
-Boot-time settings that shape the mounted API surface, read once at startup. The only
-knob today is `spec.api.expose_model_crud`:
+Boot-time settings that shape the mounted API surface, read once at startup. **Restart required**
+for a change to take effect. Each setting can also be set in the environment, and the environment
+wins over `.tuvl/system.yaml`.
 
 ```yaml
 kind: SystemConfig
@@ -134,16 +135,26 @@ metadata:
 spec:
   api:
     expose_model_crud: false   # default: true
+    expose: [auth]             # system route groups a production server mounts
+    docs: workflows            # off | workflows | all
+    dev_expose_all: true       # false: the dev server mounts only what production would
+    cors_origins:              # default: none
+      - https://app.example.com
+      - http://localhost:5173
 ```
 
-Setting `expose_model_crud: false` unmounts every auto-generated `/models/*` CRUD
-router — the routes are absent entirely, not merely scope-denied — leaving only
-hand-authored `Workflow` triggers exposed. **Restart required** for the change to
-take effect.
+| Key | Environment | What it does |
+|---|---|---|
+| `expose_model_crud` | `TUVL_EXPOSE_MODEL_CRUD` | `false` unmounts every auto-generated `/models/*` CRUD router: the routes are absent entirely, not merely scope-denied, leaving only hand-authored `Workflow` triggers exposed. |
+| `expose` | `TUVL_API_EXPOSE` | Which of `auth`, `admin`, `artifacts`, `system` a production server mounts (`runs` always is). |
+| `docs` | `TUVL_API_DOCS` | What `/docs`, `/redoc` and `/openapi.json` show: `off`, `workflows` or `all`. |
+| `dev_expose_all` | `TUVL_DEV_EXPOSE_ALL` | `false` makes the dev server mount what production would. |
+| `cors_origins` | `TUVL_CORS_ORIGINS` | Browser origins (`scheme://host[:port]`, no trailing slash) allowed to call the API from another origin. None by default, in dev too. |
 
-`TUVL_EXPOSE_MODEL_CRUD` overrides the YAML value at the env level (env wins over
-`.tuvl/system.yaml`). In dev mode, the toggle is also editable from the Insight
-[Settings page](../insight/settings.md#api-access)'s API Access section.
+The first four are explained in [API](../internals/api.md#which-routes-a-server-exposes); `cors_origins` has its
+own section, [Calling from a browser](../internals/api.md#calling-from-a-browser). In dev mode,
+`expose_model_crud` is also editable from the Insight [Settings page](../insight/settings.md#api-access)'s
+API Access section.
 
 See [Authorization Surfaces](../security/iam.md#authorization-surfaces) for the CRUD
 and workflow-trigger auth model this knob sits alongside.

@@ -112,6 +112,27 @@ of Insight that need the other groups then stop working until you turn it back o
 `/dev`); `all` adds the system routes; `off` serves none of the three paths. The dev server defaults
 to `workflows`, production to `off`. `tuvl lint project` checks both settings.
 
+## Calling from a browser
+
+A browser lets a page call only its own origin unless the server says otherwise. By default tuvl sends no CORS headers, so a UI served from another origin (a Vite dev server, a CDN, another domain) is blocked.
+Either serve the UI and the backend from one origin, with a reverse proxy for `/api`, `/auth` and `/models`, or list the UI's origin:
+
+```yaml
+kind: SystemConfig
+spec:
+  api:
+    cors_origins: [https://app.example.com, http://localhost:5173]
+```
+
+`TUVL_CORS_ORIGINS=https://app.example.com,http://localhost:5173` overrides it (the environment wins; set to an empty string it turns the setting off).
+
+- An origin is `scheme://host[:port]` exactly as the browser sends it: no path, no trailing slash. `tuvl lint project` rejects anything else; the server leaves a bad entry out, so a mistake narrows access.
+- Nothing is allowed by default, in dev too: a web page you open could otherwise call your dev server. Add `http://localhost:5173` yourself if you want to skip the proxy.
+- `*` allows every website; the API still needs a token, but `tuvl lint project` warns and the server logs a warning. Prefer a list.
+- Allowed: methods `GET POST PUT PATCH DELETE`, request headers `Authorization`, `Content-Type`, `Accept`, `Last-Event-ID`. Credentials mode is off: tokens travel in the `Authorization` header, never in cookies. The response header `X-Tuvl-Run-Id` is exposed, because `@tuvl/client` reads it.
+- It is not a login. CORS only decides which pages the browser lets read a response; scopes and groups still decide who may do what.
+- The setting is read at boot: restart after changing it. The IP allowlist (`TUVL_ALLOWED_HOSTS`) is a separate gate on the client's address.
+
 ## MCP export
 
 ```yaml
@@ -158,3 +179,5 @@ if (result instanceof RunHandle) {
 `execute` resolves the end body or a `RunHandle` (202); error ends reject with `TuvlRunError`,
 refusals with `TuvlApiError`. Also: `start`, `runs.{list,get,events,control,export}`,
 `approvals.{list,decide}`, `crud(model)`, and `TuvlAuth` for `/auth/*`.
+
+In a browser on another origin the backend must allow that origin first ([Calling from a browser](#calling-from-a-browser)); a blocked call rejects with the browser's own `TypeError` ("Failed to fetch"), not a `TuvlApiError`.
