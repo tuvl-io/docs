@@ -36,7 +36,8 @@ tuvl_documentation/
 ├── pyproject.toml        # Python deps managed by uv
 ├── .github/
 │   └── workflows/
-│       └── publish-docs.yml   # CI: build & deploy on release branch / tag
+│       ├── ci.yml             # CI: strict build on pull requests, branch-flow checks
+│       └── publish-docs.yml   # CI: build & deploy on push to main
 └── docs/
     ├── index.md          # Home page
     ├── getting-started/  # Installation, quickstart, project structure, coding agents
@@ -65,7 +66,14 @@ Docs are published automatically via GitHub Actions:
 
 | Event | Action |
 |-------|--------|
-| Push to `release` branch | Build & deploy to GitHub Pages |
-| Tag matching `v*` | Build & deploy to GitHub Pages |
+| Push to `main` | Build & deploy to GitHub Pages (tuvl.dev) |
 
 See [.github/workflows/publish-docs.yml](.github/workflows/publish-docs.yml) for details.
+
+## Branches
+
+All work happens on `develop`: branch from it, open the pull request against it, and CI builds the site in strict mode.
+`main` is what is live. It only takes a pull request from `develop`, merged with a **merge commit** (not a squash), and
+CI refuses any other head branch. The merge publishes tuvl.dev and, through the portal, tuvl.io/docs.
+
+Document a feature only once the release that has it is on PyPI: a merge to `main` is live at once.
