@@ -22,4 +22,4 @@ This directory contains the source code for the TUVL documentation website (`tuv
 
 ## 4. Workflows
 - **Adding a Page:** You must ALWAYS register any new markdown file created in `docs/` under the `nav:` section in `mkdocs.yml`, otherwise it will be considered an orphaned page.
-- **Deployment:** Handled automatically via `.github/workflows/publish-docs.yml` on push to `release` or version tags.
+- **Deployment:** Handled automatically via `.github/workflows/publish-docs.yml` on push to `main`. Work on `develop`; `main` only takes a pull request from `develop`.

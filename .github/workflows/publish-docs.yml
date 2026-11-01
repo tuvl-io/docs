@@ -1,13 +1,13 @@
 name: Publish Docs
 
 # Publishes the MkDocs site to https://tuvl.dev — a single, unversioned site
-# served from the gh-pages branch (CNAME below). Deploys from `release`, the
-# production-mirror branch (the same branch the portal's /docs mirror tracks),
-# so tuvl.dev and tuvl.io/docs stay in step.
+# served from the gh-pages branch (CNAME below). Deploys from `main`, which only
+# takes a pull request from `develop` (the same branch the portal's /docs mirror
+# tracks), so tuvl.dev and tuvl.io/docs stay in step.
 
 on:
   push:
-    branches: [release]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

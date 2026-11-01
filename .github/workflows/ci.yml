@@ -1,0 +1,68 @@
+name: CI
+
+# Work happens on develop; main takes a pull request from develop only, and a push to main publishes the site
+# (publish-docs.yml). A pull request builds the site in strict mode, so a broken link or an orphan page fails here
+# and not after the merge.
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Build the site (strict)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync
+      - run: uv run mkdocs build --strict
+
+  branch-flow:
+    name: main takes pull requests from develop only
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Check the head branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [[ "$HEAD_REF" != "develop" || "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]]; then
+            echo "::error::main only takes pull requests from develop; open this one against develop"
+            exit 1
+          fi
+
+  # a push to main must be a release merged from develop (branch rules block the rest)
+  main-from-develop:
+    name: main only contains develop
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check the pushed commit came from develop
+        run: |
+          git fetch --no-tags origin develop
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/develop; then exit 0; fi # fast-forward from develop
+          SECOND=$(git rev-parse --verify --quiet "$GITHUB_SHA^2" || true) # merge commit of develop
+          if [[ -n "$SECOND" ]] && git merge-base --is-ancestor "$SECOND" origin/develop; then exit 0; fi
+          echo "::error::$GITHUB_SHA was pushed to main without coming from develop"
+          exit 1
