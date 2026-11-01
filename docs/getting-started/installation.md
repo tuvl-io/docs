@@ -6,13 +6,19 @@ This guide walks you through installing tuvl and its dependencies.
 
 Before installing tuvl, ensure you have:
 
-- **Python 3.13** — tuvl targets Python 3.13 (`>=3.13,<3.14`). Python 3.14 is **not yet supported** — see [Troubleshooting](#troubleshooting) for the reason and the fix.
+- **Python 3.13 or 3.14** — tuvl 2.0 supports `>=3.13,<3.15`. uv picks a compatible interpreter automatically.
 - **uv** — Fast Python package manager (recommended)
 - **PostgreSQL** — For data persistence (optional for development)
+- **Docker** — Optional. The easiest way to run PostgreSQL, Redis and Laya locally, and required by `tuvl ship` to build the production image
+- **Redis** — Optional for `tuvl dev`; needed when you run more than one worker ([why](../configuration/redis.md))
+- **Laya (`tuvl/laya-serve`)** — Optional. A self-hosted decision model for `decide` agents; runs as its own container
 - **Ollama** — For local LLM inference (optional)
 
-!!! warning "Use Python 3.13"
-    tuvl pins `requires-python = ">=3.13,<3.14"`. A clean `uv tool install "tuvl[standard]"` picks a compatible interpreter automatically. If you force the install into a pre-created **Python 3.14** environment it will fail while building `biscuit-python` — jump to [Python 3.14: `biscuit-python` build failure](#python-314-biscuit-python-build-failure).
+!!! note "What you actually need"
+    To try tuvl you need Python and uv, and a PostgreSQL database. Everything else above is opt-in: Redis only matters for multi-worker deployments, and Laya only if a `decide` agent uses it as its decision model.
+
+!!! note "Python 3.14"
+    tuvl 1.x was held to Python 3.13 because its token library (`biscuit-python`) had no 3.14 builds. tuvl 2.0 signs tokens as standard JWTs and runs on 3.13 and 3.14 on Linux, macOS and Windows.
 
 ### Installing uv
 
@@ -34,6 +40,12 @@ Before installing tuvl, ensure you have:
     pip install uv
     ```
 
+## Upgrading from 1.x
+
+`uv tool install tuvl` installs tuvl 2.0.0. There is no 1.x compatibility layer: a 1.x workflow fails to
+load with an error pointing at the 2.0 format (see [what's new](../whats-new.md)). To move an existing
+install, run `uv tool upgrade tuvl`. The TypeScript client is `npm install @tuvl/client`.
+
 ## Installing tuvl CLI
 
 Install the tuvl CLI globally using uv:
@@ -47,7 +59,7 @@ uv tool install "tuvl[standard]"
 ```
 
 !!! tip
-    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, and hot-reload support. Use the base install for production-only deployments where the UI is not needed.
+    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, hot-reload support, the development tools (`tuvl generate code`, `tuvl run tests`, `tuvl serve mcp`) and every extra below. The base install is the production server and is about 65 MB installed. `tuvl ship` builds production images from it and adds only the extras your project uses.
 
 Verify the installation:
 
@@ -72,6 +84,31 @@ Or with pip:
 ```bash
 pip install "tuvl[standard]"
 ```
+
+## Extras
+
+The base `tuvl` has no package for a feature you may not use. Install the extra when you use the feature:
+
+| Extra | Adds | You need it for |
+|---|---|---|
+| `tuvl[mcp]` | `mcp` | `use: mcp` tools, a `loop` calling an MCP server, exporting a workflow as an MCP tool, `tuvl serve mcp` |
+| `tuvl[redis]` | `redis` | a `type: redis` datasource |
+| `tuvl[vector]` | `pgvector` | collections, embeddings and `tuvl.data_search` / `tuvl.data_ingest` |
+| `tuvl[otel-grpc]` | OTLP gRPC exporter | `TUVL_OTLP_PROTOCOL=grpc` (HTTP/protobuf is the default and needs nothing) |
+| `tuvl[codegen]` | `libcst` | `tuvl generate code` and `tuvl init --sample` |
+| `tuvl[test]` | `aiosqlite` | `tuvl run tests` |
+| `tuvl[review]` | `ruff` | `tuvl review code` |
+| `tuvl[pdf]` | `pypdf` | `tuvl import idea` of PDF ideas (Word and Markdown need nothing extra) |
+| `tuvl[tui]` | `textual` | the terminal UI that `tuvl dev` starts on a terminal |
+
+```bash
+uv add "tuvl[mcp,redis]"
+```
+
+Using a feature without its extra fails with the command to run, for example
+`pip install 'tuvl[mcp]'`. You do not choose extras for production by hand: [`tuvl ship`](shipping.md#only-what-the-project-uses)
+reads the project and installs exactly the ones it needs. Model providers and blob storage (S3,
+Azure, GCS, local disk) are built in and need no extra.
 
 ## Optional Dependencies
 
@@ -103,6 +140,73 @@ pip install "tuvl[standard]"
       -p 5432:5432 \
       postgres:16-alpine
     ```
+
+### Redis (optional)
+
+Redis shares OAuth state and the token-revocation list between workers. A single `tuvl dev`
+process works without it (an in-process fallback is used); add it before running more than one
+worker. Install `tuvl[redis]` to use it. See [Redis configuration](../configuration/redis.md) for the datasource file.
+
+=== "macOS (Homebrew)"
+
+    ```bash
+    brew install redis
+    brew services start redis
+    ```
+
+=== "Ubuntu/Debian"
+
+    ```bash
+    sudo apt install redis-server
+    sudo systemctl start redis-server
+    ```
+
+=== "Docker"
+
+    ```bash
+    docker run -d --name tuvl-redis -p 6379:6379 redis:7-alpine
+    ```
+
+Then add `datasources/redis-primary.yaml` with `type: redis`, `host: ${REDIS_HOST:localhost}`.
+
+### Laya decision server (optional)
+
+[Laya](https://hub.docker.com/r/tuvl/laya-serve) is an open-weight model that picks one value of a
+`decide` agent's enum with a confidence. It runs on CPU in its own container, offline, with
+verified weights baked in. Use it when you want decisions made on your own infrastructure instead
+of calling a hosted model.
+
+The quickest route is to let `tuvl init` scaffold it:
+
+```bash
+tuvl init my-project --decision-model laya -y
+cd my-project
+docker compose up -d laya        # serves on http://localhost:8000
+```
+
+This writes `llms/laya.yaml` (a `provider: laya` AgentModel), `LAYA_API_*` entries in `.env` and a
+`compose.yaml`. To run the container by hand:
+
+=== "English only (smaller)"
+
+    ```bash
+    docker run -d --name laya -p 127.0.0.1:8000:8000 tuvl/laya-serve:0.4.7-1-en
+    ```
+
+=== "English + multilingual"
+
+    ```bash
+    docker run -d --name laya -p 127.0.0.1:8000:8000 tuvl/laya-serve:0.4.7-1
+    ```
+
+| Image | Use with | Memory |
+|---|---|---|
+| `…-en` | `model: english` | about 2 GiB |
+| full | `model: auto` or `multilingual` | about 3.5 GiB |
+
+The image is about 2.7 GB (CPU PyTorch plus the weights), amd64 and arm64. Check it is up with
+`curl localhost:8000/health`. Details, checkpoints and settings are in
+[AI Models → Laya](../configuration/agents.md) and [Decide](../internals/decide.md).
 
 ### Ollama (Local LLM)
 
@@ -138,120 +242,23 @@ pip install "tuvl[standard]"
     docker exec ollama ollama pull llama3
     ```
 
-## Development Installation
-
-For contributing to tuvl or developing locally:
-
-```bash
-# Clone the repository
-git clone https://github.com/tuvl-io/tuvl.git
-cd tuvl
-
-# Install dependencies
-cd engine && uv sync
-cd ../cli && uv sync
-
-# Run the development server
-cd ../engine && uv run tuvl dev
-```
-
 ## Verifying Installation
 
-Create a test project to verify everything works:
+Create the sample project and run its checks:
 
 ```bash
-# Scaffold with sample files (recommended)
-tuvl init my-project --sample
+tuvl init my-project --sample --preset gemini -y   # or openai | anthropic | ollama
 cd my-project
-
-# Start the development server
-tuvl dev
-
-# Options: custom port or project directory
-# tuvl dev --port 3000
-# tuvl dev --project-dir /path/to/project
+tuvl lint project --strict
+tuvl run tests
+tuvl dev --auto-login
 ```
 
-You should see output like:
-
-```
-╭─────────────────────────────── tuvl dev ───────────────────────────────╮
-│ Starting tuvl engine in dev mode on port 8885.                         │
-│                                                                        │
-│ Security key                                                           │
-│  XXXX-XXXX-XXXX-XXXX                                                   │
-│                                                                        │
-│ Open http://127.0.0.1:8885/insight/ and paste the key above.          │
-╰────────────────────────────────────────────────────────────────────────╯
-```
-
-Open `http://127.0.0.1:8885/insight/` in your browser and paste the printed security key to access the tuvl insight developer portal.
+`tuvl dev` serves the engine on port 8885 and **Insight** at `http://127.0.0.1:8885/insight/`.
+With `--auto-login` this machine skips the key screen; otherwise paste the session key, stored in
+`.tuvl/.dev-session` (`tuvl dev --show-key` prints it).
 
 ## Troubleshooting
-
-### Python 3.14: `biscuit-python` build failure
-
-**Symptom** — installing on Python 3.14 (typically Windows) aborts while building `biscuit-python`:
-
-```text
-× Failed to build biscuit-python==0.4.0
-  ╰─▶ Call to maturin.build_wheel failed (exit code: 1)
-      error: the configured Python interpreter version (3.14) is newer than
-      PyO3's maximum supported version (3.13)
-hint: biscuit-python (v0.4.0) was included because tuvl (v1.0.0) depends on biscuit-python
-```
-
-**Why this happens** — tuvl uses [Biscuit](https://www.biscuitsec.org/) tokens for its capability-based auth, via the `biscuit-python` package. `biscuit-python` is a native extension written in Rust (built with `maturin` + PyO3), so installing it needs a **pre-compiled wheel** for your exact Python version and platform. `biscuit-python==0.4.0` publishes wheels up to **CPython 3.13** only — there is no 3.14 Windows wheel yet. When no wheel matches, uv/pip falls back to compiling from Rust source, and **PyO3 0.24.1 refuses to build against any Python newer than 3.13** and stops.
-
-This is exactly why tuvl pins `requires-python = ">=3.13,<3.14"`. A correctly formed install (`uv tool install "tuvl[standard]"`) selects a compatible interpreter automatically and never reaches this build. You only hit the error above when you install into an environment that was **already created with Python 3.14** — uv then honours that interpreter instead of choosing 3.13.
-
-#### Fix A — use Python 3.13 (recommended, zero friction)
-
-Wheels exist for 3.13, so the install is a fast binary download with no Rust toolchain involved.
-
-=== "uv tool (global CLI)"
-
-    ```powershell
-    # Install a 3.13 interpreter (uv manages it for you) and pin the tool to it
-    uv python install 3.13
-    uv tool install --python 3.13 "tuvl[standard]"
-    ```
-
-=== "uv venv (project)"
-
-    ```powershell
-    # Recreate the environment explicitly on 3.13
-    uv venv --python 3.13 .venv
-    .\.venv\Scripts\activate
-    uv pip install "tuvl[standard]"
-    ```
-
-Verify:
-
-```powershell
-tuvl --version
-```
-
-#### Fix B — force the build on Python 3.14 (advanced, unsupported)
-
-If you must stay on 3.14, you can tell PyO3 to skip its forward-compatibility check and build against the stable ABI anyway. This is **not officially supported** — it requires a working **Rust toolchain** (`rustc`/`cargo`) and may produce a binary that behaves subtly differently. Prefer Fix A.
-
-=== "PowerShell"
-
-    ```powershell
-    $env:PYO3_USE_ABI3_FORWARD_COMPATIBILITY = "1"
-    uv pip install "tuvl[standard]"
-    ```
-
-=== "cmd.exe"
-
-    ```bat
-    set PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
-    uv pip install "tuvl[standard]"
-    ```
-
-!!! note
-    Native 3.14 support will land once `biscuit-python` ships 3.14 wheels (and PyO3 raises its supported ceiling). Until then, **3.13 is the supported runtime.**
 
 ### Windows: port already in use or permission denied
 
@@ -292,5 +299,7 @@ The default `8885` spells **T·U·V·L** on a phone keypad and deliberately avoi
 ## Next Steps
 
 - [Quickstart Guide](quickstart.md) — Build your first workflow
+- [Code generation](codegen.md) — `tuvl generate code`: typed schemas, stubs and tests
+- [Shipping to production](shipping.md) — `tuvl ship`: image, Helm chart, Laya and secrets
 - [Project Structure](project-structure.md) — Understand the project layout
-- [Architecture](../concepts/architecture.md) — Learn how tuvl works
+- [Agentic Manual](../internals/tuvl-agentic-manual.md) — how tuvl projects are written

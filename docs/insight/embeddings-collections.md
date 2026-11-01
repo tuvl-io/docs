@@ -48,8 +48,9 @@ spec:
 
 | Field | Description |
 |-------|-------------|
-| `model` | LiteLLM embedding model string |
-| `api_base` | Required for Ollama. Leave blank for cloud providers. |
+| `model` | `provider/model` of an OpenAI-compatible embeddings endpoint (OpenAI, Gemini, Ollama, Cohere, Voyage, a gateway) |
+| `api_base` | Optional — a gateway or proxy; Ollama defaults to `OLLAMA_BASE_URL` |
+| `api_key` | Optional `${ENV_VAR}` reference; blank uses the provider's key variable |
 | `dimensions` | Vector size — must match the model's output dimension |
 
 ### Common embedding models
@@ -61,6 +62,7 @@ spec:
 | OpenAI | `openai/text-embedding-3-small` | 1536 |
 | OpenAI | `openai/text-embedding-3-large` | 3072 |
 | Cohere | `cohere/embed-english-v3.0` | 1024 |
+| Voyage | `voyage/voyage-3` | 1024 |
 
 ---
 
@@ -94,32 +96,44 @@ spec:
 
 ## Using RAG in a workflow
 
-Once an `EmbeddingModel` and `VectorCollection` are configured and enabled, tuvl registers automatic RAG nodes that you can call from `Functional` steps:
+Search and ingest are built-in `code` agents with typed contracts:
 
 ```yaml
 - id: retrieve_policy
-  kind: Functional
-  runner: rag_search          # auto-registered by tuvl
-  input:
-    collection: hr_knowledge_base
-    query: "{{ employee_question }}"
-    top_k: 5
+  description: Find the relevant policy passages
+  engine: code
+  inputs:  { employee_question: str }
+  outputs: { hits: "list[json]" }          # [{content, metadata, score}]
+  code:
+    run: tuvl.data_search
+    with: { collection: hr_knowledge_base, query: "{{ employee_question }}", top_k: 5 }
+  routes: { default: answer, error: END.failed }
+
+- id: ingest_policy
+  description: Add a policy document to the knowledge base
+  engine: code
+  inputs:  { title: str, content: str }
+  outputs: { doc_id: uuid }
+  code:
+    run: tuvl.data_ingest
+    with: { collection: hr_knowledge_base, document: "{{ content }}", metadata: { title: "{{ title }}" } }
+  routes: { default: END, error: END.failed }
 ```
 
-The RAG node returns the top-k chunks as a list in `ctx["rag_results"]`, which you can pass to a subsequent `Agent` step as context.
+In the workflow editor, a search or ingest step has a **Collection** dropdown listing the collections configured here, with the embedding each
+one uses, and the **+ Add step** palette has **Retrieve and answer**: a search routed into an `llm` step that answers only from the passages and
+returns its `sources`.
 
----
+A `loop` agent can also search a collection as a tool, with no wrapper agent:
 
-## Indexing documents
-
-Use the auto-generated REST endpoint to index text into a collection:
-
-```bash
-curl -X POST http://localhost:8885/api/collections/hr_knowledge_base/index \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"text": "All employees are entitled to 25 days annual leave.", "metadata": {"source": "policy_v3.pdf"}}'
+```yaml
+loop:
+  model: default
+  steering: Answer from the knowledge base only.
+  tools:
+    - collection: hr_knowledge_base      # offered to the model as search_hr_knowledge_base(query)
+      top_k: 3
 ```
 
-!!! note "Bulk indexing"
-    For large document sets, use the `POST /api/collections/{name}/index-batch` endpoint, which accepts a JSON array of `{text, metadata}` objects and processes them with connection pooling.
+Pass `hits` to an `llm` agent as an input to ground its answer. See the knowledge-base-qa
+[example](../examples/example-projects.md).

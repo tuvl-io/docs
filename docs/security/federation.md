@@ -27,7 +27,7 @@ sequenceDiagram
     Provider (Google / GitHub / Microsoft)-->>tuvl: access_token + id_token
     tuvl->>Provider (Google / GitHub / Microsoft): GET user profile (email, sub, name)
     tuvl->>tuvl: Upsert IAMUser (including first_name/last_name) + auto-assign default_role (if configured)
-    tuvl-->>Browser: 302 Redirect → TUVL_OAUTH_UI_REDIRECT_URL?token=<biscuit_b64>
+    tuvl-->>Browser: 302 Redirect → TUVL_OAUTH_UI_REDIRECT_URL?token=<jwt>
 ```
 
 CSRF state tokens are stored in Redis (when configured) or in-process memory. In multi-worker
@@ -196,7 +196,7 @@ In local development set it to `http://localhost:8885`.
 TUVL_OAUTH_UI_REDIRECT_URL=https://app.example.com/auth/callback
 ```
 
-After a successful OAuth login the browser is redirected to this URL with `?token=<biscuit_b64>`
+After a successful OAuth login the browser is redirected to this URL with `?token=<jwt>`
 appended. Your frontend reads the token from the query string and passes it to `TuvlClient`.
 When unset the callback returns JSON instead (useful for server-side and CLI flows).
 
@@ -259,7 +259,7 @@ When a federated login succeeds, tuvl looks up a `iam_users` record by email:
 2. **Not found** — a new user record is created with `is_active=true`. The account has no
    password (federated-only).
 
-The returned Biscuit token carries whatever roles the user has been assigned in the database.
+The returned access token carries whatever roles the user has been assigned in the database.
 
 !!! warning "First-time federated users have no roles by default"
     When a user logs in via OAuth for the first time they arrive with **zero permissions**.
@@ -296,3 +296,34 @@ spec:
 
 Users whose email domain is not in the list receive a `403 Forbidden` at the callback step.
 Leave the field absent (or empty) to allow any domain.
+
+---
+
+## Restricting GitHub logins by handle
+
+For the `github` provider, `allowed_users` limits login to specific GitHub handles (case-insensitive).
+It combines with `allowed_domains`: a login must satisfy every restriction that is set.
+
+```yaml
+spec:
+  provider: github
+  client_id: ${GITHUB_CLIENT_ID}
+  client_secret: ${GITHUB_CLIENT_SECRET}
+  allowed_users:
+    - octocat
+```
+
+---
+
+## Device login for command-line tools
+
+A CLI can sign in without a browser callback. `POST /auth/oauth/github/device/start` returns a `handle`,
+a `user_code`, a `verification_uri`, an `interval` and `expires_in`; GitHub's device code stays on the
+server. The user opens the URI and enters the code while the client polls
+`POST /auth/oauth/github/device/poll {"handle": …}`: `428` while pending, `200` with a token once
+approved (same account linking as the browser flow), `400` when denied or expired. A handle is
+single-use. Tick **Enable Device Flow** on the GitHub OAuth app. `tuvl register project` and Insight's
+Register dialog use this flow.
+
+When `TUVL_OAUTH_UI_REDIRECT_URL` is set, the browser callback now returns the token in the URL
+**fragment** (`#token=…`), not the query string, so it never reaches a server log.

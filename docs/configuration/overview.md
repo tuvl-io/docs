@@ -9,7 +9,8 @@ tuvl uses YAML files for all configuration. This keeps your logic declarative an
 | `ModelDefinition` | `models/` | Data model schemas |
 | `Workflow` | `workflows/` | Business logic flows |
 | `DataSource` | `datasources/` | Database connections |
-| `AgentModel` | `agents/` | LLM provider presets |
+| `AgentModel` | `llms/` | LLM and decision models |
+| `Storage` | `storage/` | Named blob stores: S3, Azure Blob, GCS, local disk ([Blob Storage](../internals/storage.md)) |
 | `Artifact` | `artifacts/` | Named, versioned assets — prompts, steering, skills, guardrails, hooks, MCP servers — referenced via `artifact://name[@version]` |
 | `SystemConfig` | `.tuvl/system.yaml` | Project-level, boot-time API surface settings |
 
@@ -66,22 +67,17 @@ project/
 Reduce duplication with anchors:
 
 ```yaml
-# Define anchor
-defaults: &defaults
-  timeout: 30
-  retry:
-    attempts: 3
-    backoff: 2
-
-steps:
-  - id: "step1"
-    <<: *defaults       # Merge anchor
-    runner: "process_a"
-    
-  - id: "step2"
-    <<: *defaults       # Reuse
-    runner: "process_b"
+agents:
+  - id: summarise
+    # …
+    budget: &llm_budget { timeout: 30s, max_tokens: 1500, retry: { attempts: 2, errors: [timeout, parse_error] } }
+  - id: reply
+    # …
+    budget: *llm_budget
 ```
+
+Define the anchor where it is first used: documents are strict, so an extra top-level key just to hold
+an anchor is rejected.
 
 ### Multi-Document Files
 
@@ -154,7 +150,7 @@ and workflow-trigger auth model this knob sits alongside.
 
 ## Validation
 
-tuvl validates configurations at startup. Invalid files are logged and skipped:
+tuvl lint projects configurations at startup. Invalid files are logged and skipped:
 
 ```
 INFO:     📋  Model loaded: 'User'

@@ -1,244 +1,111 @@
 # Contributing
 
-Thank you for your interest in contributing to tuvl!
+Thank you for your interest in contributing to tuvl! By taking part you agree to the
+[Code of Conduct](https://github.com/tuvl-io/tuvl/blob/main/CODE_OF_CONDUCT.md).
 
-## Development Setup
+## Before you start
+
+- **A bug fix or a small improvement:** open a pull request.
+- **A new feature, or a change to behaviour:** open an issue first and describe what you need. Document kinds,
+  engines and artifact types are closed sets, so a design discussion comes before code.
+- **A security problem:** do not open an issue; follow the
+  [security policy](https://github.com/tuvl-io/tuvl/blob/main/SECURITY.md).
+
+## Development setup
 
 ### Prerequisites
 
-- Python 3.13 (`>=3.13,<3.14` — 3.14 is not yet supported; see [Installation → Troubleshooting](getting-started/installation.md#troubleshooting))
-- uv package manager
-- PostgreSQL 16+
-- Node.js 20+ and pnpm (for UI development)
+- Python 3.13 or 3.14 (see [Installation → Troubleshooting](getting-started/installation.md#troubleshooting))
+- [uv](https://docs.astral.sh/uv/)
+- PostgreSQL 16+ with pgvector, and Redis
+- Node.js 20+ and pnpm (Insight)
 
-### Clone and Install
+### Install and run
 
 ```bash
-# Clone repository
-git clone https://github.com/tuvl-io/tuvl.git
-cd tuvl
-
-# Install Python dependencies and apply vendored patches
-make setup
-
-# Install UI node_modules (run once after clone)
+git clone https://github.com/tuvl-io/tuvl.git && cd tuvl
+uv sync --extra standard --group dev
 make ui-install
+
+uv run tuvl init demo --sample -y
+uv run tuvl dev -d demo --auto-login       # Insight at http://localhost:8885/insight
 ```
 
-`make setup` runs `uv sync` followed by `make apply-patches`, which re-applies the
-vendored fixes in `patches/` to sonora after every sync. If you add a new dependency
-with `uv add`, re-run `make apply-patches` (or just `make setup`).
+The repository's `AGENTS.md` maps the code: `src/tuvl/contract/` (document model, type and expression
+languages), `validate/`, `runtime/` (durable runner, engines, journal), `api/` (REST, SSE, MCP, dev
+API), `spec/`, `codegen/`, `lock/`, `testing/`, `cli/`, `core/` (config, models, auth, artifacts),
+and `ui/` (Insight).
 
-### Run Development Servers
+## Checks
 
 ```bash
-# Engine only (headless)
-make dev-core DIR=/path/to/your/project
-
-# Engine + hot-reload Vite dev server
-make dev DIR=/path/to/your/project
+make check                 # ruff format + lint on src/
+make typecheck-gate        # mypy on the gated packages (must stay clean)
+TUVL_TEST_PG_URL=postgresql+asyncpg://tuvl:tuvl@localhost:5432/tuvl_test uv run pytest
+cd ui && pnpm exec tsc -b && pnpm test     # Insight unit tests
+scripts/insight-smoke.sh   # Insight browser tests (Playwright), needs a built UI and Postgres
 ```
 
-The server starts on `http://localhost:8885`. The tuvl dev console is at
-`http://localhost:8885/insight` when `TUVL_DEV_MODE=true`.
+Tests that need Postgres skip without `TUVL_TEST_PG_URL`. CI runs all of the above.
 
-### Proto codegen
+## Changing behaviour
 
-If you modify any `.proto` file, regenerate the Python stubs:
-
-```bash
-make proto
-```
-
-### Vendored patches
-
-`patches/sonora-asgi-fixes.patch` contains two bug fixes for sonora 0.2.3:
-
-1. **Trailer bytes format** — gRPC-Web trailer keys/values must be plain strings, not
-   bytes tuples, for `pack_trailers()` to produce a valid ASCII frame.
-2. **Content-Type echo** — restricts sonora's response `Content-Type` to known gRPC-Web
-   MIME types so clients never receive `Content-Type: */*`.
-
-Applied automatically by `make setup` / `make setup-all`. To apply manually:
-
-```bash
-make apply-patches
-```
-
-## Code Style
-
-### Python
-
-We use `ruff` for linting and formatting:
-
-```bash
-# Format code
-uv run ruff format .
-
-# Check linting
-uv run ruff check .
-
-# Fix auto-fixable issues
-uv run ruff check --fix .
-```
-
-### TypeScript
-
-We use ESLint and Prettier:
-
-```bash
-# Format
-npm run format
-
-# Lint
-npm run lint
-```
-
-## Testing
-
-### Python Tests
-
-```bash
-cd engine
-uv run pytest
-
-# With coverage
-uv run pytest --cov=tuvl_engine
-```
-
-### Writing Tests
-
-Place tests in `tests/` directory:
-
-```python
-# tests/test_nodes.py
-import pytest
-from tuvl_engine.nodes.base import node, NODE_REGISTRY
-
-def test_node_registration():
-    @node("test_node")
-    async def my_node(ctx):
-        return ctx
-    
-    assert "test_node" in NODE_REGISTRY
-```
+- The 2.0 specification is the contract: a change to a document kind, engine, signal or validation
+  rule updates the schema (`contract/schema.py`), `tuvl lint project`, codegen, Insight, the docs and
+  the changelog together.
+- Engines, document kinds and artifact types are closed sets — open an issue before proposing one.
+- Add a test for every fix; prefer real Postgres over mocks for runtime behaviour.
+- Keep comments to the non-obvious *why*.
 
 ## Pull Request Process
 
 1. **Fork** the repository
 2. **Create a branch** for your feature: `git checkout -b feature/my-feature`
-3. **Make your changes** with clear commit messages
+3. **Make your changes** with clear commit messages, each [signed off](#sign-your-commits)
 4. **Add tests** for new functionality
 5. **Run tests** to ensure everything passes
-6. **Submit a PR** with a clear description
+6. **Submit a PR** with a clear description, linking the issue it closes
+
+A maintainer reviews the pull request on the repository. tuvl is developed in a private repository and each release
+is published as a tagged snapshot, so a merged change is applied there and appears in the next tagged release; it
+keeps your authorship.
+
+### Sign your commits
+
+tuvl uses the [Developer Certificate of Origin](https://github.com/tuvl-io/tuvl/blob/main/DCO): you certify that you
+wrote the change, or have the right to submit it, under the project's license. Add a `Signed-off-by` line to each
+commit with `git commit -s`. A pull request whose commits are not signed off will be asked to add it
+(`git rebase --signoff main`).
 
 ### Commit Messages
 
 Use conventional commits:
 
 ```
-feat: add email notification node
-fix: correct validation logic in router
+feat: add an http_<status> route for tool agents
+fix: decide rules type-check enum literals
 docs: update workflow configuration guide
-test: add tests for bulk import node
+test: cover per-run transactions
 refactor: simplify repository pattern
 ```
 
-### PR Description Template
-
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Documentation update
-- [ ] Refactoring
-
-## Testing
-- [ ] Unit tests added/updated
-- [ ] Integration tests pass
-- [ ] Manual testing performed
-
-## Checklist
-- [ ] Code follows project style
-- [ ] Self-reviewed code
-- [ ] Documentation updated
-- [ ] No breaking changes (or documented)
-```
-
-## Project Structure
-
-```
-tuvl/
-├── engine/               # Core Python engine
-│   ├── src/tuvl_engine/
-│   │   ├── api/         # FastAPI routes
-│   │   ├── core/        # Configuration, logging
-│   │   ├── datasources/ # Database connections
-│   │   ├── engine/      # Workflow engine
-│   │   ├── models/      # Model loading
-│   │   ├── nodes/       # Node registry
-│   │   └── repositories/# Data access
-│   └── tests/
-├── cli/                  # CLI tool
-│   └── src/tuvl_cli/
-│       └── commands/
-├── ui/                   # React UI (optional)
-│   └── src/
-└── documentation/        # This documentation
-    └── docs/
-```
-
-## Adding Features
-
-### New Node Types
-
-1. Create node in `engine/src/tuvl_engine/nodes/`
-2. Register with `@node("name")` decorator
-3. Add tests in `engine/tests/`
-4. Document in `docs/concepts/nodes.md`
-
-### New Step Kinds
-
-1. Add handler in `engine/src/tuvl_engine/engine/runner.py`
-2. Update `_run_*_step` pattern
-3. Add tests
-4. Document in `docs/concepts/workflows.md`
-
-### New Configuration Types
-
-1. Add loader in appropriate module
-2. Update `load_all_*` function
-3. Add validation
-4. Document in `docs/configuration/`
+The repository's pull request template lists the checks (tests, docs, sign-off) a reviewer looks for.
 
 ## Documentation
 
-Documentation uses MkDocs with Material theme.
-
-### Build Locally
+The site ([tuvl.dev](https://tuvl.dev)) is MkDocs Material in the `docs` repository. The engine's
+`docs/*.md` are the source of the Guide pages; `make sync-internals` copies them into the site.
 
 ```bash
-cd documentation
-pip install mkdocs-material mkdocstrings[python]
-mkdocs serve
+uv sync && uv run mkdocs serve
+uv run mkdocs build --strict
 ```
-
-### Writing Docs
-
-- Use clear, concise language
-- Include code examples
-- Add diagrams with Mermaid
-- Cross-reference related pages
 
 ## Getting Help
 
 - **Issues**: [GitHub Issues](https://github.com/tuvl-io/tuvl/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/tuvl-io/tuvl/discussions)
-- **Discord**: [Join our Discord](https://discord.gg/tuvl)
+- **Anything else**: [developer@tuvl.io](mailto:developer@tuvl.io)
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions are licensed under the [Apache License, Version 2.0](license.md), and your sign-off certifies the DCO. You keep the copyright in your contribution.

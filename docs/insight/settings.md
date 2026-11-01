@@ -8,20 +8,44 @@ The Settings section configures project-level infrastructure and observability i
 
 ## Navigation
 
-The left panel groups settings into four categories:
+The left panel groups settings into these categories (Project opens first):
 
 | Category | Item | Purpose |
 |----------|------|---------|
+| General | Project | The project's identity and its listing in the public catalogue |
 | Infrastructure | Redis | Shared state for multi-worker deployments |
 | Observability | Telemetry | OpenTelemetry trace and metric export |
-| Testing | LLM Judge | Automated quality evaluation for CI |
 | Security | API Access | Control which HTTP API surfaces are mounted |
+
+---
+
+## Project
+
+The **Project** page edits `.tuvl/project.yaml`: the identity `tuvl init` gave the project.
+
+| Field | Notes |
+|-------|-------|
+| Project id | Read-only. `prj_<uuidv7>-<check>`, created once; a hand-edited id fails its check and Insight refuses to register it |
+| Name, Author, Developer email | Email stays private unless you choose to publish it |
+| Type | `PoC`, `Dev` or `Production` |
+| Version | The application's own semver, not the engine's |
+| Description | Markdown, up to 2000 characters, with an **Edit / Preview** toggle |
+| License, Repository | Optional; the repository must be an `http(s)` URL |
+
+The **Catalogue** card below the form shows whether the project is listed on [nest.tuvl.io](https://nest.tuvl.io):
+not listed, up to date, changed since the last registration, or id changed. **Register** (or **Update
+listing** once listed) opens a dialog with the exact payload that will be sent and a *Show my developer
+email publicly* checkbox. **Send** registers directly when this machine already has a Nest login;
+otherwise it shows a GitHub device code, waits for you to approve it and then registers. The Nest token
+stays on the dev server, never in the browser.
+
+The same actions are available from the CLI: see [Project and Catalogue](../internals/project.md).
 
 ---
 
 ## Redis
 
-Redis is required when running tuvl with more than one uvicorn worker. Without Redis, OAuth2 CSRF state tokens and Biscuit token revocation lists are stored only in each worker's memory — causing random failures when a request lands on a different worker than the one that started the session.
+Redis is required when running tuvl with more than one uvicorn worker. Without Redis, OAuth2 CSRF state tokens and token revocation lists (and session ends) are stored only in each worker's memory — causing random failures when a request lands on a different worker than the one that started the session.
 
 ### Redis YAML format
 
@@ -63,56 +87,25 @@ tuvl ships with built-in [OpenTelemetry](https://opentelemetry.io/) support. Tra
 ```yaml
 kind: TelemetryConfig
 version: v1
-enabled: true
-metadata:
-  name: otel
 spec:
-  exporter: otlp-grpc              # otlp-grpc | otlp-http | jaeger | console
-  endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}"
-  service_name: "${OTEL_SERVICE_NAME:tuvl}"
-  sample_rate: 1.0                 # 0.0–1.0  (1.0 = trace everything)
+  enabled: true
+  otlp_endpoint: http://localhost:4318
+  otlp_protocol: http/protobuf     # http/protobuf (default) | grpc
+  service_name: tuvl
 ```
 
-### Exporter options
+### Protocol options
 
-| Exporter | Description |
+| `otlp_protocol` | Description |
 |----------|-------------|
-| `otlp-grpc` | OpenTelemetry Protocol over gRPC (default) |
-| `otlp-http` | OpenTelemetry Protocol over HTTP/JSON |
-| `jaeger` | Jaeger native UDP exporter (legacy) |
-| `console` | Print spans to stdout — useful for debugging |
+| `http/protobuf` | OTLP over HTTP (default), port 4318. Spans go to `<endpoint>/v1/traces`, metrics to `<endpoint>/v1/metrics` |
+| `grpc` | OTLP over gRPC, port 4317. Needs `tuvl[otel-grpc]`; `tuvl ship` installs it when this is set |
 
-See the [Telemetry configuration guide](../configuration/telemetry.md) for a full guide including Grafana Tempo setup.
+Environment variables win over this file: `TUVL_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_ENDPOINT`,
+`TUVL_OTLP_PROTOCOL`, `OTEL_EXPORTER_OTLP_PROTOCOL`. If you upgraded from a version that used gRPC and
+your endpoint still ends in `:4317`, tuvl logs a warning at startup.
 
----
-
-## LLM Judge
-
-The LLM Judge powers tuvl's `tuvl test` command. It evaluates workflow outputs against natural-language quality criteria using a secondary LLM.
-
-### LLM Judge YAML format
-
-```yaml
-kind: LLMJudgeConfig
-version: v1
-enabled: true
-metadata:
-  name: judge
-spec:
-  model: default          # references an AgentModel metadata.name
-  temperature: 0.0        # deterministic for consistent scoring
-  pass_threshold: 0.8     # 0.0–1.0; runs below this score are flagged
-```
-
-### Judge fields
-
-| Field | Description |
-|-------|-------------|
-| `model` | AgentModel to use for evaluation (see [AI Models](ai-models.md)) |
-| `temperature` | Set to `0.0` for reproducible judgements |
-| `pass_threshold` | Minimum pass score (0.0–1.0). Runs below this fail the test. |
-
-See the [LLM Judge guide](../configuration/llm-judge.md) and the [Testing Workflows](../tools/testing.md) reference for how to write test cases and run them in CI.
+See [Observability](../internals/observability.md) for spans, logs and collector setup (Grafana Tempo, Honeycomb, Datadog).
 
 ---
 
@@ -130,4 +123,4 @@ the `TUVL_EXPOSE_MODEL_CRUD` env var overrides whatever is saved here.
 
 !!! warning "Restart required to apply changes"
     The API surface is mounted once at startup. Save your config here, then
-    restart the engine with `tuvl run` (or `tuvl dev`) for changes to take effect.
+    restart the engine with `tuvl serve app` (or `tuvl dev`) for changes to take effect.

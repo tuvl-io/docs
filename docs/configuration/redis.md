@@ -13,7 +13,7 @@ It is used for:
 ## When Is Redis Required?
 
 Redis is **required** for any multi-worker or multi-process deployment. If you run
-more than one tuvl worker (e.g. `tuvl run --workers 4`), there is no shared memory
+more than one tuvl worker (e.g. `tuvl serve app --workers 4`), there is no shared memory
 between processes. Without Redis:
 
 - An OAuth callback routed to a different worker than the one that generated the state will **always fail** the CSRF check.
