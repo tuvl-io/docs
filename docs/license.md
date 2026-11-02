@@ -19,6 +19,8 @@ ships with it. This applies to the engine (`tuvl`), the UI (`tuvl-insight`), the
 This applies to `2.0.0b5` and every later release. A release published before that keeps the terms it
 was published with: a license you received for a version does not change.
 
+Where a release was built is a separate matter: see [Verifying a release](getting-started/installation.md#verifying-a-release-and-the-pypi-provenance-notice).
+
 ## What you can do
 
 - Build commercial or private software on tuvl and ship it under your own license. Software you
