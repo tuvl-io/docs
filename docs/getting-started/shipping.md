@@ -5,7 +5,7 @@ same gate as CI: nothing ships that does not validate.
 
 ```bash
 tuvl generate key --write          # a persistent signing key (TUVL_SIGNING_KEY)
-tuvl ship -t registry.example.com/triage:1.0.0 --push
+tuvl ship -t registry.example.com/triage:0.1.0 --push
 ```
 
 ## Image, archive, or both
