@@ -296,6 +296,29 @@ If `8885` sits inside an excluded range (or is otherwise taken), run tuvl on a f
 
 The default `8885` spells **T·U·V·L** on a phone keypad and deliberately avoids the crowded `8000`/`8080`/`8888` range — but any free, non-reserved port works.
 
+## Verifying a release, and the PyPI provenance notice
+
+From 2.0.0, `tuvl` and `tuvl-insight` are published to PyPI by a GitHub Actions workflow in the public repository [tuvl-io/tuvl](https://github.com/tuvl-io/tuvl), using PyPI Trusted Publishing. Each file carries a signed [provenance attestation](https://docs.pypi.org/attestations/) that names that repository and the `publish.yml` workflow that built it, so anyone can read the code and the workflow behind a release.
+
+**Why PyPI shows "The repository or configuration that created this release differs from a previous release".** PyPI compares the publisher of a release with the previous one. Earlier releases were published from a different place:
+
+| Release | Published from |
+|---|---|
+| 1.0.1 and earlier | A build server, without provenance |
+| 2.0.0b1 to 2.0.0b10 | A private repository (`tuvl-io/tuvl-private`), with provenance for some of them |
+| 2.0.0 and later | The public repository `tuvl-io/tuvl` |
+
+The notice is a comparison, not a finding. The publisher changed once, when the source moved to the public repository, and the notice appears once for the first release published from the new place. It does not mean a release was altered: the files in 2.0.0 are the ones the public workflow built.
+
+To check a release yourself, download it and verify it against the repository:
+
+```bash
+pip download tuvl==2.0.0 --no-deps
+pypi-attestations verify pypi --repository https://github.com/tuvl-io/tuvl pypi:tuvl-2.0.0-py3-none-any.whl
+```
+
+Run the second command in the folder you downloaded to. It succeeds only if the file was built by a workflow in `tuvl-io/tuvl`; releases before 2.0.0 do not pass it.
+
 ## Next Steps
 
 - [Quickstart Guide](quickstart.md) — Build your first workflow
