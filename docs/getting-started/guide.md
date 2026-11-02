@@ -905,7 +905,7 @@ Then:
 
 ```bash
 tuvl generate key --write                       # a persistent signing key for production tokens
-tuvl ship -t registry.example.com/refunds:1.0    # add --push to push, --no-build to skip docker
+tuvl ship -t registry.example.com/refunds:0.1.0    # add --push to push, --no-build to skip docker
 ```
 
 ```text

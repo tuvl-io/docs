@@ -5,10 +5,6 @@ server's Ed25519 key (`alg: EdDSA`). A token carries the caller's identity, IAM 
 scopes; it can't be forged or altered without the key, and any service holding tuvl's public
 key can verify it.
 
-!!! note "Changed in 2.0"
-    tuvl 1.x used Biscuit tokens. 2.0 issues JWTs with the same claims, signed with the same
-    key — see [Upgrading from 1.x](#upgrading-from-1x).
-
 ---
 
 ## Token Structure
@@ -215,14 +211,3 @@ python3 -c "import jwt,sys; print(jwt.decode(sys.argv[1], options={'verify_signa
 ```
 
 From TypeScript, `readToken(token)` in `@tuvl/client` returns the claims.
-
----
-
-## Upgrading from 1.x
-
-- **Set `TUVL_SIGNING_KEY`.** 2.0 no longer reads the 1.x `TUVL_BISCUIT_PRIVATE_KEY`. Its value is the
-  same 32-byte Ed25519 key, so you can move it to `TUVL_SIGNING_KEY` unchanged, or run
-  `tuvl generate key --write --force` for a new one. Without a key a production server will not start.
-- **Everyone signs in once.** Biscuit tokens issued by 1.x are not accepted by 2.0.
-- **Python 3.14 is supported.** 1.x was held to Python 3.13 by `biscuit-python`'s missing
-  3.14 builds; 2.0 runs on 3.13 and 3.14.
