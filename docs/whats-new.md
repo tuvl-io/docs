@@ -1,8 +1,7 @@
 # What's new in 2.0
 
 tuvl **2.0.0** is a redesign: workflows are graphs of typed **agents**, every run is **durable and
-journaled**, and projects are built **spec-first**. There is no 1.x compatibility layer — 1.x
-workflows fail to load with an error pointing at the 2.0 format. The full list of changes is in the
+journaled**, and projects are built **spec-first**. The full list of changes is in the
 [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
 
 !!! info "License: Apache 2.0"
@@ -132,8 +131,7 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     ---
 
     `tuvl serve app` shuts down cleanly behind an ingress and exposes only the route groups you choose
-    (`spec.api.expose`). `TUVL_SIGNING_KEY` is the only name for the signing key; the 1.x
-    `TUVL_BISCUIT_PRIVATE_KEY` is no longer read. [Authentication](internals/auth.md)
+    (`spec.api.expose`). `TUVL_SIGNING_KEY` is the only name for the signing key. [Authentication](internals/auth.md)
 
 -   **Nest: the public catalogue**
 
@@ -300,22 +298,5 @@ workflows fail to load with an error pointing at the 2.0 format. The full list o
     OpenAI-compatible endpoint or gateway are built in. [Models and Providers](internals/models.md)
 
 </div>
-
-## From 1.x to 2.0
-
-| 1.x | 2.0 |
-|---|---|
-| `steps:` with `kind:` step types | `agents:` with an `engine:` (`version: tuvl/v2`) |
-| `Functional` + `@node` | `code` agent + `@agent`, typed `In`/`Out` from `tuvl generate code` |
-| `ModelOp`, `APICall`, `MCP` | `tool` agent: `use: db \| http \| mcp` |
-| `Router` | `decide` agent (rules, then an optional decision model) |
-| `Agent` (`mode: completion` / `autonomous`) | `llm` agent / `loop` agent |
-| `HumanInTheLoop` + `POST /api/workflows/resume` | `human` agent + `POST /api/approvals/{id}` |
-| `Response` step | named ends in `spec.outputs` |
-| `kind: test` + LLM judge config | `kind: Test` (offline, mocks, replay) + `type: judge` artifacts |
-| Lens / Spectrum | Insight Runs page, breakpoints, step mode, Probe |
-| gRPC / gRPC-Web | REST + SSE; MCP export |
-| `litellm`, `pip install tuvl` pulls everything | built-in model client; features are [extras](getting-started/installation.md#extras) |
-| `/models/*` CRUD for every model | CRUD only for models with `spec.api.crud` |
 
 The [examples](examples/example-projects.md) show every pattern on 2.0.

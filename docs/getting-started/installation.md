@@ -18,7 +18,7 @@ Before installing tuvl, ensure you have:
     To try tuvl you need Python and uv, and a PostgreSQL database. Everything else above is opt-in: Redis only matters for multi-worker deployments, and Laya only if a `decide` agent uses it as its decision model.
 
 !!! note "Python 3.14"
-    tuvl 1.x was held to Python 3.13 because its token library (`biscuit-python`) had no 3.14 builds. tuvl 2.0 signs tokens as standard JWTs and runs on 3.13 and 3.14 on Linux, macOS and Windows.
+    tuvl runs on Python 3.13 and 3.14 on Linux, macOS and Windows.
 
 ### Installing uv
 
@@ -39,12 +39,6 @@ Before installing tuvl, ensure you have:
     ```bash
     pip install uv
     ```
-
-## Upgrading from 1.x
-
-`uv tool install tuvl` installs tuvl 2.0.0. There is no 1.x compatibility layer: a 1.x workflow fails to
-load with an error pointing at the 2.0 format (see [what's new](../whats-new.md)). To move an existing
-install, run `uv tool upgrade tuvl`. The TypeScript client is `npm install @tuvl/client`.
 
 ## Installing tuvl CLI
 
@@ -304,7 +298,7 @@ From 2.0.0, `tuvl` and `tuvl-insight` are published to PyPI by a GitHub Actions 
 
 | Release | Published from |
 |---|---|
-| 1.0.1 and earlier | A build server, without provenance |
+| Releases before 2.0 | A build server, without provenance |
 | 2.0.0b1 to 2.0.0b10 | A private repository (`tuvl-io/tuvl-private`), with provenance for some of them |
 | 2.0.0 and later | The public repository `tuvl-io/tuvl` |
 
