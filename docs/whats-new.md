@@ -8,6 +8,33 @@ journaled**, and projects are built **spec-first**. The full list of changes is 
     tuvl is licensed under the **Apache License, Version 2.0**, which includes an express patent grant.
     Using, modifying and selling software built on tuvl is free. [The license](license.md)
 
+## New in 2.0.2
+
+A patch release. Nothing here changes how an existing project runs.
+
+- **`tuvl` starts on Windows.** Every command failed at import with `No module named 'fcntl'`. The telemetry outbox locks now
+  work on Windows, and CI installs the wheel and starts the CLI there. Running a command from Insight still needs a POSIX
+  shell.
+- **Gemini loop agents keep their tool-call signatures.** Gemini 3 returns an opaque `thought_signature` with each tool call
+  and rejects the next request if it is missing. tuvl now keeps it and sends it back, in streaming and non-streaming calls.
+- **A `note:` line under a spec step.** `- note: <text>` is free text no check reads, for saying why a step is built the way it
+  is. When a step line does not parse, the error now lists the lines a step takes.
+  [Spec-driven development](internals/spec-driven.md)
+- **The spec checker follows what the engine builds.** `tool storage` and `tool http` steps can route the signals they emit
+  (`not_found`, `http_404`), an optional trigger input written `` `x`? (str) `` is kept, and an `Input:` field that does not
+  parse is reported instead of dropped.
+- **`llm.memory.retention` no longer breaks `tuvl run tests`.** The retention sweep did nothing useful on the offline SQLite
+  test database and crashed; it now skips it.
+- **The `agent-code` skill lists the effects the schema accepts:** `read`, `write` and `destructive` (default `write`).
+
+The full list is in the [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
+
+## New in 2.0.1
+
+A patch release: a token's `iat` is never ahead of the clock, the first memory-retention and draft sweeps no longer wait for
+the machine to have been up, and `tuvl-insight` has a project description on PyPI. Releases are published from the public
+repository with provenance.
+
 ## New in 2.0.0b10
 
 <div class="grid cards" markdown>
