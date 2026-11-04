@@ -13,8 +13,7 @@ journaled**, and projects are built **spec-first**. The full list of changes is 
 A patch release. Nothing here changes how an existing project runs.
 
 - **`tuvl` starts on Windows.** Every command failed at import with `No module named 'fcntl'`. The telemetry outbox locks now
-  work on Windows, and CI installs the wheel and starts the CLI there. Running a command from Insight still needs a POSIX
-  shell.
+  work on Windows, commands started from Insight run there too, and CI installs the wheel and starts the CLI on Windows.
 - **Gemini loop agents keep their tool-call signatures.** Gemini 3 returns an opaque `thought_signature` with each tool call
   and rejects the next request if it is missing. tuvl now keeps it and sends it back, in streaming and non-streaming calls.
 - **A `note:` line under a spec step.** `- note: <text>` is free text no check reads, for saying why a step is built the way it
