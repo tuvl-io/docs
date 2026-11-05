@@ -8,6 +8,22 @@ journaled**, and projects are built **spec-first**. The full list of changes is 
     tuvl is licensed under the **Apache License, Version 2.0**, which includes an express patent grant.
     Using, modifying and selling software built on tuvl is free. [The license](license.md)
 
+## New in 2.0.3
+
+A security patch release. Only dependencies change; nothing here changes how an existing project runs.
+
+- **Patched Python dependencies.** `PyJWT`, `starlette`, `python-multipart`, `mcp`, `cryptography`, `pypdf`, `anyio`,
+  `certifi`, `idna`, `opentelemetry-api` and `pydantic-settings` move to releases that fix their published advisories.
+  tuvl signs and verifies its tokens with local EdDSA keys only, so most `PyJWT` advisories (key sets, PEM handling) did not
+  reach it; the form-parsing ones reach the upload endpoints, and the `mcp` ones reach `/mcp` when the export is on.
+- **Higher minimum versions.** `PyJWT[crypto]>=2.15.0`, `starlette>=1.3.1`, `python-multipart>=0.0.31`, `mcp>=1.30.0`
+  (extra `mcp`) and `pypdf>=6.21.4` (extra `pdf`), so an install that resolves to the lowest allowed version is no longer
+  vulnerable. Upgrade with `uv tool upgrade tuvl`, or `pip install -U "tuvl[standard]"`.
+- **The Insight UI's dependencies are updated** (`vite`, `react-router-dom`, `js-yaml`, `minimatch` and others). Its typecheck,
+  lint, unit tests and browser smoke tests pass on the new versions.
+
+The full list is in the [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
+
 ## New in 2.0.2
 
 A patch release. Nothing here changes how an existing project runs.
