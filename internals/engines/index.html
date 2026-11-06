@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <script>
+        const base_url = (new URL("../..", window.location)).href.replace(/\/+$/, ""); /* for search plugin notably */
+    </script>
+    <script integrity="sha384-m6cZ+Whl1ci89lidlu8DH4C+sZLNOYBvImtjUIhUK+iaNffXhqtbYgBVuuPfRsa0" src="../../js/dark.js"></script>
+
+
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+
+    
+    
+
+
+<title>Engines - tuvl</title>
+
+
+
+<meta name="description" content="Intelligent Workflows. Deterministic Execution. Typed workflows of agents — deterministic where they can be, bounded where they can't — on a durable, journaled runtime, built spec-first.">
+
+
+
+
+
+<meta name="author" content="tuvl Team">
+
+
+
+<link rel="canonical" href="https://tuvl.dev/internals/engines/">
+
+
+<!-- Open Graph (Facebook, LinkedIn) -->
+
+<meta property="og:title" content="Engines">
+
+
+
+
+
+<meta property="og:url" content="https://tuvl.dev/internals/engines/">
+
+
+
+
+
+
+<!-- Twitter Card -->
+
+<meta name="twitter:title" content="Engines">
+
+
+
+
+
+
+<!-- JSON-LD Structured Data -->
+
+
+
+    
+    <link href="../../assets/favicon.ico" rel="icon" />
+
+    <link href="../../css/base.css" rel="stylesheet" />
+    <link href="../../css/geist.css" rel="stylesheet" />
+
+    
+
+    <style>
+        :root {
+            --theme-accent: oklch(62.3% 0.214 259.815);
+        }
+    </style>
+    <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    <link href="../../stylesheets/extra.css" rel="stylesheet" />
+
+    
+
+    <script integrity="sha384-2hn3q9jeDV70Gb3DuyWPKgeRxkowIjEpcHeOXSvWCEq2uHJHvXiVer7rbM8HYzYz"
+        src="../../js/callbacks.js"></script>
+    <script defer="" integrity="sha384-ljmRPFWw/c4kKFaKY5DIe8bgppHI9VBBrg7WZa8UPd23U9dEFesxZ1Ng8Hzjq2WB"
+        src="../../js/toc.js"></script>
+
+    
+    
+<!-- katex -->
+<link href="../../css/katex.min.css" rel="stylesheet"/>
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer="" integrity="sha384-YPHNAPyrxGS8BNnA7Q4ommqra8WQPEjooVSLzFgwgs8OXJBvadbyvx4QpfiFurGr" src="../../js/katex.min.js"></script>
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer="" integrity="sha384-JKXHIJf8PKPyDFptuKZoUyMRQJAmQKj4B4xyOca62ebJhciMYGiDdq/9twUUWyZH" onload='renderMathInElement(document.body, "{}");' src="../../js/auto-render.min.js"></script>
+    
+
+    
+
+    
+
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("a.headerlink").forEach(function (link) {
+            link.addEventListener("click", function (e) {
+                e.preventDefault();
+
+                // Build the full URL with the anchor fragment
+                const url = window.location.origin + window.location.pathname + this.getAttribute("href");
+
+                navigator.clipboard.writeText(url).then(function () {
+                    // Optional: brief visual feedback
+                });
+            });
+        });
+    });
+</script>
+    
+
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7NBSPKBZSP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-7NBSPKBZSP');
+</script>
+</head>
+
+<body
+    class="text-foreground group/body overscroll-none font-sans antialiased [--footer-height:calc(var(--spacing)*14)] [--header-height:calc(var(--spacing)*14)] lg:[--header-height:calc(var(--spacing)*16)] xl:[--footer-height:calc(var(--spacing)*24)] theme-default">
+    <div class="bg-background relative z-10 flex min-h-svh flex-col" id="inner-body">
+        <header class="bg-background sticky top-0 z-50 w-full" view-transition-name="header">
+    <div class="container-wrapper 3xl:fixed:px-0 px-6">
+        <div class="3xl:fixed:container flex h-(--header-height) items-center gap-2 **:data-[slot=separator]:!h-4">
+            <button id="burger-button" data-slot="popover-trigger" onclick="onMobileMenuButtonClick(event)" class="group"
+    
+    type="button" aria-haspopup="dialog" data-state="closed">
+    <div class="relative flex h-8 w-4 items-center justify-center">
+        <div class="relative size-4">
+            <!-- 16px x 16px -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="0" x2="16" y1="5" y2="5"
+                    class="group-data-[state=open]:translate-y-[2.25px] group-data-[state=open]:-translate-x-[2.25px] group-data-[state=open]:rotate-45 transition-all duration-300 origin-center" />
+                <line x1="0" x2="16" y1="11" y2="11"
+                    class="group-data-[state=open]:-translate-y-[2.25px] group-data-[state=open]:-translate-x-[2.25px] group-data-[state=open]:-rotate-45 transition-all duration-300 origin-center" />
+            </svg>
+        </div>
+
+        <span class="sr-only">Toggle Menu</span>
+    </div>
+    <span class="flex h-8 items-center text-lg leading-none font-medium">Menu</span>
+</button>
+            <a data-slot="button" class="button ghost gap-2 hidden lg:flex"
+    
+    href="../../">
+    <span class="flex flex-row justify-center items-center">
+        
+
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 41" width="38" height="41" fill="#12a3c7"><circle cx="33.5" cy="3.5" r="0.47"/><circle cx="33.5" cy="4.5" r="0.57"/><circle cx="32.5" cy="5.5" r="0.54"/><circle cx="33.5" cy="5.5" r="0.58"/><circle cx="30.5" cy="6.5" r="0.46"/><circle cx="31.5" cy="6.5" r="0.57"/><circle cx="32.5" cy="6.5" r="0.57"/><circle cx="33.5" cy="6.5" r="0.58"/><circle cx="27.5" cy="7.5" r="0.43"/><circle cx="28.5" cy="7.5" r="0.55"/><circle cx="29.5" cy="7.5" r="0.58"/><circle cx="30.5" cy="7.5" r="0.58"/><circle cx="31.5" cy="7.5" r="0.58"/><circle cx="32.5" cy="7.5" r="0.55"/><circle cx="33.5" cy="7.5" r="0.58"/><circle cx="24.5" cy="8.5" r="0.38"/><circle cx="25.5" cy="8.5" r="0.35"/><circle cx="26.5" cy="8.5" r="0.54"/><circle cx="27.5" cy="8.5" r="0.58"/><circle cx="28.5" cy="8.5" r="0.58"/><circle cx="29.5" cy="8.5" r="0.58"/><circle cx="30.5" cy="8.5" r="0.58"/><circle cx="31.5" cy="8.5" r="0.50"/><circle cx="32.5" cy="8.5" r="0.58"/><circle cx="33.5" cy="8.5" r="0.53"/><circle cx="23.5" cy="9.5" r="0.55"/><circle cx="24.5" cy="9.5" r="0.53"/><circle cx="25.5" cy="9.5" r="0.47"/><circle cx="26.5" cy="9.5" r="0.58"/><circle cx="27.5" cy="9.5" r="0.58"/><circle cx="28.5" cy="9.5" r="0.58"/><circle cx="29.5" cy="9.5" r="0.58"/><circle cx="30.5" cy="9.5" r="0.47"/><circle cx="31.5" cy="9.5" r="0.54"/><circle cx="32.5" cy="9.5" r="0.58"/><circle cx="33.5" cy="9.5" r="0.38"/><circle cx="21.5" cy="10.5" r="0.44"/><circle cx="22.5" cy="10.5" r="0.58"/><circle cx="23.5" cy="10.5" r="0.58"/><circle cx="24.5" cy="10.5" r="0.43"/><circle cx="25.5" cy="10.5" r="0.57"/><circle cx="26.5" cy="10.5" r="0.58"/><circle cx="27.5" cy="10.5" r="0.58"/><circle cx="28.5" cy="10.5" r="0.58"/><circle cx="29.5" cy="10.5" r="0.46"/><circle cx="30.5" cy="10.5" r="0.46"/><circle cx="31.5" cy="10.5" r="0.58"/><circle cx="32.5" cy="10.5" r="0.50"/><circle cx="20.5" cy="11.5" r="0.45"/><circle cx="21.5" cy="11.5" r="0.58"/><circle cx="22.5" cy="11.5" r="0.58"/><circle cx="23.5" cy="11.5" r="0.58"/><circle cx="24.5" cy="11.5" r="0.41"/><circle cx="25.5" cy="11.5" r="0.58"/><circle cx="26.5" cy="11.5" r="0.58"/><circle cx="27.5" cy="11.5" r="0.58"/><circle cx="28.5" cy="11.5" r="0.46"/><circle cx="29.5" cy="11.5" r="0.42"/><circle cx="30.5" cy="11.5" r="0.57"/><circle cx="31.5" cy="11.5" r="0.47"/><circle cx="32.5" cy="11.5" r="0.50"/><circle cx="17.5" cy="12.5" r="0.35"/><circle cx="18.5" cy="12.5" r="0.55"/><circle cx="19.5" cy="12.5" r="0.40"/><circle cx="20.5" cy="12.5" r="0.58"/><circle cx="21.5" cy="12.5" r="0.58"/><circle cx="22.5" cy="12.5" r="0.58"/><circle cx="23.5" cy="12.5" r="0.58"/><circle cx="24.5" cy="12.5" r="0.41"/><circle cx="25.5" cy="12.5" r="0.58"/><circle cx="26.5" cy="12.5" r="0.57"/><circle cx="27.5" cy="12.5" r="0.44"/><circle cx="28.5" cy="12.5" r="0.41"/><circle cx="29.5" cy="12.5" r="0.46"/><circle cx="30.5" cy="12.5" r="0.46"/><circle cx="31.5" cy="12.5" r="0.57"/><circle cx="32.5" cy="12.5" r="0.48"/><circle cx="16.5" cy="13.5" r="0.48"/><circle cx="17.5" cy="13.5" r="0.58"/><circle cx="18.5" cy="13.5" r="0.49"/><circle cx="19.5" cy="13.5" r="0.48"/><circle cx="20.5" cy="13.5" r="0.58"/><circle cx="21.5" cy="13.5" r="0.58"/><circle cx="22.5" cy="13.5" r="0.58"/><circle cx="23.5" cy="13.5" r="0.54"/><circle cx="24.5" cy="13.5" r="0.46"/><circle cx="25.5" cy="13.5" r="0.54"/><circle cx="26.5" cy="13.5" r="0.43"/><circle cx="27.5" cy="13.5" r="0.43"/><circle cx="28.5" cy="13.5" r="0.46"/><circle cx="29.5" cy="13.5" r="0.57"/><circle cx="30.5" cy="13.5" r="0.58"/><circle cx="31.5" cy="13.5" r="0.58"/><circle cx="32.5" cy="13.5" r="0.36"/><circle cx="15.5" cy="14.5" r="0.51"/><circle cx="16.5" cy="14.5" r="0.58"/><circle cx="17.5" cy="14.5" r="0.58"/><circle cx="18.5" cy="14.5" r="0.43"/><circle cx="19.5" cy="14.5" r="0.54"/><circle cx="20.5" cy="14.5" r="0.58"/><circle cx="21.5" cy="14.5" r="0.58"/><circle cx="22.5" cy="14.5" r="0.58"/><circle cx="23.5" cy="14.5" r="0.45"/><circle cx="24.5" cy="14.5" r="0.46"/><circle cx="25.5" cy="14.5" r="0.45"/><circle cx="26.5" cy="14.5" r="0.45"/><circle cx="27.5" cy="14.5" r="0.55"/><circle cx="28.5" cy="14.5" r="0.58"/><circle cx="29.5" cy="14.5" r="0.58"/><circle cx="30.5" cy="14.5" r="0.58"/><circle cx="31.5" cy="14.5" r="0.55"/><circle cx="14.5" cy="15.5" r="0.45"/><circle cx="15.5" cy="15.5" r="0.58"/><circle cx="16.5" cy="15.5" r="0.58"/><circle cx="17.5" cy="15.5" r="0.58"/><circle cx="18.5" cy="15.5" r="0.39"/><circle cx="19.5" cy="15.5" r="0.56"/><circle cx="20.5" cy="15.5" r="0.58"/><circle cx="21.5" cy="15.5" r="0.58"/><circle cx="22.5" cy="15.5" r="0.57"/><circle cx="24.5" cy="15.5" r="0.47"/><circle cx="25.5" cy="15.5" r="0.45"/><circle cx="26.5" cy="15.5" r="0.54"/><circle cx="27.5" cy="15.5" r="0.58"/><circle cx="28.5" cy="15.5" r="0.58"/><circle cx="29.5" cy="15.5" r="0.58"/><circle cx="30.5" cy="15.5" r="0.58"/><circle cx="12.5" cy="16.5" r="0.50"/><circle cx="13.5" cy="16.5" r="0.37"/><circle cx="14.5" cy="16.5" r="0.58"/><circle cx="15.5" cy="16.5" r="0.58"/><circle cx="16.5" cy="16.5" r="0.58"/><circle cx="17.5" cy="16.5" r="0.58"/><circle cx="18.5" cy="16.5" r="0.39"/><circle cx="19.5" cy="16.5" r="0.56"/><circle cx="20.5" cy="16.5" r="0.58"/><circle cx="21.5" cy="16.5" r="0.56"/><circle cx="22.5" cy="16.5" r="0.35"/><circle cx="23.5" cy="16.5" r="0.51"/><circle cx="24.5" cy="16.5" r="0.44"/><circle cx="25.5" cy="16.5" r="0.55"/><circle cx="26.5" cy="16.5" r="0.58"/><circle cx="27.5" cy="16.5" r="0.58"/><circle cx="28.5" cy="16.5" r="0.58"/><circle cx="29.5" cy="16.5" r="0.54"/><circle cx="30.5" cy="16.5" r="0.35"/><circle cx="11.5" cy="17.5" r="0.55"/><circle cx="12.5" cy="17.5" r="0.51"/><circle cx="13.5" cy="17.5" r="0.44"/><circle cx="14.5" cy="17.5" r="0.58"/><circle cx="15.5" cy="17.5" r="0.58"/><circle cx="16.5" cy="17.5" r="0.58"/><circle cx="17.5" cy="17.5" r="0.58"/><circle cx="18.5" cy="17.5" r="0.37"/><circle cx="19.5" cy="17.5" r="0.58"/><circle cx="20.5" cy="17.5" r="0.53"/><circle cx="21.5" cy="17.5" r="0.36"/><circle cx="22.5" cy="17.5" r="0.53"/><circle cx="23.5" cy="17.5" r="0.41"/><circle cx="24.5" cy="17.5" r="0.48"/><circle cx="25.5" cy="17.5" r="0.43"/><circle cx="26.5" cy="17.5" r="0.40"/><circle cx="27.5" cy="17.5" r="0.39"/><circle cx="28.5" cy="17.5" r="0.39"/><circle cx="29.5" cy="17.5" r="0.46"/><circle cx="10.5" cy="18.5" r="0.55"/><circle cx="11.5" cy="18.5" r="0.58"/><circle cx="12.5" cy="18.5" r="0.43"/><circle cx="13.5" cy="18.5" r="0.51"/><circle cx="14.5" cy="18.5" r="0.58"/><circle cx="15.5" cy="18.5" r="0.58"/><circle cx="16.5" cy="18.5" r="0.58"/><circle cx="17.5" cy="18.5" r="0.58"/><circle cx="18.5" cy="18.5" r="0.38"/><circle cx="19.5" cy="18.5" r="0.43"/><circle cx="20.5" cy="18.5" r="0.41"/><circle cx="21.5" cy="18.5" r="0.54"/><circle cx="23.5" cy="18.5" r="0.38"/><circle cx="24.5" cy="18.5" r="0.49"/><circle cx="25.5" cy="18.5" r="0.54"/><circle cx="26.5" cy="18.5" r="0.57"/><circle cx="27.5" cy="18.5" r="0.58"/><circle cx="28.5" cy="18.5" r="0.58"/><circle cx="29.5" cy="18.5" r="0.53"/><circle cx="9.5" cy="19.5" r="0.47"/><circle cx="10.5" cy="19.5" r="0.58"/><circle cx="11.5" cy="19.5" r="0.58"/><circle cx="12.5" cy="19.5" r="0.40"/><circle cx="13.5" cy="19.5" r="0.54"/><circle cx="14.5" cy="19.5" r="0.58"/><circle cx="15.5" cy="19.5" r="0.58"/><circle cx="16.5" cy="19.5" r="0.58"/><circle cx="17.5" cy="19.5" r="0.47"/><circle cx="19.5" cy="19.5" r="0.49"/><circle cx="20.5" cy="19.5" r="0.51"/><circle cx="21.5" cy="19.5" r="0.38"/><circle cx="22.5" cy="19.5" r="0.54"/><circle cx="23.5" cy="19.5" r="0.58"/><circle cx="24.5" cy="19.5" r="0.58"/><circle cx="25.5" cy="19.5" r="0.58"/><circle cx="26.5" cy="19.5" r="0.58"/><circle cx="27.5" cy="19.5" r="0.58"/><circle cx="28.5" cy="19.5" r="0.58"/><circle cx="8.5" cy="20.5" r="0.39"/><circle cx="9.5" cy="20.5" r="0.57"/><circle cx="10.5" cy="20.5" r="0.58"/><circle cx="11.5" cy="20.5" r="0.58"/><circle cx="12.5" cy="20.5" r="0.39"/><circle cx="13.5" cy="20.5" r="0.56"/><circle cx="14.5" cy="20.5" r="0.58"/><circle cx="15.5" cy="20.5" r="0.58"/><circle cx="16.5" cy="20.5" r="0.51"/><circle cx="18.5" cy="20.5" r="0.55"/><circle cx="19.5" cy="20.5" r="0.46"/><circle cx="20.5" cy="20.5" r="0.44"/><circle cx="21.5" cy="20.5" r="0.58"/><circle cx="22.5" cy="20.5" r="0.58"/><circle cx="23.5" cy="20.5" r="0.58"/><circle cx="24.5" cy="20.5" r="0.58"/><circle cx="25.5" cy="20.5" r="0.58"/><circle cx="26.5" cy="20.5" r="0.58"/><circle cx="27.5" cy="20.5" r="0.58"/><circle cx="28.5" cy="20.5" r="0.41"/><circle cx="7.5" cy="21.5" r="0.44"/><circle cx="8.5" cy="21.5" r="0.46"/><circle cx="9.5" cy="21.5" r="0.58"/><circle cx="10.5" cy="21.5" r="0.58"/><circle cx="11.5" cy="21.5" r="0.58"/><circle cx="12.5" cy="21.5" r="0.37"/><circle cx="13.5" cy="21.5" r="0.57"/><circle cx="14.5" cy="21.5" r="0.58"/><circle cx="15.5" cy="21.5" r="0.44"/><circle cx="16.5" cy="21.5" r="0.41"/><circle cx="17.5" cy="21.5" r="0.56"/><circle cx="18.5" cy="21.5" r="0.39"/><circle cx="19.5" cy="21.5" r="0.49"/><circle cx="20.5" cy="21.5" r="0.57"/><circle cx="21.5" cy="21.5" r="0.58"/><circle cx="22.5" cy="21.5" r="0.58"/><circle cx="23.5" cy="21.5" r="0.58"/><circle cx="24.5" cy="21.5" r="0.58"/><circle cx="25.5" cy="21.5" r="0.58"/><circle cx="26.5" cy="21.5" r="0.56"/><circle cx="27.5" cy="21.5" r="0.38"/><circle cx="7.5" cy="22.5" r="0.58"/><circle cx="8.5" cy="22.5" r="0.45"/><circle cx="9.5" cy="22.5" r="0.58"/><circle cx="10.5" cy="22.5" r="0.58"/><circle cx="11.5" cy="22.5" r="0.58"/><circle cx="12.5" cy="22.5" r="0.39"/><circle cx="13.5" cy="22.5" r="0.55"/><circle cx="14.5" cy="22.5" r="0.36"/><circle cx="15.5" cy="22.5" r="0.50"/><circle cx="16.5" cy="22.5" r="0.54"/><circle cx="19.5" cy="22.5" r="0.37"/><circle cx="20.5" cy="22.5" r="0.36"/><circle cx="23.5" cy="22.5" r="0.36"/><circle cx="24.5" cy="22.5" r="0.39"/><circle cx="6.5" cy="23.5" r="0.46"/><circle cx="7.5" cy="23.5" r="0.58"/><circle cx="8.5" cy="23.5" r="0.46"/><circle cx="9.5" cy="23.5" r="0.58"/><circle cx="10.5" cy="23.5" r="0.58"/><circle cx="11.5" cy="23.5" r="0.56"/><circle cx="14.5" cy="23.5" r="0.55"/><circle cx="15.5" cy="23.5" r="0.50"/><circle cx="16.5" cy="23.5" r="0.44"/><circle cx="17.5" cy="23.5" r="0.55"/><circle cx="18.5" cy="23.5" r="0.58"/><circle cx="19.5" cy="23.5" r="0.58"/><circle cx="20.5" cy="23.5" r="0.58"/><circle cx="21.5" cy="23.5" r="0.58"/><circle cx="22.5" cy="23.5" r="0.58"/><circle cx="23.5" cy="23.5" r="0.56"/><circle cx="24.5" cy="23.5" r="0.54"/><circle cx="25.5" cy="23.5" r="0.52"/><circle cx="6.5" cy="24.5" r="0.56"/><circle cx="7.5" cy="24.5" r="0.58"/><circle cx="8.5" cy="24.5" r="0.45"/><circle cx="9.5" cy="24.5" r="0.58"/><circle cx="10.5" cy="24.5" r="0.57"/><circle cx="12.5" cy="24.5" r="0.40"/><circle cx="13.5" cy="24.5" r="0.57"/><circle cx="14.5" cy="24.5" r="0.52"/><circle cx="15.5" cy="24.5" r="0.55"/><circle cx="16.5" cy="24.5" r="0.58"/><circle cx="17.5" cy="24.5" r="0.58"/><circle cx="18.5" cy="24.5" r="0.58"/><circle cx="19.5" cy="24.5" r="0.58"/><circle cx="20.5" cy="24.5" r="0.58"/><circle cx="21.5" cy="24.5" r="0.58"/><circle cx="22.5" cy="24.5" r="0.58"/><circle cx="23.5" cy="24.5" r="0.58"/><circle cx="24.5" cy="24.5" r="0.53"/><circle cx="6.5" cy="25.5" r="0.58"/><circle cx="7.5" cy="25.5" r="0.57"/><circle cx="8.5" cy="25.5" r="0.47"/><circle cx="9.5" cy="25.5" r="0.56"/><circle cx="11.5" cy="25.5" r="0.48"/><circle cx="12.5" cy="25.5" r="0.58"/><circle cx="13.5" cy="25.5" r="0.56"/><circle cx="14.5" cy="25.5" r="0.58"/><circle cx="15.5" cy="25.5" r="0.58"/><circle cx="16.5" cy="25.5" r="0.58"/><circle cx="17.5" cy="25.5" r="0.58"/><circle cx="18.5" cy="25.5" r="0.58"/><circle cx="19.5" cy="25.5" r="0.58"/><circle cx="20.5" cy="25.5" r="0.58"/><circle cx="21.5" cy="25.5" r="0.58"/><circle cx="22.5" cy="25.5" r="0.58"/><circle cx="23.5" cy="25.5" r="0.46"/><circle cx="6.5" cy="26.5" r="0.58"/><circle cx="7.5" cy="26.5" r="0.52"/><circle cx="8.5" cy="26.5" r="0.50"/><circle cx="10.5" cy="26.5" r="0.52"/><circle cx="11.5" cy="26.5" r="0.56"/><circle cx="12.5" cy="26.5" r="0.42"/><circle cx="13.5" cy="26.5" r="0.36"/><circle cx="17.5" cy="26.5" r="0.42"/><circle cx="18.5" cy="26.5" r="0.47"/><circle cx="19.5" cy="26.5" r="0.50"/><circle cx="20.5" cy="26.5" r="0.49"/><circle cx="21.5" cy="26.5" r="0.43"/><circle cx="5.5" cy="27.5" r="0.39"/><circle cx="6.5" cy="27.5" r="0.58"/><circle cx="7.5" cy="27.5" r="0.45"/><circle cx="9.5" cy="27.5" r="0.54"/><circle cx="10.5" cy="27.5" r="0.54"/><circle cx="11.5" cy="27.5" r="0.49"/><circle cx="12.5" cy="27.5" r="0.57"/><circle cx="13.5" cy="27.5" r="0.58"/><circle cx="14.5" cy="27.5" r="0.58"/><circle cx="15.5" cy="27.5" r="0.58"/><circle cx="16.5" cy="27.5" r="0.56"/><circle cx="17.5" cy="27.5" r="0.50"/><circle cx="18.5" cy="27.5" r="0.45"/><circle cx="19.5" cy="27.5" r="0.45"/><circle cx="20.5" cy="27.5" r="0.36"/><circle cx="5.5" cy="28.5" r="0.44"/><circle cx="6.5" cy="28.5" r="0.57"/><circle cx="8.5" cy="28.5" r="0.55"/><circle cx="9.5" cy="28.5" r="0.58"/><circle cx="10.5" cy="28.5" r="0.57"/><circle cx="11.5" cy="28.5" r="0.58"/><circle cx="12.5" cy="28.5" r="0.58"/><circle cx="13.5" cy="28.5" r="0.58"/><circle cx="14.5" cy="28.5" r="0.58"/><circle cx="15.5" cy="28.5" r="0.58"/><circle cx="16.5" cy="28.5" r="0.58"/><circle cx="17.5" cy="28.5" r="0.58"/><circle cx="18.5" cy="28.5" r="0.54"/><circle cx="19.5" cy="28.5" r="0.35"/><circle cx="5.5" cy="29.5" r="0.49"/><circle cx="6.5" cy="29.5" r="0.45"/><circle cx="7.5" cy="29.5" r="0.56"/><circle cx="8.5" cy="29.5" r="0.52"/><circle cx="9.5" cy="29.5" r="0.44"/><circle cx="10.5" cy="29.5" r="0.42"/><circle cx="11.5" cy="29.5" r="0.40"/><circle cx="12.5" cy="29.5" r="0.43"/><circle cx="13.5" cy="29.5" r="0.50"/><circle cx="14.5" cy="29.5" r="0.52"/><circle cx="15.5" cy="29.5" r="0.51"/><circle cx="16.5" cy="29.5" r="0.45"/><circle cx="5.5" cy="30.5" r="0.54"/><circle cx="6.5" cy="30.5" r="0.56"/><circle cx="7.5" cy="30.5" r="0.57"/><circle cx="8.5" cy="30.5" r="0.56"/><circle cx="9.5" cy="30.5" r="0.58"/><circle cx="10.5" cy="30.5" r="0.58"/><circle cx="11.5" cy="30.5" r="0.58"/><circle cx="12.5" cy="30.5" r="0.55"/><circle cx="13.5" cy="30.5" r="0.50"/><circle cx="14.5" cy="30.5" r="0.48"/><circle cx="15.5" cy="30.5" r="0.37"/><circle cx="4.5" cy="31.5" r="0.40"/><circle cx="5.5" cy="31.5" r="0.58"/><circle cx="6.5" cy="31.5" r="0.58"/><circle cx="7.5" cy="31.5" r="0.58"/><circle cx="8.5" cy="31.5" r="0.58"/><circle cx="9.5" cy="31.5" r="0.58"/><circle cx="10.5" cy="31.5" r="0.58"/><circle cx="11.5" cy="31.5" r="0.58"/><circle cx="12.5" cy="31.5" r="0.57"/><circle cx="13.5" cy="31.5" r="0.47"/><circle cx="4.5" cy="32.5" r="0.57"/><circle cx="5.5" cy="32.5" r="0.56"/><circle cx="6.5" cy="32.5" r="0.42"/><circle cx="3.5" cy="33.5" r="0.55"/><circle cx="4.5" cy="33.5" r="0.52"/><circle cx="2.5" cy="34.5" r="0.54"/><circle cx="3.5" cy="34.5" r="0.53"/><circle cx="1.5" cy="35.5" r="0.50"/><circle cx="2.5" cy="35.5" r="0.57"/><circle cx="5.5" cy="35.5" r="0.57"/><circle cx="6.5" cy="35.5" r="0.58"/><circle cx="1.5" cy="36.5" r="0.48"/><circle cx="2.5" cy="36.5" r="0.39"/><circle cx="5.5" cy="36.5" r="0.57"/><circle cx="6.5" cy="36.5" r="0.58"/></svg>
+
+
+
+    </span>
+
+    
+    <h1>tuvl <span class="tuvl-site-tag">docs</span></h1>
+    
+</a>
+            
+            <div class="ml-auto flex items-center gap-2 md:flex-1 md:justify-end">
+                <div class="hidden w-full flex-1 md:flex md:w-auto md:flex-none">
+                    <div class="hidden w-full flex-1 md:flex md:w-auto md:flex-none">
+    <button onclick="onSearchBarClick(event)" data-slot="dialog-trigger" data-variant="outline" data-size="default"
+    class="search secondary" type="button" aria-haspopup="dialog" aria-controls="search-dialog" data-state="closed">
+    <span class="hidden lg:inline-flex">Search documentation...</span>
+    <span class="inline-flex lg:hidden">Search...</span>
+</button>
+</div>
+<dialog id="search-dialog" onclick="onSearchDialogClick(event)"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background rounded-lg shadow-lg border overflow-hidden p-0">
+    <div class="w-lg gap-4">
+        <div class="flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
+            <div data-slot="command-input-wrapper" class="flex h-9 items-center gap-2 border-b px-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="lucide lucide-search size-4 shrink-0 opacity-50">
+    <circle cx="11" cy="11" r="8"></circle>
+    <path d="m21 21-4.3-4.3"></path>
+</svg>
+                <input data-slot="command-input"
+                    class="placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Search documentation..." cmdk-input="" autocomplete="off" autocorrect="off"
+                    spellcheck="false" aria-label="Search documentation" type="search" value=""
+                    oninput="onInputHandler(event)">
+            </div>
+        </div>
+        <div id="mkdocs-search-results">
+            <!-- search results go there -->
+        </div>
+    </div>
+</dialog>
+<script>
+    document.removeEventListener("keydown", searchShortcutHandler);
+    document.addEventListener("keydown", searchShortcutHandler);
+</script>
+                </div>
+                
+                <a class="button ghost hidden lg:inline-flex items-center gap-1 text-sm" href="https://tuvl.io" rel="noopener">tuvl.io <span aria-hidden="true">&#8599;</span></a>
+                <a class="button ghost hidden lg:inline-flex items-center gap-1 text-sm" href="https://try.tuvl.online" rel="noopener">Try it live <span aria-hidden="true">&#8599;</span></a>
+                
+                <div data-orientation="vertical" role="none" data-slot="separator"
+    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
+</div>
+                <a href="https://github.com/tuvl-io/tuvl" class="button ghost">
+    <svg viewBox="0 0 438.549 438.549" class="h-4.5">
+    <path fill="currentColor"
+        d="M409.132 114.573c-19.608-33.596-46.205-60.194-79.798-79.8-33.598-19.607-70.277-29.408-110.063-29.408-39.781 0-76.472 9.804-110.063 29.408-33.596 19.605-60.192 46.204-79.8 79.8C9.803 148.168 0 184.854 0 224.63c0 47.78 13.94 90.745 41.827 128.906 27.884 38.164 63.906 64.572 108.063 79.227 5.14.954 8.945.283 11.419-1.996 2.475-2.282 3.711-5.14 3.711-8.562 0-.571-.049-5.708-.144-15.417a2549.81 2549.81 0 01-.144-25.406l-6.567 1.136c-4.187.767-9.469 1.092-15.846 1-6.374-.089-12.991-.757-19.842-1.999-6.854-1.231-13.229-4.086-19.13-8.559-5.898-4.473-10.085-10.328-12.56-17.556l-2.855-6.57c-1.903-4.374-4.899-9.233-8.992-14.559-4.093-5.331-8.232-8.945-12.419-10.848l-1.999-1.431c-1.332-.951-2.568-2.098-3.711-3.429-1.142-1.331-1.997-2.663-2.568-3.997-.572-1.335-.098-2.43 1.427-3.289 1.525-.859 4.281-1.276 8.28-1.276l5.708.853c3.807.763 8.516 3.042 14.133 6.851 5.614 3.806 10.229 8.754 13.846 14.842 4.38 7.806 9.657 13.754 15.846 17.847 6.184 4.093 12.419 6.136 18.699 6.136 6.28 0 11.704-.476 16.274-1.423 4.565-.952 8.848-2.383 12.847-4.285 1.713-12.758 6.377-22.559 13.988-29.41-10.848-1.14-20.601-2.857-29.264-5.14-8.658-2.286-17.605-5.996-26.835-11.14-9.235-5.137-16.896-11.516-22.985-19.126-6.09-7.614-11.088-17.61-14.987-29.979-3.901-12.374-5.852-26.648-5.852-42.826 0-23.035 7.52-42.637 22.557-58.817-7.044-17.318-6.379-36.732 1.997-58.24 5.52-1.715 13.706-.428 24.554 3.853 10.85 4.283 18.794 7.952 23.84 10.994 5.046 3.041 9.089 5.618 12.135 7.708 17.705-4.947 35.976-7.421 54.818-7.421s37.117 2.474 54.823 7.421l10.849-6.849c7.419-4.57 16.18-8.758 26.262-12.565 10.088-3.805 17.802-4.853 23.134-3.138 8.562 21.509 9.325 40.922 2.279 58.24 15.036 16.18 22.559 35.787 22.559 58.817 0 16.178-1.958 30.497-5.853 42.966-3.9 12.471-8.941 22.457-15.125 29.979-6.191 7.521-13.901 13.85-23.131 18.986-9.232 5.14-18.182 8.85-26.84 11.136-8.662 2.286-18.415 4.004-29.263 5.146 9.894 8.562 14.842 22.077 14.842 40.539v60.237c0 3.422 1.19 6.279 3.572 8.562 2.379 2.279 6.136 2.95 11.276 1.995 44.163-14.653 80.185-41.062 108.068-79.226 27.88-38.161 41.825-81.126 41.825-128.906-.01-39.771-9.818-76.454-29.414-110.049z">
+    </path>
+</svg>
+    
+    <span id="stargazers" class="text-muted-foreground w-fit text-xs tabular-nums" onload="fetchStargazers()">
+    </span>
+    
+</a>
+                
+
+
+                
+
+                <div data-orientation="vertical" role="none" data-slot="separator"
+    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
+</div>
+                <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="lucide lucide-gallery-horizontal">
+    <path d="M2 3v18"></path>
+    <rect width="12" height="18" x="6" y="3" rx="2"></rect>
+    <path d="M22 3v18"></path>
+</svg>
+</button>
+                <div data-orientation="vertical" role="none" data-slot="separator"
+    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
+</div>
+                <button class="ghost icon" onclick="onThemeSwitch(event)" title="Toggle theme">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="size-4.5">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+    <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+    <path d="M12 3l0 18"></path>
+    <path d="M12 9l4.65 -4.65"></path>
+    <path d="M12 14.3l7.37 -7.37"></path>
+    <path d="M12 19.6l8.85 -8.85"></path>
+</svg>
+</button>
+            </div>
+        </div>
+    </div>
+</header>
+        <main class="flex flex-1 flex-col">
+            <div class="container-wrapper flex flex-1 flex-col px-2">
+                <div class="group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex w-full 3xl:fixed:container 3xl:fixed:px-3 min-h-min flex-1 items-start px-0 [--sidebar-width:220px] [--top-spacing:0] lg:grid lg:grid-cols-[var(--sidebar-width)_minmax(0,1fr)] lg:[--sidebar-width:240px] lg:[--top-spacing:calc(var(--spacing)*4)]"
+                    data-slot="sidebar-wrapper"
+                    style="--sidebar-width:calc(var(--spacing) * 72);--sidebar-width-icon:3rem;">
+                    <div class="w-(--sidebar-width) flex-col text-sidebar-foreground sticky top-[calc(var(--header-height)+0.6rem)] z-30 hidden max-h-[calc(100svh-10rem)] overscroll-none bg-transparent [--sidebar-menu-width:--spacing(56)] lg:flex"
+                        data-slot="sidebar">
+                        <div class="h-9"></div>
+                        <div
+                            class="absolute top-8 z-10 h-8 w-(--sidebar-menu-width) shrink-0 bg-gradient-to-b from-background via-background/80 to-background/50 blur-xs">
+                        </div>
+                        <div
+                            class="absolute top-12 right-2 bottom-0 hidden h-full w-px bg-gradient-to-b from-transparent via-border to-transparent lg:flex">
+                        </div>
+                        <div class="flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden mx-auto no-scrollbar w-(--sidebar-menu-width) overflow-x-hidden px-2"
+                            data-sidebar="content" data-slot="sidebar-content" view-transition-name="sidebar">
+                            
+
+
+
+
+
+
+
+
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2 pt-6">
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../.."
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Home
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../whats-new/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        What's New in 2.0
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../why-tuvl/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Why tuvl
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../examples/example-projects/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Examples
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../contributing/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Contributing
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../license/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        License
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+    <div data-slot="sidebar-group-label" data-sidebar="group-label"
+        class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 font-medium text-muted-foreground">
+        Getting Started</div>
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../getting-started/installation/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Installation
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../getting-started/quickstart/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Quickstart
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../getting-started/guide/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Guide: Init to Ship
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../getting-started/codegen/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Code Generation
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../getting-started/shipping/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Shipping to Production
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../getting-started/project-structure/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Project Structure
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../getting-started/coding-agents/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Build with Coding Agents
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+    <div data-slot="sidebar-group-label" data-sidebar="group-label"
+        class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 font-medium text-muted-foreground">
+        Guide</div>
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../tuvl-agentic-manual/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Agentic Manual
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
+        data-size="default" href="./"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Engines
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../decide/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Decide
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../loop-and-tools/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Loop and Tools
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../judges/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Judges
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../runtime/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Runtime and Journal
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../spec-driven/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Spec-Driven Development
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../authoring/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Authoring with a Coding Agent
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../api/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        API — REST, SSE, MCP
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../cli/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        CLI Reference
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../cli-reference/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        CLI Options (every flag)
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../project/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Project and Catalogue
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../models/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Models and Providers
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../storage/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Blob Storage
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../webhooks/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Webhooks
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../dev-telemetry/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Developer Telemetry
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../observability/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Observability
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+    <div data-slot="sidebar-group-label" data-sidebar="group-label"
+        class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 font-medium text-muted-foreground">
+        Insight</div>
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../insight/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Overview
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/models/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Models
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/datasources/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Datasources
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/ai-models/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        AI Models
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/embeddings-collections/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Embeddings & Collections
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/memory/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Memory
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/iam/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        IAM
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/federation/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Federation
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/api-docs/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        API Docs
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../insight/settings/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Settings
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+    <div data-slot="sidebar-group-label" data-sidebar="group-label"
+        class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 font-medium text-muted-foreground">
+        Configuration</div>
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../configuration/overview/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Overview
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../configuration/datasources/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Datasources
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../configuration/redis/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Redis
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../configuration/agents/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        AI Models
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+    <div data-slot="sidebar-group-label" data-sidebar="group-label"
+        class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 font-medium text-muted-foreground">
+        Security</div>
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../auth/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Authentication & Authorization
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../security/iam/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        IAM
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../security/federation/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Federation
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../security/tokens/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Tokens
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+    <div data-slot="sidebar-group-label" data-sidebar="group-label"
+        class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 font-medium text-muted-foreground">
+        Tools</div>
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Overview
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/laya-serve/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Laya Serve
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    
+    <button data-slot="collapsible-trigger" data-sidebar="menu-button" data-size="default" data-active="false"
+        class="peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 [&amp;&gt;span:last-child]:truncate hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-8 text-[0.8rem] font-medium"
+        type="button" aria-expanded="true"
+        data-state="closed"
+        onclick="this.setAttribute('data-state', this.getAttribute('data-state') === 'closed' ? 'open' : 'closed')">
+        
+        Flightlog
+        
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-chevron-right ml-auto transition-[stroke,rotate] duration-200 group-data-[state=open]/menu-button:rotate-90 group-data-[state=closed]/menu-button:stroke-muted-foreground">
+            <path d="m9 18 6-6-6-6"></path>
+        </svg>
+    </button>
+    <div data-state="open" data-slot="collapsible-content"
+        class="grid grid-rows-[0fr] transition-[grid-template-rows] peer-data-[state=open]/menu-button:grid-rows-[1fr] py-0.5">
+        <ul data-slot="sidebar-menu-sub" data-sidebar="menu-sub"
+            class="overflow-hidden ml-3.5 flex flex-col gap-0.5 border-l border-sidebar-border pl-2.5">
+
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/flightlog/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Overview
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/flightlog/deployment/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Deployment
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/flightlog/operations/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Operations
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/flightlog/security/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Security
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/flightlog/forwarding/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Forwarding
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/flightlog/api/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        The contract
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../tools/flightlog/on-tuvl/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Flightlog on tuvl
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+
+<div
+    class="sticky -bottom-1 z-10 h-16 shrink-0 bg-gradient-to-t from-background via-background/80 to-background/50 blur-xs">
+</div>
+
+                        </div>
+                    </div>
+                    <div class="h-full w-full">
+                        <div class="flex items-stretch text-[1.05rem] sm:text-[15px] xl:w-full" data-slot="docs">
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <div class="h-(--top-spacing) shrink-0"></div>
+                                
+                                
+                                <article class="w-full" view-transition-name="page">
+  <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2">
+      <div id="page-header" class="flex items-start justify-between">
+        <h1 class="scroll-m-20 text-4xl font-semibold tracking-tight sm:text-3xl xl:text-4xl">
+          Engines
+        </h1>
+        <div class="flex items-start gap-2">
+          
+          <button id="copy-page"
+    onclick="fetch(`https://tuvl.dev/internals/engines.md`).then((r) => r.text()).then((text) => navigator.clipboard.write([new ClipboardItem({ 'text/plain': text })]))"
+    data-slot="button" class="secondary cursor-pointer sm">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy ">
+        <path
+            d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z">
+        </path>
+        <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"></path>
+    </svg>
+    <span class="max-md:hidden">Copy Page</span>
+</button>
+          
+          
+          <a id="previous-button" class="button secondary icon sm" href="../tuvl-agentic-manual/">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="tabler-icon tabler-icon-arrow-left">
+    <path d="M5 12l14 0"></path>
+    <path d="M5 12l6 6"></path>
+    <path d="M5 12l6 -6"></path>
+</svg>
+    <span class="sr-only">Previous</span>
+</a>
+          
+          
+          <a id="next-button" class="button secondary icon sm" href="../decide/">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="tabler-icon tabler-icon-arrow-right">
+    <path d="M5 12l14 0"></path>
+    <path d="M13 18l6 -6"></path>
+    <path d="M13 6l6 6"></path>
+</svg>
+    <span class="sr-only">Next</span>
+</a>
+          
+        </div>
+      </div>
+      
+    </div>
+    <div class="flex justify-end items-center">
+      
+
+      
+    </div>
+  </div>
+  <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
+    <h1 id="engines">Engines<a class="headerlink" href="#engines" title="Permanent link">&para;</a></h1>
+<p>An agent's <strong>engine</strong> implements its contract. The closed set is <code>pending</code>, <code>code</code>, <code>tool</code>,
+<code>decide</code>, <code>llm</code>, <code>loop</code>, <code>human</code>, <code>map</code> and <code>parallel</code>. This page covers <code>pending</code>, <code>code</code>, <code>tool</code>, <code>llm</code>,
+<code>human</code>, <code>map</code> and <code>parallel</code>;
+see <a href="../decide/">decide</a> and <a href="../loop-and-tools/">loop and tools</a> for the other two.</p>
+<p>Every engine except <code>pending</code> can emit <code>error</code>. Engine parameters live under a key named after the
+engine (<code>code:</code>, <code>tool:</code>, <code>llm:</code>, …).</p>
+<hr />
+<h2 id="pending-a-contract-without-an-implementation"><code>pending</code> — a contract without an implementation<a class="headerlink" href="#pending-a-contract-without-an-implementation" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code class="language-yaml">- id: classify_ticket
+  description: Decide which team owns the ticket
+  engine: pending
+  inputs:  { ticket: Ticket }
+  outputs: { team: "enum[billing, technical, general]" }
+  routes:  { billing: billing_queue, technical: kb_search, general: general_queue }</code></pre>
+<ul>
+<li><code>tuvl lint project</code> checks it fully as a contract (data flow, types, routes). It is a V010 warning.</li>
+<li>In dev and in tests it returns a <strong>typed stub</strong>: schema-valid placeholder outputs and its first
+  normal signal. Tests override it with <code>mocks</code>.</li>
+<li><code>tuvl ship</code> refuses a project with <code>pending</code> agents, and the production runner won't load one.</li>
+</ul>
+<p>A <code>pending</code> agent is a typed placeholder for a step the spec names but nobody has built yet; <code>tuvl verify spec</code> reports it as unfinished and tests through it are <em>stubbed</em>, not passed.</p>
+<hr />
+<h2 id="code-a-python-function"><code>code</code> — a Python function<a class="headerlink" href="#code-a-python-function" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code class="language-yaml">- id: issue_refund
+  description: Calculate the refund amount and record it
+  engine: code
+  effect: write                           # read | write | destructive; default write
+  inputs:  { order: Order, reason: str }
+  outputs: { refund: Refund }
+  code: { run: issue_refund, with: { currency: EUR } }
+  routes: { default: reply, error: END.failed }</code></pre>
+<pre class="highlight"><code class="language-python"># agents/issue_refund.py — one @agent per file
+from tuvl import agent, Ctx
+from agents._generated.schemas import IssueRefundIn, IssueRefundOut
+
+
+@agent("issue_refund")
+async def issue_refund(inp: IssueRefundIn, ctx: Ctx) -&gt; IssueRefundOut:
+    """Calculate the refund amount and record it."""
+    amount = inp.order.total if inp.reason != "partial" else inp.order.total / 2
+    refund = await ctx.db.create("Refund", order_id=inp.order.id, amount=amount)
+    return IssueRefundOut(refund=refund)</code></pre>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Signature</td>
+<td><code>async def f(inp: &lt;Id&gt;In, ctx: Ctx) -&gt; &lt;Id&gt;Out</code> or <code>tuple[&lt;Id&gt;Out, str]</code>. <code>tuvl generate code</code> writes the decorator, signature and docstring; you write the body.</td>
+</tr>
+<tr>
+<td>Signals</td>
+<td>Returning <code>Out</code> emits <code>default</code>; <code>(Out, "signal")</code> emits that signal (it must be routed); an exception emits <code>error</code> (<code>code_exception</code>).</td>
+</tr>
+<tr>
+<td><code>ctx.db</code></td>
+<td>Unit of work restricted to <code>spec.models</code>; read-only when <code>effect: read</code> (a write raises). Writes commit with the step's checkpoint.</td>
+</tr>
+<tr>
+<td><code>ctx</code></td>
+<td><code>ctx.log</code> (structlog, bound to the run and agent), <code>ctx.run_id</code>, <code>ctx.principal</code>, <code>ctx.idempotency_key</code>, <code>ctx.http</code> (shared HTTP client), <code>ctx.artifact(ref)</code>, <code>ctx.params</code> (rendered <code>code.with</code>), <code>ctx.agent_id</code></td>
+</tr>
+<tr>
+<td><code>effect</code></td>
+<td>Declared, because it can't be derived from Python. It drives policy (<code>require_human_before</code>) and MCP annotations.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Built-ins.</strong> <code>run: tuvl.data_search</code> and <code>run: tuvl.data_ingest</code> are vector search and ingest with
+typed contracts, configured by <code>code.with</code> (<code>collection</code>, <code>query</code>/<code>document</code>, <code>top_k</code>, <code>filter</code>,
+<code>metadata</code>, <code>scope: global | run</code>). Search writes <code>[{content, metadata, score}]</code> to its single list
+output; ingest writes the new document id to its optional single output. The <code>tuvl.</code> prefix is
+reserved.</p>
+<p><strong>Memory built-ins.</strong> <code>tuvl.memory_remember</code> and <code>tuvl.memory_recall</code> let an agent remember across runs, in an
+ordinary <code>kind: Collection</code>:</p>
+<pre class="highlight"><code class="language-yaml">- { id: recall,   engine: code, effect: read, inputs: { question: str }, outputs: { memories: "list[json]" },
+    code: { run: tuvl.memory_recall,   with: { collection: support_memory, query: "{{ question }}", window: 5, top_k: 3 } } }
+- { id: remember, engine: code, inputs: { turn: str }, outputs: { stored: bool },
+    code: { run: tuvl.memory_remember, with: { collection: support_memory, text: "{{ turn }}" } } }</code></pre>
+<ul>
+<li><strong>Whose memory.</strong> The owner is <code>code.with.key</code> when given, otherwise the signed-in principal; with neither, the step fails
+  (<code>tool_args_invalid</code>). Reads and writes are filtered by that owner in the query itself, so a run for one user never sees
+  another's memories. Name a <code>key</code> from run input only when the trigger is not public: whoever can start the run chooses the owner.</li>
+<li><strong>Recall</strong> returns the owner's last <code>window</code> memories (default 5, 0-50) and up to <code>top_k</code> older ones most related to <code>query</code>
+  (default 3, 0-20), as <code>[{content, source: recent | related, at | score}]</code>, older context first. The step journals
+  <code>memory_recalled</code> with the text it handed to the agent.</li>
+<li><strong>Remember</strong> stores <code>text</code> (embedded) with the owner, run and agent in its metadata. A step that runs again after a crash
+  stores it once. What to store is the author's choice: store the agent's answer or a summary, never a <code>secure</code> field.</li>
+<li>Treat recalled text as data, not instructions (an earlier user wrote it): put it in the prompt inside a labelled block, as
+  tool results are.</li>
+<li>Erase with <code>tuvl prune memory &lt;collection&gt; --key &lt;owner&gt;</code>; expire with <code>--older-than 30d</code>.</li>
+<li>In tests, mock them by agent id like any code agent.</li>
+</ul>
+<hr />
+<h2 id="tool-database-http-mcp-and-storage-operations"><code>tool</code> — database, HTTP, MCP and storage operations<a class="headerlink" href="#tool-database-http-mcp-and-storage-operations" title="Permanent link">&para;</a></h2>
+<p>One engine, four <code>use</code> variants. The <strong>effect is derived</strong>; a declared <code>effect</code> may only strengthen
+it (V015), except that an HTTP <code>POST</code>/<code>PUT</code>/<code>PATCH</code> may declare <code>effect: read</code> (search APIs often
+read via POST).</p>
+<h3 id="use-db"><code>use: db</code><a class="headerlink" href="#use-db" title="Permanent link">&para;</a></h3>
+<pre class="highlight"><code class="language-yaml">tool: { use: db, model: Order, op: read, where: { id: "{{ order_id }}" } }
+tool: { use: db, model: Refund, op: create, values: { order_id: "{{ order.id }}", amount: "{{ amount }}" } }
+tool: { use: db, model: Ticket, op: list, where: { status: open }, order_by: [-created_at], limit: 20 }</code></pre>
+<p><code>op</code>: <code>create</code>, <code>read</code>, <code>update</code>, <code>delete</code>, <code>list</code>, <code>upsert</code>. The model must be in <code>spec.models</code>
+(V018). The result lands in the agent's single output — a row, or <code>list[Model]</code> for <code>list</code>; <code>delete</code>
+has none. Untyped <code>where</code> values are coerced to the column type.</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>op</th>
+<th>Effect</th>
+<th>Reserved signals</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read</code></td>
+<td>read</td>
+<td><code>not_found</code></td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>read</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>create</code>, <code>update</code>, <code>upsert</code></td>
+<td>write</td>
+<td><code>conflict</code></td>
+</tr>
+<tr>
+<td><code>delete</code></td>
+<td>destructive</td>
+<td><code>not_found</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="use-http"><code>use: http</code><a class="headerlink" href="#use-http" title="Permanent link">&para;</a></h3>
+<pre class="highlight"><code class="language-yaml">tool:
+  use: http
+  method: POST
+  url: https://payments.example.com/refunds
+  headers: { Authorization: "Bearer ${PAYMENTS_KEY}" }
+  body: { order: "{{ order.id }}", amount: "{{ amount }}" }
+  expect: { status: [200, 201] }
+  map: { refund_ref: response.body.id }   # response.status | headers | body paths → outputs
+  idempotency: auto                       # auto | none — sends Idempotency-Key</code></pre>
+<p><code>GET</code>/<code>HEAD</code> are <code>read</code>; other methods are <code>write</code> (override to <code>destructive</code> allowed). Without
+<code>map</code>, a single output receives the body. An unexpected status emits <code>http_&lt;status&gt;</code> when that
+signal is routed; otherwise <code>error</code> (<code>rate_limit</code> for 429 and <code>transient</code> for 5xx are retryable,
+<code>http_error</code> otherwise). <code>${VAR}</code> reads the environment.</p>
+<h3 id="use-storage"><code>use: storage</code><a class="headerlink" href="#use-storage" title="Permanent link">&para;</a></h3>
+<pre class="highlight"><code class="language-yaml">tool: { use: storage, store: invoices, op: put, key: "{{ id }}.pdf", body: "{{ pdf_b64 }}", encoding: base64 }
+tool: { use: storage, store: invoices, op: get, key: "{{ id }}.pdf", as: base64 }</code></pre>
+<p><code>op</code>: <code>put</code>, <code>get</code>, <code>head</code>, <code>list</code>, <code>copy</code>, <code>delete</code>, <code>presign</code>, on a store declared in
+<code>storage/*.yaml</code> (S3 and compatible services, Azure Blob, GCS, local disk). The result lands in the
+single output — the blob for <code>put</code>/<code>head</code>/<code>copy</code>, the content for <code>get</code>, the items for <code>list</code>, the
+URL for <code>presign</code> — or is spread by <code>map</code>. <code>get</code>, <code>head</code> and <code>copy</code> emit <code>not_found</code>; <code>put</code> and
+<code>copy</code> emit <code>conflict</code> unless <code>if_exists: overwrite</code>; <code>delete</code> is destructive. Object bytes are never
+journaled. Details: <code>docs/storage.md</code>.</p>
+<h3 id="use-mcp"><code>use: mcp</code><a class="headerlink" href="#use-mcp" title="Permanent link">&para;</a></h3>
+<pre class="highlight"><code class="language-yaml">tool: { use: mcp, server: artifact://zendesk@3, name: add_comment, args: { ticket: "{{ ticket.id }}", body: "{{ text }}" } }</code></pre>
+<p>The effect comes from the server's <code>readOnlyHint</code>/<code>destructiveHint</code>, else <code>write</code>. The tool's
+structured content (or parsed text) fills a single output, or spreads an object across several.
+The tool's input schema is pinned in <code>tuvl.lock</code>.</p>
+<p>Each worker process keeps the MCP session open between calls, one per tenant and server (a stdio
+server is started once, not per call). A change to the server's artifact or to an environment
+variable it reads opens a new session; a session that dies is replaced on the next call. An unused
+session closes after <code>TUVL_MCP_IDLE_SECONDS</code> (default 300); <code>0</code> opens a new session for every call.</p>
+<h3 id="side-effects-and-crashes">Side effects and crashes<a class="headerlink" href="#side-effects-and-crashes" title="Permanent link">&para;</a></h3>
+<p>Runs are at-least-once per agent (<a href="../runtime/">runtime</a>). <code>tool: db</code> writes on the primary
+datasource commit with the step's checkpoint (exactly-once under <code>transaction: per_agent</code>); HTTP
+calls get a stable <code>Idempotency-Key</code>; MCP calls are at-least-once, so give write/destructive tools a
+<code>compensate</code> agent (V015).</p>
+<hr />
+<h2 id="llm-one-structured-model-call"><code>llm</code> — one structured model call<a class="headerlink" href="#llm-one-structured-model-call" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code class="language-yaml">- id: reply
+  description: Write the customer confirmation
+  engine: llm
+  inputs:  { order: Order, refund: Refund }
+  outputs: { text: str }
+  budget:  { timeout: 20s, max_tokens: 1500, retry: { attempts: 2, errors: [parse_error, timeout] } }
+  llm:
+    model: default                        # AgentModel name (type llm) or a provider/model id (see `docs/models.md`)
+    system: artifact://support-voice@3    # text or a prompt artifact
+    prompt: Write a short confirmation of the refund.
+    skills: [artifact://refund-policy@2]
+  guardrails: { output: [artifact://refund-reply-quality@2] }
+  routes: { default: END, guardrail_violation: END.failed, error: END.failed,
+            parse_error: END.failed, timeout: END.failed, budget_exceeded: END.failed }</code></pre>
+<ul>
+<li>Every input is serialised into the prompt inside a <code>&lt;data name="…" type="…"&gt;</code> fence, and the
+  system prompt tells the model that fenced text is data, never instructions. A value can't close
+  its fence early (<code>&lt;/data&gt;</code> inside it is escaped), so retrieved documents, user text or web
+  content can't pass themselves off as part of the prompt. <code>loop</code> agents fence every tool result the
+  same way (<code>&lt;data tool="…"&gt;</code>). Text you interpolate into <code>llm.prompt</code> with <code>{{ … }}</code> is not fenced:
+  pass untrusted values as inputs.</li>
+<li>The model answers with <strong>structured output</strong> whose schema is the agent's <code>outputs</code>.</li>
+<li>With more than one normal route, an <code>outcome: enum[&lt;those signals&gt;]</code> field is added and its value
+  becomes the signal; a free-form model string can never become a signal.</li>
+<li><code>budget.max_tokens</code> and <code>budget.timeout</code> are required (V011).</li>
+<li>Guardrails: <code>input</code>/<code>output</code> lists of <code>guardrail</code> or <code>judge</code> artifacts. A failing output judge emits
+  <code>guardrail_violation</code>; an unavailable or uncertain judge fails closed (<code>error</code>).</li>
+<li><strong>Showing the answer while it is written.</strong> <code>llm: { stream_tokens: true, stream_field: draft }</code> sends the text of one <code>str</code> output
+  to the run's event stream as the model produces it (<code>token_delta</code> events, see <a href="../api/#sse-events">API</a>), so a UI is not frozen
+  for the length of the call. <code>stream_field</code> names the output; it can be left out when the agent has exactly one <code>str</code> output. The model
+  still returns its normal structured answer: the result, its validation, tokens, retries and journal are unchanged, and the draft is
+  only a preview. When the answer is then rejected (<code>parse_error</code>, a cut-off <code>budget_exceeded</code>, an error in the stream) or the agent runs
+  again, the client receives <code>token_reset</code> and discards the draft. Not allowed together with <code>guardrails.output</code> (V039): the text would
+  reach a user before a guardrail could refuse it. A model that reasons before it answers sends nothing until its answer starts.</li>
+<li>Secure model fields can't be inputs unless <code>policy.allow_secure_to_llm: true</code> (V020).</li>
+</ul>
+<hr />
+<h3 id="remembering-across-runs-llmmemory-loopmemory">Remembering across runs (<code>llm.memory</code>, <code>loop.memory</code>)<a class="headerlink" href="#remembering-across-runs-llmmemory-loopmemory" title="Permanent link">&para;</a></h3>
+<pre class="highlight"><code class="language-yaml">llm:
+  model: gpt-4o-mini
+  prompt: "Answer the customer: {{ question }}"
+  memory:
+    collection: support_memory     # a kind: Collection that holds the memories
+    key: principal                 # whose memory: principal (default) | tenant | "{{ some_input }}"
+    window: 5                      # the owner's latest memories handed to the agent
+    recall_top_k: 3                # plus older ones related to the prompt
+    max_tokens: 1000               # most recalled text in the prompt (about 4 characters a token)
+    write: [question, answer]      # inputs and outputs stored after a successful run; default: every output; [] only reads
+    retention: 90d                 # optional: memories older than this are deleted by the runtime</code></pre>
+<p>Before the call the owner's memories are added to the prompt under "Earlier context (from previous sessions)" inside a
+<code>&lt;data name="memory"&gt;</code> fence, and the model is told that text in <code>&lt;data&gt;</code> is data, never instructions. After a successful
+answer the <code>write</code> fields are stored (in the step's own transaction, once even if the step runs again). Journal events:
+<code>memory_recalled</code> (what was handed over) and <code>memory_written</code>.</p>
+<ul>
+<li>The owner is chosen in YAML, never by the model. A key templated from input on a public trigger is refused (V043):
+  anyone could name another person's memory. A run with no owner fails with <code>tool_args_invalid</code>.</li>
+<li><code>write</code> may name only fields of the agent, and never one that carries secure model fields (V043).</li>
+<li><code>max_tokens</code> is added to the agent's worst-case tokens, so <code>policy.max_tokens_per_run</code> accounts for memory.</li>
+<li><code>retention</code> deletes memories past that age, for every agent that names the collection (the shortest wins); the runtime
+  sweeps every five minutes. Erase by hand with <code>tuvl prune memory</code> or the Memory page in Insight.</li>
+<li><strong>Compaction.</strong> <code>tuvl.memory_compact</code> (<code>collection</code>, <code>model</code>, <code>keep</code>: default 5, <code>min_rows</code>: default 20) is a built-in to
+  run from a scheduled workflow: for each owner with more than <code>min_rows</code> memories it asks the model to fold all but the
+  latest <code>keep</code> into one summary row (same owner, the time of the newest row it replaces) and deletes the originals in the
+  same transaction. It writes the number of owners compacted to its one output and journals <code>memory_compacted</code>.</li>
+<li>A <code>loop</code> agent has the same block (<code>loop.memory</code>): the recalled text goes under the opening input, the same
+  rules and journal events apply, and the <code>write</code> fields are stored when the loop finishes with a result. A loop
+  that fails, waits for an approval or runs out of budget stores nothing.</li>
+</ul>
+<h2 id="human-a-person-fills-a-form"><code>human</code> — a person fills a form<a class="headerlink" href="#human-a-person-fills-a-form" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code class="language-yaml">- id: approval
+  description: A manager approves or rejects a refund
+  engine: human
+  inputs:  { order: Order, message: str }
+  outputs: { approved: bool, note: "str?" }   # the form
+  human:
+    title: "Refund for order {{ order.id }}"
+    instruction: Approve this refund?
+    show: [order, message]                  # inputs shown to the reviewer
+    form:                                   # optional; defaults from outputs
+      approved: { label: "Approve?", widget: toggle }
+      note:     { label: Note, widget: textarea }
+    required_group: support_manager
+    assignee: "{{ order.owner_id }}"
+    expires: 48h
+    route_on: approved                      # bool → "true"/"false"; enum → its values
+  routes: { "true": issue_refund, "false": END.rejected, expired: END.failed, error: END.failed }</code></pre>
+<ul>
+<li>The run checkpoints, opens an <strong>approval request</strong> and becomes <code>waiting_human</code>. A synchronous
+  trigger answers <code>202</code> with the run descriptor and the request.</li>
+<li>Answer with <code>POST /api/approvals/{id}</code> <code>{ values }</code> (or <code>POST /api/runs/{run_id}/human/{agent_id}</code>).
+  Values are validated against <code>outputs</code>; the run is re-queued and continues on any worker.</li>
+<li>Who may answer: with <code>required_group</code>, a holder of <code>approvals:decide</code> in that group who is not the
+  triggering principal; otherwise the triggering principal or <code>iam:admin</code>. <code>iam:admin</code> bypasses the
+  group, never the no-self-approval rule.</li>
+<li><code>expires</code> closes the request and takes the <code>expired</code> route; a late answer gets <code>409</code>.</li>
+<li><code>form</code> fields must equal <code>outputs</code>; <code>route_on</code> must be a bool or enum output (V016).</li>
+</ul>
+<p>In tests, an unmocked human agent stops the run: assert it with <code>expect.wait: human</code>.</p>
+<hr />
+<h2 id="map-a-workflow-for-every-item-of-a-list"><code>map</code> — a workflow for every item of a list<a class="headerlink" href="#map-a-workflow-for-every-item-of-a-list" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code class="language-yaml">- id: score_each
+  description: Score every candidate
+  engine: map
+  inputs:  { candidates: "list[json]", job_id: uuid }
+  outputs: { scores: "list[json]" }          # one list: the results, in input order
+  map:
+    over: candidates                         # an input that is a list
+    workflow: score_candidate                # the child workflow, run once per item
+    as: candidate                            # the child's trigger input that receives the item (default: item)
+    with: { job_id: "{{ job_id }}" }         # further child inputs, templates over this agent's inputs
+    concurrency: 4                           # items in flight (1-32, default 4)
+    max_items: 100                           # longer lists fail the agent before any item starts (default 100)
+    on_error: collect                        # fail (default) | collect
+  effect: write                              # the strongest effect of the child; never weaker (V015)
+  routes: { default: rank, partial: review, error: END.failed }</code></pre>
+<p>Fan-out and nothing else: tuvl runs the child workflow once per item, a few at a time, and gathers
+the results. The step is one agent of the parent; each item is a <strong>child run</strong> of its own.</p>
+<ul>
+<li><strong>Each item is a run.</strong> It has its own journal, checkpoints and cost, shows in the run list with
+  <code>parent_run_id</code> set, and is replayable on its own. The step journals <code>map_started</code>, one <code>map_item</code>
+  per item, and <code>map_finished</code>.</li>
+<li><strong>Idempotent after a crash.</strong> The child of item <em>i</em> is keyed <code>&lt;agent&gt;:&lt;i&gt;</code>. A parent that is
+  reclaimed by another worker and reaches the step again follows the children already started (or
+  finished) instead of starting new ones, so no item runs twice.</li>
+<li><strong>Success is per item.</strong> An item succeeds when its child completes on an end whose status is below
+  400; its result is that end's <code>body</code>. The result list keeps the input order.</li>
+<li><strong><code>on_error: fail</code></strong> stops starting new items at the first failed item and emits <code>error</code>
+  (<code>map_item_failed</code>: which item, why, and how many failed or never started). Items already running
+  finish; their runs stay in the journal.</li>
+<li><strong><code>on_error: collect</code></strong> runs every item. A failed item is <code>null</code> in the results, and the agent
+  emits <code>partial</code> instead of <code>default</code> when the workflow routes <code>partial</code> (otherwise <code>default</code>).
+  <code>partial</code> is only valid with <code>collect</code> (V004).</li>
+<li><strong>A mapped workflow must finish on its own (V036):</strong> no <code>human</code> or <code>pending</code> agent and no loop tool
+  that needs approval. A child that waits anyway fails its item.</li>
+<li><strong>Bounded.</strong> <code>concurrency</code> limits parallel items, <code>max_items</code> the list length, and
+  <code>policy.max_depth</code> how deeply workflows nest (a workflow cannot map itself, V035). Worst-case
+  tokens in <code>tuvl lint project</code> are the child's worst case times <code>max_items</code>, and the step takes the
+  child's strongest determinism class.</li>
+<li><strong>Checks (V035):</strong> <code>over</code> is a list input; the workflow exists; <code>as</code> and every <code>with</code> key are inputs of
+  the child; no required child input is left out; item and input types agree (V007); <code>outputs</code> is
+  exactly one list (V007).</li>
+<li>Items run in this worker's process, in parallel; another worker takes over only through crash
+  recovery. Nothing is shared between items: they are independent runs, so a map is not a fork/join of
+  different branches, only the same workflow over many items.</li>
+</ul>
+<hr />
+<h2 id="parallel-different-read-only-lookups-at-the-same-time"><code>parallel</code> — different read-only lookups at the same time<a class="headerlink" href="#parallel-different-read-only-lookups-at-the-same-time" title="Permanent link">&para;</a></h2>
+<pre class="highlight"><code class="language-yaml">- id: gather
+  description: Look the customer up in three places at once
+  engine: parallel
+  inputs:  { customer_id: uuid, name: str }
+  outputs: { profile: json, hit: bool, notes: "list[json]" }   # exactly the branches' outputs together
+  parallel:
+    on_error: fail                           # fail (default) | collect
+    concurrency: 3                           # branches in flight (default: all)
+    branches:                                # 2-16 agents; each reads its `inputs` from this step's inputs
+      - id: crm
+        engine: tool
+        inputs:  { customer_id: uuid }
+        outputs: { profile: json }
+        tool: { use: db, model: Customer, op: read, where: { id: "{{ customer_id }}" } }
+      - id: sanctions
+        engine: tool
+        inputs:  { name: str }
+        outputs: { hit: bool }
+        tool: { use: http, method: GET, url: "https://screening.example/check?q={{ name }}", map: { hit: response.body.hit } }
+      - id: knowledge
+        engine: llm
+        inputs:  { name: str }
+        outputs: { notes: "list[json]" }
+        llm: { model: gpt-4o-mini, prompt: "List what we know about {{ name }}" }
+        budget: { max_tokens: 800, timeout: 20s }
+  budget: { timeout: 30s }
+  routes: { default: decide, error: END.failed }</code></pre>
+<p>The step takes about as long as its slowest branch instead of the sum. It is one agent of the workflow: one checkpoint,
+one route, one place in the journal.</p>
+<ul>
+<li><strong>Branches only read (V040).</strong> A branch is a <code>tool</code> (db <code>read</code>/<code>list</code>, http <code>GET</code>/<code>HEAD</code>, storage reads), an <code>llm</code>, or a
+  <code>code</code> agent with <code>effect: read</code>. Writes, destructive tools and MCP tools (their effect is unknown until listed) belong
+  in a step of their own; so do <code>loop</code>, <code>human</code>, <code>decide</code>, <code>map</code> and a nested <code>parallel</code>.</li>
+<li><strong>A session of its own.</strong> Each branch runs in its own database session with the idempotency key
+  <code>&lt;step key&gt;:&lt;branch id&gt;</code>; <code>transaction: per_run</code> is refused (V042).</li>
+<li><strong>Outputs.</strong> The step's outputs are all branches' outputs together; no name twice, nothing left over (V041). A branch
+  ends on <code>default</code>; anything else is a failure.</li>
+<li><strong><code>on_error: fail</code></strong> stops the branches still running at the first failure and emits <code>error</code>
+  (<code>parallel_branch_failed</code>, naming the branch). <strong><code>collect</code></strong> lets every branch finish; a failed branch's outputs are
+  <code>null</code> (declare them optional), and the step emits <code>partial</code> when the workflow routes it, <code>default</code> otherwise.</li>
+<li><strong>Timeout.</strong> <code>budget.timeout</code> is for the whole step; when it passes, every branch is cancelled and the step emits <code>timeout</code>.</li>
+<li><strong>Journal.</strong> <code>parallel_started</code>, one <code>parallel_branch</code> per branch in the order they finish (ok, ms, tokens, reason),
+  <code>parallel_finished</code>. A branch's own events (<code>tool_call</code>, <code>llm_turn</code>, ...) carry <code>branch</code> in the payload.</li>
+<li><strong>Cost.</strong> The worst-case tokens of a step are the sum of its branches' <code>max_tokens</code>; its determinism class is its
+  strongest branch's.</li>
+<li><strong>Crash.</strong> A step is checkpointed when it completes, so a crash in the middle runs the whole step again; the branch
+  keys make repeating a read or a model call safe.</li>
+<li><strong>Offline tests.</strong> <code>tuvl run tests</code> runs the step when every branch is mocked (<code>mocks.crm</code>, <code>mocks.sanctions</code>, ...) and
+  names the first branch that is not; mock the step itself (<code>mocks.gather</code>) to skip its branches.</li>
+<li><strong>Codegen.</strong> <code>tuvl generate code</code> writes stubs for <code>code</code> branches like any other code agent.</li>
+</ul>
+  </div>
+</article>
+                                <div id="bottom-navigation" class="mx-auto flex h-16 w-full max-w-2xl items-center justify-between gap-2 px-4 md:px-0">
+    
+    <a class="button secondary" href="../tuvl-agentic-manual/">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="tabler-icon tabler-icon-arrow-left">
+    <path d="M5 12l14 0"></path>
+    <path d="M5 12l6 6"></path>
+    <path d="M5 12l6 -6"></path>
+</svg>
+    <span class="max-[500px]:hidden truncate">Agentic Manual</span>
+</a>
+    
+    
+    <a class="button secondary" href="../decide/">
+    <span class="max-[500px]:hidden truncate">Decide</span>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class="tabler-icon tabler-icon-arrow-right">
+    <path d="M5 12l14 0"></path>
+    <path d="M13 18l6 -6"></path>
+    <path d="M13 6l6 6"></path>
+</svg>
+</a>
+    
+</div>
+                                
+                                
+                            </div>
+                            
+                            <dialog id="bottom-sidebar" onclick="onBottomSidebarDialogClick(event)" class="bg-transparent"
+    style="position: fixed; left: 0px; top: 0px; transform: translate(0px, 58px); min-width: max-content; --radix-popper-transform-origin: 0% 0px; will-change: transform; z-index: 50; --radix-popper-available-width: 504px; --radix-popper-available-height: 857px; --radix-popper-anchor-width: 72.94999694824219px; --radix-popper-anchor-height: 32px;">
+    <div data-side="bottom" data-align="start" data-state="open" role="dialog" data-slot="popover-content"
+        class="text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 origin-(--radix-popover-content-transform-origin) border outline-hidden bg-background/90 no-scrollbar h-(--radix-popper-available-height) w-(--radix-popper-available-width) overflow-y-auto rounded-none border-none p-0 shadow-none backdrop-blur duration-100"
+        style="--radix-popover-content-transform-origin: var(--radix-popper-transform-origin); --radix-popover-content-available-width: var(--radix-popper-available-width); --radix-popover-content-available-height: var(--radix-popper-available-height); --radix-popover-trigger-width: var(--radix-popper-anchor-width); --radix-popover-trigger-height: var(--radix-popper-anchor-height);"
+        tabindex="-1">
+        <div class="flex flex-col gap-12 overflow-auto px-6 py-6">
+            
+            
+            
+
+            
+            <div class="flex flex-col gap-4">
+                <div class="text-muted-foreground text-sm font-medium">Menu</div>
+                <div class="flex flex-col gap-3">
+                    
+                    <a class="text-2xl font-medium" href="../..">
+                        
+                        Home
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../../whats-new/">
+                        
+                        What's New in 2.0
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../../why-tuvl/">
+                        
+                        Why tuvl
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../../examples/example-projects/">
+                        
+                        Examples
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../../contributing/">
+                        
+                        Contributing
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../../license/">
+                        
+                        License
+                        
+                    </a>
+                    
+                </div>
+            </div>
+            
+
+            
+            <div class="flex flex-col gap-8">
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Main Website</div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Try it Live ↗</div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Nest ↗</div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Getting Started</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/installation/">
+                            
+                            Installation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/quickstart/">
+                            
+                            Quickstart
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/guide/">
+                            
+                            Guide: Init to Ship
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/codegen/">
+                            
+                            Code Generation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/shipping/">
+                            
+                            Shipping to Production
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/project-structure/">
+                            
+                            Project Structure
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/coding-agents/">
+                            
+                            Build with Coding Agents
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Guide</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../tuvl-agentic-manual/">
+                            
+                            Agentic Manual
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="./">
+                            
+                            Engines
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../decide/">
+                            
+                            Decide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../loop-and-tools/">
+                            
+                            Loop and Tools
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../judges/">
+                            
+                            Judges
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../runtime/">
+                            
+                            Runtime and Journal
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../spec-driven/">
+                            
+                            Spec-Driven Development
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../authoring/">
+                            
+                            Authoring with a Coding Agent
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../api/">
+                            
+                            API — REST, SSE, MCP
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../cli/">
+                            
+                            CLI Reference
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../cli-reference/">
+                            
+                            CLI Options (every flag)
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../project/">
+                            
+                            Project and Catalogue
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../models/">
+                            
+                            Models and Providers
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../storage/">
+                            
+                            Blob Storage
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../webhooks/">
+                            
+                            Webhooks
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../dev-telemetry/">
+                            
+                            Developer Telemetry
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../observability/">
+                            
+                            Observability
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Insight</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../insight/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/models/">
+                            
+                            Models
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/datasources/">
+                            
+                            Datasources
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/ai-models/">
+                            
+                            AI Models
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/embeddings-collections/">
+                            
+                            Embeddings & Collections
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/memory/">
+                            
+                            Memory
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/iam/">
+                            
+                            IAM
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/federation/">
+                            
+                            Federation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/api-docs/">
+                            
+                            API Docs
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../insight/settings/">
+                            
+                            Settings
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Configuration</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../configuration/overview/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../configuration/datasources/">
+                            
+                            Datasources
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../configuration/redis/">
+                            
+                            Redis
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../configuration/agents/">
+                            
+                            AI Models
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Security</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../auth/">
+                            
+                            Authentication & Authorization
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../security/iam/">
+                            
+                            IAM
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../security/federation/">
+                            
+                            Federation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../security/tokens/">
+                            
+                            Tokens
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Tools</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../tools/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../tools/laya-serve/">
+                            
+                            Laya Serve
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+            </div>
+            
+            
+
+        </div>
+    </div>
+</dialog>
+                            <div
+                                class="sticky top-[calc(var(--header-height)+1px)] ml-auto hidden h-[calc(100svh-var(--header-height)-var(--footer-height))] w-72 flex-col gap-4 overflow-hidden overscroll-none pb-8 xl:flex">
+                                <div class="h-(--top-spacing) shrink-0"></div>
+                                
+                                
+                                <div id="toc" view-transition-name="toc" class="no-scrollbar overflow-y-auto px-8">
+    <div class="flex flex-col gap-2 p-4 pt-0 text-sm">
+        <p class="text-muted-foreground bg-background sticky top-0 h-6 text-xs">On This Page</p>
+        
+        
+        
+        
+        <a href="#pending-a-contract-without-an-implementation" data-active="false" data-depth="2">
+            pending — a contract without an implementation
+        </a>
+        
+
+        
+        <a href="#code-a-python-function" data-active="false" data-depth="2">
+            code — a Python function
+        </a>
+        
+
+        
+        <a href="#tool-database-http-mcp-and-storage-operations" data-active="false" data-depth="2">
+            tool — database, HTTP, MCP and storage operations
+        </a>
+        
+        
+        <a href="#use-db" data-active="false" data-depth="3">
+            use: db
+        </a>
+        
+        <a href="#use-http" data-active="false" data-depth="3">
+            use: http
+        </a>
+        
+        <a href="#use-storage" data-active="false" data-depth="3">
+            use: storage
+        </a>
+        
+        <a href="#use-mcp" data-active="false" data-depth="3">
+            use: mcp
+        </a>
+        
+        <a href="#side-effects-and-crashes" data-active="false" data-depth="3">
+            Side effects and crashes
+        </a>
+        
+        
+
+        
+        <a href="#llm-one-structured-model-call" data-active="false" data-depth="2">
+            llm — one structured model call
+        </a>
+        
+        
+        <a href="#remembering-across-runs-llmmemory-loopmemory" data-active="false" data-depth="3">
+            Remembering across runs (llm.memory, loop.memory)
+        </a>
+        
+        
+
+        
+        <a href="#human-a-person-fills-a-form" data-active="false" data-depth="2">
+            human — a person fills a form
+        </a>
+        
+
+        
+        <a href="#map-a-workflow-for-every-item-of-a-list" data-active="false" data-depth="2">
+            map — a workflow for every item of a list
+        </a>
+        
+
+        
+        <a href="#parallel-different-read-only-lookups-at-the-same-time" data-active="false" data-depth="2">
+            parallel — different read-only lookups at the same time
+        </a>
+        
+
+        
+        
+        
+        
+
+    </div>
+    <div class="h-12"></div>
+
+</div>
+                                
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer view-transition-name="footer" class="tuvl-footer">
+    <div class="tuvl-footer__inner">
+        <div class="tuvl-footer__brand">
+            <a href="https://tuvl.io" class="tuvl-footer__logo">
+                <span class="tuvl-footer__mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 41" width="38" height="41" fill="#12a3c7"><circle cx="33.5" cy="3.5" r="0.47"/><circle cx="33.5" cy="4.5" r="0.57"/><circle cx="32.5" cy="5.5" r="0.54"/><circle cx="33.5" cy="5.5" r="0.58"/><circle cx="30.5" cy="6.5" r="0.46"/><circle cx="31.5" cy="6.5" r="0.57"/><circle cx="32.5" cy="6.5" r="0.57"/><circle cx="33.5" cy="6.5" r="0.58"/><circle cx="27.5" cy="7.5" r="0.43"/><circle cx="28.5" cy="7.5" r="0.55"/><circle cx="29.5" cy="7.5" r="0.58"/><circle cx="30.5" cy="7.5" r="0.58"/><circle cx="31.5" cy="7.5" r="0.58"/><circle cx="32.5" cy="7.5" r="0.55"/><circle cx="33.5" cy="7.5" r="0.58"/><circle cx="24.5" cy="8.5" r="0.38"/><circle cx="25.5" cy="8.5" r="0.35"/><circle cx="26.5" cy="8.5" r="0.54"/><circle cx="27.5" cy="8.5" r="0.58"/><circle cx="28.5" cy="8.5" r="0.58"/><circle cx="29.5" cy="8.5" r="0.58"/><circle cx="30.5" cy="8.5" r="0.58"/><circle cx="31.5" cy="8.5" r="0.50"/><circle cx="32.5" cy="8.5" r="0.58"/><circle cx="33.5" cy="8.5" r="0.53"/><circle cx="23.5" cy="9.5" r="0.55"/><circle cx="24.5" cy="9.5" r="0.53"/><circle cx="25.5" cy="9.5" r="0.47"/><circle cx="26.5" cy="9.5" r="0.58"/><circle cx="27.5" cy="9.5" r="0.58"/><circle cx="28.5" cy="9.5" r="0.58"/><circle cx="29.5" cy="9.5" r="0.58"/><circle cx="30.5" cy="9.5" r="0.47"/><circle cx="31.5" cy="9.5" r="0.54"/><circle cx="32.5" cy="9.5" r="0.58"/><circle cx="33.5" cy="9.5" r="0.38"/><circle cx="21.5" cy="10.5" r="0.44"/><circle cx="22.5" cy="10.5" r="0.58"/><circle cx="23.5" cy="10.5" r="0.58"/><circle cx="24.5" cy="10.5" r="0.43"/><circle cx="25.5" cy="10.5" r="0.57"/><circle cx="26.5" cy="10.5" r="0.58"/><circle cx="27.5" cy="10.5" r="0.58"/><circle cx="28.5" cy="10.5" r="0.58"/><circle cx="29.5" cy="10.5" r="0.46"/><circle cx="30.5" cy="10.5" r="0.46"/><circle cx="31.5" cy="10.5" r="0.58"/><circle cx="32.5" cy="10.5" r="0.50"/><circle cx="20.5" cy="11.5" r="0.45"/><circle cx="21.5" cy="11.5" r="0.58"/><circle cx="22.5" cy="11.5" r="0.58"/><circle cx="23.5" cy="11.5" r="0.58"/><circle cx="24.5" cy="11.5" r="0.41"/><circle cx="25.5" cy="11.5" r="0.58"/><circle cx="26.5" cy="11.5" r="0.58"/><circle cx="27.5" cy="11.5" r="0.58"/><circle cx="28.5" cy="11.5" r="0.46"/><circle cx="29.5" cy="11.5" r="0.42"/><circle cx="30.5" cy="11.5" r="0.57"/><circle cx="31.5" cy="11.5" r="0.47"/><circle cx="32.5" cy="11.5" r="0.50"/><circle cx="17.5" cy="12.5" r="0.35"/><circle cx="18.5" cy="12.5" r="0.55"/><circle cx="19.5" cy="12.5" r="0.40"/><circle cx="20.5" cy="12.5" r="0.58"/><circle cx="21.5" cy="12.5" r="0.58"/><circle cx="22.5" cy="12.5" r="0.58"/><circle cx="23.5" cy="12.5" r="0.58"/><circle cx="24.5" cy="12.5" r="0.41"/><circle cx="25.5" cy="12.5" r="0.58"/><circle cx="26.5" cy="12.5" r="0.57"/><circle cx="27.5" cy="12.5" r="0.44"/><circle cx="28.5" cy="12.5" r="0.41"/><circle cx="29.5" cy="12.5" r="0.46"/><circle cx="30.5" cy="12.5" r="0.46"/><circle cx="31.5" cy="12.5" r="0.57"/><circle cx="32.5" cy="12.5" r="0.48"/><circle cx="16.5" cy="13.5" r="0.48"/><circle cx="17.5" cy="13.5" r="0.58"/><circle cx="18.5" cy="13.5" r="0.49"/><circle cx="19.5" cy="13.5" r="0.48"/><circle cx="20.5" cy="13.5" r="0.58"/><circle cx="21.5" cy="13.5" r="0.58"/><circle cx="22.5" cy="13.5" r="0.58"/><circle cx="23.5" cy="13.5" r="0.54"/><circle cx="24.5" cy="13.5" r="0.46"/><circle cx="25.5" cy="13.5" r="0.54"/><circle cx="26.5" cy="13.5" r="0.43"/><circle cx="27.5" cy="13.5" r="0.43"/><circle cx="28.5" cy="13.5" r="0.46"/><circle cx="29.5" cy="13.5" r="0.57"/><circle cx="30.5" cy="13.5" r="0.58"/><circle cx="31.5" cy="13.5" r="0.58"/><circle cx="32.5" cy="13.5" r="0.36"/><circle cx="15.5" cy="14.5" r="0.51"/><circle cx="16.5" cy="14.5" r="0.58"/><circle cx="17.5" cy="14.5" r="0.58"/><circle cx="18.5" cy="14.5" r="0.43"/><circle cx="19.5" cy="14.5" r="0.54"/><circle cx="20.5" cy="14.5" r="0.58"/><circle cx="21.5" cy="14.5" r="0.58"/><circle cx="22.5" cy="14.5" r="0.58"/><circle cx="23.5" cy="14.5" r="0.45"/><circle cx="24.5" cy="14.5" r="0.46"/><circle cx="25.5" cy="14.5" r="0.45"/><circle cx="26.5" cy="14.5" r="0.45"/><circle cx="27.5" cy="14.5" r="0.55"/><circle cx="28.5" cy="14.5" r="0.58"/><circle cx="29.5" cy="14.5" r="0.58"/><circle cx="30.5" cy="14.5" r="0.58"/><circle cx="31.5" cy="14.5" r="0.55"/><circle cx="14.5" cy="15.5" r="0.45"/><circle cx="15.5" cy="15.5" r="0.58"/><circle cx="16.5" cy="15.5" r="0.58"/><circle cx="17.5" cy="15.5" r="0.58"/><circle cx="18.5" cy="15.5" r="0.39"/><circle cx="19.5" cy="15.5" r="0.56"/><circle cx="20.5" cy="15.5" r="0.58"/><circle cx="21.5" cy="15.5" r="0.58"/><circle cx="22.5" cy="15.5" r="0.57"/><circle cx="24.5" cy="15.5" r="0.47"/><circle cx="25.5" cy="15.5" r="0.45"/><circle cx="26.5" cy="15.5" r="0.54"/><circle cx="27.5" cy="15.5" r="0.58"/><circle cx="28.5" cy="15.5" r="0.58"/><circle cx="29.5" cy="15.5" r="0.58"/><circle cx="30.5" cy="15.5" r="0.58"/><circle cx="12.5" cy="16.5" r="0.50"/><circle cx="13.5" cy="16.5" r="0.37"/><circle cx="14.5" cy="16.5" r="0.58"/><circle cx="15.5" cy="16.5" r="0.58"/><circle cx="16.5" cy="16.5" r="0.58"/><circle cx="17.5" cy="16.5" r="0.58"/><circle cx="18.5" cy="16.5" r="0.39"/><circle cx="19.5" cy="16.5" r="0.56"/><circle cx="20.5" cy="16.5" r="0.58"/><circle cx="21.5" cy="16.5" r="0.56"/><circle cx="22.5" cy="16.5" r="0.35"/><circle cx="23.5" cy="16.5" r="0.51"/><circle cx="24.5" cy="16.5" r="0.44"/><circle cx="25.5" cy="16.5" r="0.55"/><circle cx="26.5" cy="16.5" r="0.58"/><circle cx="27.5" cy="16.5" r="0.58"/><circle cx="28.5" cy="16.5" r="0.58"/><circle cx="29.5" cy="16.5" r="0.54"/><circle cx="30.5" cy="16.5" r="0.35"/><circle cx="11.5" cy="17.5" r="0.55"/><circle cx="12.5" cy="17.5" r="0.51"/><circle cx="13.5" cy="17.5" r="0.44"/><circle cx="14.5" cy="17.5" r="0.58"/><circle cx="15.5" cy="17.5" r="0.58"/><circle cx="16.5" cy="17.5" r="0.58"/><circle cx="17.5" cy="17.5" r="0.58"/><circle cx="18.5" cy="17.5" r="0.37"/><circle cx="19.5" cy="17.5" r="0.58"/><circle cx="20.5" cy="17.5" r="0.53"/><circle cx="21.5" cy="17.5" r="0.36"/><circle cx="22.5" cy="17.5" r="0.53"/><circle cx="23.5" cy="17.5" r="0.41"/><circle cx="24.5" cy="17.5" r="0.48"/><circle cx="25.5" cy="17.5" r="0.43"/><circle cx="26.5" cy="17.5" r="0.40"/><circle cx="27.5" cy="17.5" r="0.39"/><circle cx="28.5" cy="17.5" r="0.39"/><circle cx="29.5" cy="17.5" r="0.46"/><circle cx="10.5" cy="18.5" r="0.55"/><circle cx="11.5" cy="18.5" r="0.58"/><circle cx="12.5" cy="18.5" r="0.43"/><circle cx="13.5" cy="18.5" r="0.51"/><circle cx="14.5" cy="18.5" r="0.58"/><circle cx="15.5" cy="18.5" r="0.58"/><circle cx="16.5" cy="18.5" r="0.58"/><circle cx="17.5" cy="18.5" r="0.58"/><circle cx="18.5" cy="18.5" r="0.38"/><circle cx="19.5" cy="18.5" r="0.43"/><circle cx="20.5" cy="18.5" r="0.41"/><circle cx="21.5" cy="18.5" r="0.54"/><circle cx="23.5" cy="18.5" r="0.38"/><circle cx="24.5" cy="18.5" r="0.49"/><circle cx="25.5" cy="18.5" r="0.54"/><circle cx="26.5" cy="18.5" r="0.57"/><circle cx="27.5" cy="18.5" r="0.58"/><circle cx="28.5" cy="18.5" r="0.58"/><circle cx="29.5" cy="18.5" r="0.53"/><circle cx="9.5" cy="19.5" r="0.47"/><circle cx="10.5" cy="19.5" r="0.58"/><circle cx="11.5" cy="19.5" r="0.58"/><circle cx="12.5" cy="19.5" r="0.40"/><circle cx="13.5" cy="19.5" r="0.54"/><circle cx="14.5" cy="19.5" r="0.58"/><circle cx="15.5" cy="19.5" r="0.58"/><circle cx="16.5" cy="19.5" r="0.58"/><circle cx="17.5" cy="19.5" r="0.47"/><circle cx="19.5" cy="19.5" r="0.49"/><circle cx="20.5" cy="19.5" r="0.51"/><circle cx="21.5" cy="19.5" r="0.38"/><circle cx="22.5" cy="19.5" r="0.54"/><circle cx="23.5" cy="19.5" r="0.58"/><circle cx="24.5" cy="19.5" r="0.58"/><circle cx="25.5" cy="19.5" r="0.58"/><circle cx="26.5" cy="19.5" r="0.58"/><circle cx="27.5" cy="19.5" r="0.58"/><circle cx="28.5" cy="19.5" r="0.58"/><circle cx="8.5" cy="20.5" r="0.39"/><circle cx="9.5" cy="20.5" r="0.57"/><circle cx="10.5" cy="20.5" r="0.58"/><circle cx="11.5" cy="20.5" r="0.58"/><circle cx="12.5" cy="20.5" r="0.39"/><circle cx="13.5" cy="20.5" r="0.56"/><circle cx="14.5" cy="20.5" r="0.58"/><circle cx="15.5" cy="20.5" r="0.58"/><circle cx="16.5" cy="20.5" r="0.51"/><circle cx="18.5" cy="20.5" r="0.55"/><circle cx="19.5" cy="20.5" r="0.46"/><circle cx="20.5" cy="20.5" r="0.44"/><circle cx="21.5" cy="20.5" r="0.58"/><circle cx="22.5" cy="20.5" r="0.58"/><circle cx="23.5" cy="20.5" r="0.58"/><circle cx="24.5" cy="20.5" r="0.58"/><circle cx="25.5" cy="20.5" r="0.58"/><circle cx="26.5" cy="20.5" r="0.58"/><circle cx="27.5" cy="20.5" r="0.58"/><circle cx="28.5" cy="20.5" r="0.41"/><circle cx="7.5" cy="21.5" r="0.44"/><circle cx="8.5" cy="21.5" r="0.46"/><circle cx="9.5" cy="21.5" r="0.58"/><circle cx="10.5" cy="21.5" r="0.58"/><circle cx="11.5" cy="21.5" r="0.58"/><circle cx="12.5" cy="21.5" r="0.37"/><circle cx="13.5" cy="21.5" r="0.57"/><circle cx="14.5" cy="21.5" r="0.58"/><circle cx="15.5" cy="21.5" r="0.44"/><circle cx="16.5" cy="21.5" r="0.41"/><circle cx="17.5" cy="21.5" r="0.56"/><circle cx="18.5" cy="21.5" r="0.39"/><circle cx="19.5" cy="21.5" r="0.49"/><circle cx="20.5" cy="21.5" r="0.57"/><circle cx="21.5" cy="21.5" r="0.58"/><circle cx="22.5" cy="21.5" r="0.58"/><circle cx="23.5" cy="21.5" r="0.58"/><circle cx="24.5" cy="21.5" r="0.58"/><circle cx="25.5" cy="21.5" r="0.58"/><circle cx="26.5" cy="21.5" r="0.56"/><circle cx="27.5" cy="21.5" r="0.38"/><circle cx="7.5" cy="22.5" r="0.58"/><circle cx="8.5" cy="22.5" r="0.45"/><circle cx="9.5" cy="22.5" r="0.58"/><circle cx="10.5" cy="22.5" r="0.58"/><circle cx="11.5" cy="22.5" r="0.58"/><circle cx="12.5" cy="22.5" r="0.39"/><circle cx="13.5" cy="22.5" r="0.55"/><circle cx="14.5" cy="22.5" r="0.36"/><circle cx="15.5" cy="22.5" r="0.50"/><circle cx="16.5" cy="22.5" r="0.54"/><circle cx="19.5" cy="22.5" r="0.37"/><circle cx="20.5" cy="22.5" r="0.36"/><circle cx="23.5" cy="22.5" r="0.36"/><circle cx="24.5" cy="22.5" r="0.39"/><circle cx="6.5" cy="23.5" r="0.46"/><circle cx="7.5" cy="23.5" r="0.58"/><circle cx="8.5" cy="23.5" r="0.46"/><circle cx="9.5" cy="23.5" r="0.58"/><circle cx="10.5" cy="23.5" r="0.58"/><circle cx="11.5" cy="23.5" r="0.56"/><circle cx="14.5" cy="23.5" r="0.55"/><circle cx="15.5" cy="23.5" r="0.50"/><circle cx="16.5" cy="23.5" r="0.44"/><circle cx="17.5" cy="23.5" r="0.55"/><circle cx="18.5" cy="23.5" r="0.58"/><circle cx="19.5" cy="23.5" r="0.58"/><circle cx="20.5" cy="23.5" r="0.58"/><circle cx="21.5" cy="23.5" r="0.58"/><circle cx="22.5" cy="23.5" r="0.58"/><circle cx="23.5" cy="23.5" r="0.56"/><circle cx="24.5" cy="23.5" r="0.54"/><circle cx="25.5" cy="23.5" r="0.52"/><circle cx="6.5" cy="24.5" r="0.56"/><circle cx="7.5" cy="24.5" r="0.58"/><circle cx="8.5" cy="24.5" r="0.45"/><circle cx="9.5" cy="24.5" r="0.58"/><circle cx="10.5" cy="24.5" r="0.57"/><circle cx="12.5" cy="24.5" r="0.40"/><circle cx="13.5" cy="24.5" r="0.57"/><circle cx="14.5" cy="24.5" r="0.52"/><circle cx="15.5" cy="24.5" r="0.55"/><circle cx="16.5" cy="24.5" r="0.58"/><circle cx="17.5" cy="24.5" r="0.58"/><circle cx="18.5" cy="24.5" r="0.58"/><circle cx="19.5" cy="24.5" r="0.58"/><circle cx="20.5" cy="24.5" r="0.58"/><circle cx="21.5" cy="24.5" r="0.58"/><circle cx="22.5" cy="24.5" r="0.58"/><circle cx="23.5" cy="24.5" r="0.58"/><circle cx="24.5" cy="24.5" r="0.53"/><circle cx="6.5" cy="25.5" r="0.58"/><circle cx="7.5" cy="25.5" r="0.57"/><circle cx="8.5" cy="25.5" r="0.47"/><circle cx="9.5" cy="25.5" r="0.56"/><circle cx="11.5" cy="25.5" r="0.48"/><circle cx="12.5" cy="25.5" r="0.58"/><circle cx="13.5" cy="25.5" r="0.56"/><circle cx="14.5" cy="25.5" r="0.58"/><circle cx="15.5" cy="25.5" r="0.58"/><circle cx="16.5" cy="25.5" r="0.58"/><circle cx="17.5" cy="25.5" r="0.58"/><circle cx="18.5" cy="25.5" r="0.58"/><circle cx="19.5" cy="25.5" r="0.58"/><circle cx="20.5" cy="25.5" r="0.58"/><circle cx="21.5" cy="25.5" r="0.58"/><circle cx="22.5" cy="25.5" r="0.58"/><circle cx="23.5" cy="25.5" r="0.46"/><circle cx="6.5" cy="26.5" r="0.58"/><circle cx="7.5" cy="26.5" r="0.52"/><circle cx="8.5" cy="26.5" r="0.50"/><circle cx="10.5" cy="26.5" r="0.52"/><circle cx="11.5" cy="26.5" r="0.56"/><circle cx="12.5" cy="26.5" r="0.42"/><circle cx="13.5" cy="26.5" r="0.36"/><circle cx="17.5" cy="26.5" r="0.42"/><circle cx="18.5" cy="26.5" r="0.47"/><circle cx="19.5" cy="26.5" r="0.50"/><circle cx="20.5" cy="26.5" r="0.49"/><circle cx="21.5" cy="26.5" r="0.43"/><circle cx="5.5" cy="27.5" r="0.39"/><circle cx="6.5" cy="27.5" r="0.58"/><circle cx="7.5" cy="27.5" r="0.45"/><circle cx="9.5" cy="27.5" r="0.54"/><circle cx="10.5" cy="27.5" r="0.54"/><circle cx="11.5" cy="27.5" r="0.49"/><circle cx="12.5" cy="27.5" r="0.57"/><circle cx="13.5" cy="27.5" r="0.58"/><circle cx="14.5" cy="27.5" r="0.58"/><circle cx="15.5" cy="27.5" r="0.58"/><circle cx="16.5" cy="27.5" r="0.56"/><circle cx="17.5" cy="27.5" r="0.50"/><circle cx="18.5" cy="27.5" r="0.45"/><circle cx="19.5" cy="27.5" r="0.45"/><circle cx="20.5" cy="27.5" r="0.36"/><circle cx="5.5" cy="28.5" r="0.44"/><circle cx="6.5" cy="28.5" r="0.57"/><circle cx="8.5" cy="28.5" r="0.55"/><circle cx="9.5" cy="28.5" r="0.58"/><circle cx="10.5" cy="28.5" r="0.57"/><circle cx="11.5" cy="28.5" r="0.58"/><circle cx="12.5" cy="28.5" r="0.58"/><circle cx="13.5" cy="28.5" r="0.58"/><circle cx="14.5" cy="28.5" r="0.58"/><circle cx="15.5" cy="28.5" r="0.58"/><circle cx="16.5" cy="28.5" r="0.58"/><circle cx="17.5" cy="28.5" r="0.58"/><circle cx="18.5" cy="28.5" r="0.54"/><circle cx="19.5" cy="28.5" r="0.35"/><circle cx="5.5" cy="29.5" r="0.49"/><circle cx="6.5" cy="29.5" r="0.45"/><circle cx="7.5" cy="29.5" r="0.56"/><circle cx="8.5" cy="29.5" r="0.52"/><circle cx="9.5" cy="29.5" r="0.44"/><circle cx="10.5" cy="29.5" r="0.42"/><circle cx="11.5" cy="29.5" r="0.40"/><circle cx="12.5" cy="29.5" r="0.43"/><circle cx="13.5" cy="29.5" r="0.50"/><circle cx="14.5" cy="29.5" r="0.52"/><circle cx="15.5" cy="29.5" r="0.51"/><circle cx="16.5" cy="29.5" r="0.45"/><circle cx="5.5" cy="30.5" r="0.54"/><circle cx="6.5" cy="30.5" r="0.56"/><circle cx="7.5" cy="30.5" r="0.57"/><circle cx="8.5" cy="30.5" r="0.56"/><circle cx="9.5" cy="30.5" r="0.58"/><circle cx="10.5" cy="30.5" r="0.58"/><circle cx="11.5" cy="30.5" r="0.58"/><circle cx="12.5" cy="30.5" r="0.55"/><circle cx="13.5" cy="30.5" r="0.50"/><circle cx="14.5" cy="30.5" r="0.48"/><circle cx="15.5" cy="30.5" r="0.37"/><circle cx="4.5" cy="31.5" r="0.40"/><circle cx="5.5" cy="31.5" r="0.58"/><circle cx="6.5" cy="31.5" r="0.58"/><circle cx="7.5" cy="31.5" r="0.58"/><circle cx="8.5" cy="31.5" r="0.58"/><circle cx="9.5" cy="31.5" r="0.58"/><circle cx="10.5" cy="31.5" r="0.58"/><circle cx="11.5" cy="31.5" r="0.58"/><circle cx="12.5" cy="31.5" r="0.57"/><circle cx="13.5" cy="31.5" r="0.47"/><circle cx="4.5" cy="32.5" r="0.57"/><circle cx="5.5" cy="32.5" r="0.56"/><circle cx="6.5" cy="32.5" r="0.42"/><circle cx="3.5" cy="33.5" r="0.55"/><circle cx="4.5" cy="33.5" r="0.52"/><circle cx="2.5" cy="34.5" r="0.54"/><circle cx="3.5" cy="34.5" r="0.53"/><circle cx="1.5" cy="35.5" r="0.50"/><circle cx="2.5" cy="35.5" r="0.57"/><circle cx="5.5" cy="35.5" r="0.57"/><circle cx="6.5" cy="35.5" r="0.58"/><circle cx="1.5" cy="36.5" r="0.48"/><circle cx="2.5" cy="36.5" r="0.39"/><circle cx="5.5" cy="36.5" r="0.57"/><circle cx="6.5" cy="36.5" r="0.58"/></svg></span>
+                <span>tuvl</span>
+            </a>
+            <p>Intelligent Workflows. Deterministic Execution.</p>
+            <p class="tuvl-footer__small">&copy; 2026 tuvl.io &middot; Apache 2.0 licensed</p>
+        </div>
+        <nav class="tuvl-footer__col" aria-label="Project links">
+            <div class="tuvl-footer__title">Project</div>
+            
+            <a href="https://tuvl.io" rel="noopener">Website</a>
+            
+            <a href="https://try.tuvl.online" rel="noopener">Try it live</a>
+            
+            <a href="https://github.com/tuvl-io/tuvl" rel="noopener">GitHub</a>
+            
+            <a href="https://github.com/tuvl-io/examples" rel="noopener">Examples</a>
+            
+            <a href="https://pypi.org/project/tuvl/" rel="noopener">PyPI</a>
+            
+            <a href="https://discord.gg/tuvl" rel="noopener">Discord</a>
+            
+        </nav>
+        <div class="tuvl-footer__col">
+            <div class="tuvl-footer__title">Contact</div>
+            <a href="mailto:developer@tuvl.io">developer@tuvl.io</a>
+            <span class="tuvl-footer__small">Questions, feedback, partnerships</span>
+            <a href="mailto:security@tuvl.io">security@tuvl.io</a>
+            <span class="tuvl-footer__small">Security reports</span>
+        </div>
+    </div>
+</footer>
+    </div>
+     
+
+<script src="../../javascripts/analytics.js"></script>
+
+     
+
+<script src="../../search/main.js"></script>
+
+
+    
+
+    <script integrity="sha384-JLNLRFGzvOp0up707XKgSnAjjt1w5BF/+lbeLQvlf6mNwf0m89IXFdpNAk4t6Hcs"
+        src="../../js/copy-button.js"></script>
+    <script integrity="sha384-JBx6cBEiyhK1KPwZgBHiI6GDaAmvlOxMQFyWAZTEpW5Ifo5XQ2LBcJ61GVOumwF1"
+        src="../../js/sidebar.js"></script>
+    <script integrity="sha384-fNURFMRt0p/HqXnQnV4+CT9dX1GiU5F0fC3pFbg7gfoANytoUMErSW7suWSBkSuF"
+        src="../../js/slider.js"></script>
+    <script>updatePygmentsStylesheet();</script>
+    
+    <script>fetchStargazers("https://github.com/tuvl-io/tuvl");</script>
+    
+    
+    <script integrity="sha384-Oi13RhLSSgEpSmRyDbfsfmU5N1KzT7IBoQqMenKZoi1Mu+0mCDcF1mKtSZw3cd80" src="../../js/mkdocstrings.js"></script>
+    
+    
+    <script type="speculationrules">
+{
+  "prerender": [
+    {
+      "where": {
+          "selector_matches": ["#next-button", "#previous-button"]
+      }
+    }
+  ]
+}
+</script>
+</body>
+
+</html>
