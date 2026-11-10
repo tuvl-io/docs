@@ -8,6 +8,31 @@ journaled**, and projects are built **spec-first**. The full list of changes is 
     tuvl is licensed under the **Apache License, Version 2.0**, which includes an express patent grant.
     Using, modifying and selling software built on tuvl is free. [The license](license.md)
 
+## New in 2.1.0 (beta)
+
+**Production IAM, an environment manifest, and a thinner engine.** 2.1.0 is in beta (`2.1.0b1`): install it with
+`uv tool install --prerelease allow "tuvl[standard]"`. Nothing in your YAML or in the CLI changes.
+
+- **`tuvl iam` manages users, roles and scopes inside the deployment.** `kubectl exec -it deploy/<app> -- tuvl iam roles list`:
+  the administrator signs in and the command works on the database directly. Roles can be disabled, the last administrator
+  cannot be removed, and `reset-admin` is the break-glass. [Production IAM](internals/auth.md#production-iam)
+- **Roles and the first administrator are seeded once.** A `kind: RoleSeed` document and `TUVL_BOOTSTRAP_ADMIN_EMAIL` /
+  `_PASSWORD` create them on the first boot of an empty database, under an advisory lock, and never touch a database that
+  already has users.
+- **`kind: EnvConfig` declares the environment a project needs.** Variables get a description, `secret`, `required` and a
+  `default`; `tuvl lint project` checks them, `tuvl ship` writes the Secret list, the chart values and `.env.example` from
+  them, a production server refuses to start without a required one, and Insight has a **Settings → Environment** page.
+  [Environment variables](internals/environment.md)
+- **`tuvl` is the engine; the developer tooling is in `tuvl-insight`.** The production wheel has 160 modules instead of 264.
+  `tuvl[standard]` installs both, and it is still one `tuvl` command: on a bare install the development commands answer with how
+  to install them. [Core and Insight](internals/core-and-insight.md)
+
+**Before you upgrade a production setup:** the REST IAM admin routes (`/auth/bootstrap`, `/auth/admin/*`) are no longer mounted
+in production by default (use `tuvl iam`, or add `iam` to `spec.api.expose`); the extras `tuvl[codegen]`, `[test]`, `[tui]`,
+`[review]` and `[pdf]` are gone (use `tuvl[standard]`); and tuvl's Python modules for the tooling moved to `tuvl_insight`.
+
+The full list is in the [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
+
 ## New in 2.0.3
 
 A security patch release. Only dependencies change; nothing here changes how an existing project runs.
