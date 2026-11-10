@@ -53,7 +53,10 @@ uv tool install "tuvl[standard]"
 ```
 
 !!! tip
-    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, hot-reload support, the development tools (`tuvl generate code`, `tuvl run tests`, `tuvl serve mcp`) and every extra below. The base install is the production server and is about 65 MB installed. `tuvl ship` builds production images from it and adds only the extras your project uses.
+    `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, hot-reload support, the development tools (`tuvl generate code`, `tuvl run tests`, `tuvl serve mcp`) and every production extra below. The base install is the engine and the production CLI. From 2.1 the development tools live in the separate `tuvl-insight` package that `[standard]` installs: on a base install they answer with how to get them ([Core and Insight](../internals/core-and-insight.md)). `tuvl ship` builds production images from the base install and adds only the extras your project uses.
+
+!!! note "2.1 is in beta"
+    A plain `uv tool install "tuvl[standard]"` still installs 2.0.x. To try the 2.1 beta: `uv tool install --prerelease allow "tuvl[standard]"`.
 
 Verify the installation:
 
@@ -89,15 +92,12 @@ The base `tuvl` has no package for a feature you may not use. Install the extra 
 | `tuvl[redis]` | `redis` | a `type: redis` datasource |
 | `tuvl[vector]` | `pgvector` | collections, embeddings and `tuvl.data_search` / `tuvl.data_ingest` |
 | `tuvl[otel-grpc]` | OTLP gRPC exporter | `TUVL_OTLP_PROTOCOL=grpc` (HTTP/protobuf is the default and needs nothing) |
-| `tuvl[codegen]` | `libcst` | `tuvl generate code` and `tuvl init --sample` |
-| `tuvl[test]` | `aiosqlite` | `tuvl run tests` |
-| `tuvl[review]` | `ruff` | `tuvl review code` |
-| `tuvl[pdf]` | `pypdf` | `tuvl import idea` of PDF ideas (Word and Markdown need nothing extra) |
-| `tuvl[tui]` | `textual` | the terminal UI that `tuvl dev` starts on a terminal |
 
 ```bash
 uv add "tuvl[mcp,redis]"
 ```
+
+In 2.0 the development tools also had extras (`tuvl[codegen]`, `[test]`, `[review]`, `[pdf]`, `[tui]`). From 2.1 their packages are dependencies of `tuvl-insight`, so `tuvl[standard]` is all you install.
 
 Using a feature without its extra fails with the command to run, for example
 `pip install 'tuvl[mcp]'`. You do not choose extras for production by hand: [`tuvl ship`](shipping.md#only-what-the-project-uses)
