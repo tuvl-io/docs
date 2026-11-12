@@ -10,8 +10,8 @@ journaled**, and projects are built **spec-first**. The full list of changes is 
 
 ## New in 2.1.0 (beta)
 
-**Production IAM, an environment manifest, and a thinner engine.** 2.1.0 is in beta (`2.1.0b1`): install it with
-`uv tool install --prerelease allow "tuvl[standard]"`. Nothing in your YAML or in the CLI changes.
+**Production IAM, an environment manifest, and a thinner engine.** 2.1.0 is in beta (`2.1.0b3`): install it by pinning both packages (not with `--prerelease allow`, which lets every dependency go to a pre-release):
+`uv tool install "tuvl==2.1.0b3" --with "tuvl-insight==2.1.0b3"`. Nothing in your YAML changes.
 
 - **`tuvl iam` manages users, roles and scopes inside the deployment.** `kubectl exec -it deploy/<app> -- tuvl iam roles list`:
   the administrator signs in and the command works on the database directly. Roles can be disabled, the last administrator
@@ -23,6 +23,9 @@ journaled**, and projects are built **spec-first**. The full list of changes is 
   `default`; `tuvl lint project` checks them, `tuvl ship` writes the Secret list, the chart values and `.env.example` from
   them, a production server refuses to start without a required one, and Insight has a **Settings → Environment** page.
   [Environment variables](internals/environment.md)
+- **`tuvl deploy` deploys to a tuvl cloud (2.1.0b3).** It packages the project, uploads it with a client token and follows the build
+  and the deployment. `--check-dns` tells whether a name is free and points at the cloud, `--set-hostname` renames the deployed app,
+  and `--admin-email` creates the app's administrator with a password made on your machine. [Deploy to a tuvl cloud](getting-started/shipping.md#tuvl-deploy-deploy-to-a-tuvl-cloud)
 - **`tuvl` is the engine; the developer tooling is in `tuvl-insight`.** The production wheel has 160 modules instead of 264.
   `tuvl[standard]` installs both, and it is still one `tuvl` command: on a bare install the development commands answer with how
   to install them. [Core and Insight](internals/core-and-insight.md)

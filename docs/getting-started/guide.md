@@ -948,10 +948,9 @@ variable of every model the workflows use (none here). A production engine refus
 one is missing. The container runs in production mode: no dev routes, no Insight, JSON logs. The chart
 does not include Postgres, so point `POSTGRES_HOST` at yours. More: [Shipping to production](shipping.md).
 
-!!! info "`tuvl deploy` is coming"
-    A hosted, managed tuvl engine that runs your backend services is planned, so there is no image or
-    cluster to operate. `tuvl deploy` is the command for it. It is not available yet: today it prints a
-    message, deploys nothing and exits 1. Until then, `tuvl ship` plus `helm` is the way.
+!!! info "Or let a tuvl cloud run it"
+    `tuvl deploy` sends the project to a hosted tuvl cloud with a client token from its operator, so there is no image
+    or cluster to operate. [Deploy to a tuvl cloud](shipping.md#tuvl-deploy-deploy-to-a-tuvl-cloud)
 
 ### Optional: list it in the catalogue
 

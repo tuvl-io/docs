@@ -125,22 +125,55 @@ stores (S3, Azure, GCS) need no volume, only their credentials in the secret. `s
 image allowlist; a project shipped before storage existed needs `tuvl ship --force` once. See
 [Blob Storage](../internals/storage.md).
 
-## Coming: `tuvl deploy` (managed hosting)
+## `tuvl deploy`: deploy to a tuvl cloud
 
-`tuvl deploy` is planned as a hosted, managed tuvl engine that runs your backend services, so there
-is no image or cluster to operate. It is not available yet. Today the command only says so, deploys
-nothing and exits with status 1, so a script cannot mistake it for a deployment:
+`tuvl deploy` sends the project to a hosted tuvl cloud (`https://cloud.tuvl.io` by default), which builds it and runs it in its own
+container with its own database. There is no image or cluster for you to operate. It packages the project the way
+`tuvl ship --format archive` does, uploads it, follows the build and the deployment, and prints the address.
 
-```text
-$ tuvl deploy
-╭─ tuvl deploy ───────────────────────────────────────────╮
-│ Managed hosting is coming soon.                         │
-│ It is not available yet, and nothing was deployed.      │
-│ Until then, build and deploy it yourself: tuvl ship     │
-╰─────────────────────────────────────────────────────────╯
+It needs a **client token**, which the cloud's operator makes for your account (cloud console → Customers → your account → Deploy tokens).
+A token looks like `tvc_<client id>_<secret>` and is shown once; the cloud keeps only a keyed hash, so a lost token is replaced, not recovered.
+
+```bash
+export TUVL_CLIENT_TOKEN=tvc_...                      # or: tuvl deploy --login (saved with owner-only permissions)
+tuvl deploy --admin-email you@example.com             # package, upload, build, deploy
+echo "$TOKEN" | tuvl deploy --token-stdin             # in CI: the token from standard input
 ```
 
-Until it launches, you deploy the chart that `tuvl ship` writes with `helm`, as above.
+The token is never an argument and never printed, and it is sent only over https (plain http only to `localhost`).
+
+| Option | What it does |
+|---|---|
+| `--url URL` | The cloud to deploy to (default `https://cloud.tuvl.io`, or `TUVL_CLOUD_URL`). |
+| `--plan NAME` | The plan for a new project (`hobby` or `standard`). The wallet must be able to pay it; if not, nothing is built. |
+| `--hostname NAME` | The name for a new deployment (default `<project>.<the cloud's base domain>`). |
+| `--admin-email EMAIL` | Create an administrator in a new app. The password is made on your machine, sealed so only the cloud can read it, and shown once at the end. `--no-admin` skips it. |
+| `--archive FILE` | Deploy an archive you already made with `tuvl ship --format archive`. |
+| `--login`, `--logout` | Save or forget a token on this machine. |
+| `--no-follow` | Start the deployment and return; it keeps going on the cloud. |
+
+A project name nobody owns is claimed by deploying it. A name another customer owns is refused as "not available" without saying whether it exists.
+
+### Names: `--check-dns` and `--set-hostname`
+
+Names are under the cloud's base domain (for example `shop.tuvl.app`), and each is served by one project.
+
+```bash
+tuvl deploy --check-dns --hostname shop.tuvl.app       # is it free, and does it point at the cloud?
+tuvl deploy --set-hostname shop.tuvl.app               # serve the deployed app under this name
+```
+
+- `--check-dns` deploys nothing. It says whether the name is `available`, already **yours**, **taken** (used by another project, without saying which),
+  **outside the base domain** or **invalid**, and, for a usable name, whether DNS resolves it to the cloud (`ok`, `missing` or `wrong`). A taken or unusable name
+  exits with status 1; a record that does not resolve yet is only a warning, because the cloud's operator creates it once for the whole base domain.
+  Without `--hostname` it checks the project's default name. `--project` picks another project (default: the name in `pyproject.toml`).
+- `--set-hostname` packages and uploads nothing: the app restarts on its running release behind the new name, the old name stops working, the database is
+  untouched and it costs no credits. It is refused, before anything restarts, when the name is taken, already this project's, outside the base domain or
+  malformed, or when the project is not yours, not running, or stopped because its plan is unpaid. It cannot be combined with `--archive`, `--hostname` or `--admin-email`.
+
+A customer's own domain (`app.acme.com`) is not supported yet.
+
+To run the app yourself instead, deploy the chart that `tuvl ship` writes with `helm`, as above.
 
 ## See also
 
