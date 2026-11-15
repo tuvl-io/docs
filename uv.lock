@@ -224,7 +224,7 @@ wheels = [
 
 [[package]]
 name = "mkdocs-shadcn"
-version = "0.12.2"
+version = "0.12.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bottle" },
@@ -232,9 +232,9 @@ dependencies = [
     { name = "mkdocs" },
     { name = "pymdown-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/77/50b0f4d0c093f5cdd1fcc168d45fa0000df4452e58b4a221ce18b4a06835/mkdocs_shadcn-0.12.2.tar.gz", hash = "sha256:d59dd719be1da00cfff386557f1b0f7a6efe65b9020d05825fb76a836c0903ac", size = 3497759, upload-time = "2026-10-11T13:39:27.11Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/25/a1/83ac8d33f0111796472fcd9b57af841273ba48e5d094cd801420094455eb/mkdocs_shadcn-0.12.3.tar.gz", hash = "sha256:1ae208d9ba70913b3b43755f4dd3cce9136b314562e95dc38aeee2a16d2e4ed3", size = 3532095, upload-time = "2026-11-12T10:08:13.959Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e3/a7/f9c82b9863f43b1326b1efe610b7d0cb723731a92451eb98e50ca38fb866/mkdocs_shadcn-0.12.2-py3-none-any.whl", hash = "sha256:c2a64cf628052257b4869efd33ffb7f510e6df84462878a69e7a798982a22949", size = 1797415, upload-time = "2026-10-11T13:39:25.077Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/9c/d73dd321135d80a547f8f93ed3559535e08dc96a0ee01828f54288a1060f/mkdocs_shadcn-0.12.3-py3-none-any.whl", hash = "sha256:1932b1e3cff28155b9ba3da8f5b8b0498e9ee66b881eabed455071166e1555eb", size = 1797648, upload-time = "2026-11-12T10:08:12.414Z" },
 ]
 
 [[package]]
