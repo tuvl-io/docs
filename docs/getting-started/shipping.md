@@ -90,7 +90,8 @@ helm install triage deploy/chart/triage --set image.repository=registry.example.
 ```
 
 The secret must hold `TUVL_SIGNING_KEY`, `POSTGRES_PASSWORD` and the variables of every model the
-workflows use. A production engine refuses to start while one is missing.
+workflows use. A production engine refuses to start while one is missing. The chart's readiness probe is `GET /ready` (`503` until the runtime
+has started, while the database does not answer, and during shutdown); the liveness probe stays on `GET /health`.
 
 For separate API and worker pods:
 
@@ -172,6 +173,21 @@ tuvl deploy --set-hostname shop.tuvl.app               # serve the deployed app 
   malformed, or when the project is not yours, not running, or stopped because its plan is unpaid. It cannot be combined with `--archive`, `--hostname` or `--admin-email`.
 
 A customer's own domain (`app.acme.com`) is not supported yet.
+
+### The web UI
+
+A project's UI (a folder of static files with an `index.html`, by default `ui/`) is deployed after the backend. The UI is served on
+`<name>` and the backend on `api.<name>`; the UI's own address also hands `/api`, `/auth`, `/models` and `/health` to the backend, so a UI
+that calls its own origin needs no cross-origin setup.
+
+```bash
+tuvl deploy --ui web/            # deploy the backend, then the UI from this folder
+tuvl deploy --ui-only            # only the UI of a project that is already running
+tuvl deploy --no-ui              # the backend only
+```
+
+The folder is packed without hidden files, `serve.py`, `tests`, `specs`, `node_modules` and links, and the same files give the same
+bytes. The cloud must support web UIs. The deploy result prints both addresses.
 
 To run the app yourself instead, deploy the chart that `tuvl ship` writes with `helm`, as above.
 

@@ -157,8 +157,23 @@ tuvl generate key --write    # writes TUVL_SIGNING_KEY into the project .env (mo
 
 !!! warning "Required for `tuvl serve app`"
     Production mode fails closed if no signing key is set — it will **not** fall back to an
-    ephemeral key the way `tuvl dev` does. Keep the key stable: rotating it invalidates every
-    existing token.
+    ephemeral key the way `tuvl dev` does. Keep the key stable: changing `TUVL_SIGNING_KEY` on
+    its own invalidates every existing token. To rotate without signing anyone out, use
+    `TUVL_SIGNING_KEY_PREVIOUS` (below).
+
+### Rotating the key without signing anyone out
+
+`TUVL_SIGNING_KEY_PREVIOUS` takes one or more retired private keys (64 hex characters each, comma-separated).
+They sign nothing; their public keys verify tokens already issued and are published at `/auth/jwks.json` after
+the current key, and the token header's `kid` picks the key. A rolling deploy runs old and new pods side by side,
+so rotate in three steps:
+
+1. Make a key (`tuvl generate key`) and deploy with it in `TUVL_SIGNING_KEY_PREVIOUS` while `TUVL_SIGNING_KEY` still holds the current one.
+2. Deploy again with the two swapped: `TUVL_SIGNING_KEY` is the new key, `TUVL_SIGNING_KEY_PREVIOUS` the old one.
+3. After the longest token lifetime has passed (`TUVL_TOKEN_TTL_SECONDS`, 24 hours by default), remove `TUVL_SIGNING_KEY_PREVIOUS`.
+
+A value that is not 64 hex characters stops the boot, naming the variable. Revocations and session ends do not
+depend on the key. [Key management](../internals/auth.md#10-key-management)
 
 ??? note "Generate without the CLI"
     ```bash
