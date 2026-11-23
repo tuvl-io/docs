@@ -78,7 +78,7 @@ refunds/
     Give the agent tuvl's own tools by adding the development MCP server to the agent's config:
 
     ```json title=".mcp.json"
-    { "mcpServers": { "tuvl": { "command": "tuvl", "args": ["mcp", "-d", "."] } } }
+    { "mcpServers": { "tuvl": { "command": "tuvl", "args": ["serve", "mcp", "-d", "."] } } }
     ```
 
     It offers `validate`, `spec_check`, `spec_verify`, `spec_status`, `spec_diff`, `get_contract`,
