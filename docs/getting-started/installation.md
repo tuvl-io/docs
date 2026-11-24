@@ -55,8 +55,8 @@ uv tool install "tuvl[standard]"
 !!! tip
     `tuvl[standard]` includes the dev server (`tuvl dev`), the built-in **tuvl insight** UI, hot-reload support, the development tools (`tuvl generate code`, `tuvl run tests`, `tuvl serve mcp`) and every production extra below. The base install is the engine and the production CLI. From 2.1 the development tools live in the separate `tuvl-insight` package that `[standard]` installs: on a base install they answer with how to get them ([Core and Insight](../internals/core-and-insight.md)). `tuvl ship` builds production images from the base install and adds only the extras your project uses.
 
-!!! note "2.1 is in beta"
-    A plain `uv tool install "tuvl[standard]"` still installs 2.0.x. To try the 2.1 beta: `uv tool install --prerelease allow "tuvl[standard]"`.
+!!! note "Upgrading from 2.0"
+    `uv tool upgrade tuvl` (or `pip install -U "tuvl[standard]"`) installs 2.1. Nothing in your YAML has to change; read [what's new](../whats-new.md#new-in-210) first if you run a production server.
 
 Verify the installation:
 

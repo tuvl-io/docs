@@ -1,6 +1,6 @@
-# What's new in 2.0
+# What's new
 
-tuvl **2.0.0** is a redesign: workflows are graphs of typed **agents**, every run is **durable and
+What changed in each release, newest first. tuvl **2.0.0** was a redesign: workflows are graphs of typed **agents**, every run is **durable and
 journaled**, and projects are built **spec-first**. The full list of changes is in the
 [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
 
@@ -8,10 +8,13 @@ journaled**, and projects are built **spec-first**. The full list of changes is 
     tuvl is licensed under the **Apache License, Version 2.0**, which includes an express patent grant.
     Using, modifying and selling software built on tuvl is free. [The license](license.md)
 
-## New in 2.1.0 (beta)
+## New in 2.1.0
 
-**Production IAM, an environment manifest, and a thinner engine.** 2.1.0 is in beta (`2.1.0b1`): install it with
-`uv tool install --prerelease allow "tuvl[standard]"`. Nothing in your YAML or in the CLI changes.
+**Production IAM, an environment manifest, a thinner engine, `tuvl deploy`, and a security and reliability review.** Install it with
+`uv tool install "tuvl[standard]"` (or `pip install -U "tuvl[standard]"`). Nothing in your YAML has to change; read *Before you upgrade*
+below if you run a production server.
+
+**Identity and access**
 
 - **`tuvl iam` manages users, roles and scopes inside the deployment.** `kubectl exec -it deploy/<app> -- tuvl iam roles list`:
   the administrator signs in and the command works on the database directly. Roles can be disabled, the last administrator
@@ -19,17 +22,55 @@ journaled**, and projects are built **spec-first**. The full list of changes is 
 - **Roles and the first administrator are seeded once.** A `kind: RoleSeed` document and `TUVL_BOOTSTRAP_ADMIN_EMAIL` /
   `_PASSWORD` create them on the first boot of an empty database, under an advisory lock, and never touch a database that
   already has users.
+- **Set-password links.** `POST /auth/admin/users/{id}/invite`, or `tuvl iam users invite`, makes a one-time link that lets a user
+  choose their own password. [Set-password links](security/iam.md#set-password-links)
+- **Role management from your own screen.** A separate `roles` API group (scope `roles:manage`, off in production until you expose it)
+  lists roles, adds and removes members, and disables or enables a role.
+- **Approvals by scope.** A `human` agent or a loop tool's `approval` rule can say `required_scope` instead of, or as well as,
+  `required_group`, so a role created at runtime can decide approvals. `PATCH /auth/admin/roles/{role_id}` edits a role's
+  description and active flag.
+- **Rotate the signing key without signing anyone out.** `TUVL_SIGNING_KEY_PREVIOUS` keeps verifying the tokens already issued.
+  [Rotating the key](security/tokens.md#rotating-the-key-without-signing-anyone-out)
+
+**Project and deployment**
+
 - **`kind: EnvConfig` declares the environment a project needs.** Variables get a description, `secret`, `required` and a
   `default`; `tuvl lint project` checks them, `tuvl ship` writes the Secret list, the chart values and `.env.example` from
   them, a production server refuses to start without a required one, and Insight has a **Settings → Environment** page.
   [Environment variables](internals/environment.md)
+- **`tuvl deploy` deploys to a tuvl cloud.** It packages the project, uploads it with a client token and follows the build
+  and the deployment. `--check-dns` tells whether a name is free and points at the cloud, `--set-hostname` renames the deployed app,
+  `--admin-email` creates the app's administrator with a password made on your machine, and the project's web UI is deployed
+  with it (the backend is served as `api.<name>`). [Deploy to a tuvl cloud](getting-started/shipping.md#tuvl-deploy-deploy-to-a-tuvl-cloud)
 - **`tuvl` is the engine; the developer tooling is in `tuvl-insight`.** The production wheel has 160 modules instead of 264.
   `tuvl[standard]` installs both, and it is still one `tuvl` command: on a bare install the development commands answer with how
   to install them. [Core and Insight](internals/core-and-insight.md)
 
+**Operations**
+
+- **`GET /ready`** is the readiness probe (the Helm chart uses it); `/health` also fails when the worker's poll loop is gone.
+- **`tuvl prune runs --older-than 30d`** removes finished runs with their journal, checkpoints and drafts (`TUVL_RUN_RETENTION_DAYS`
+  does it from the worker). [Runtime](internals/runtime.md)
+- **Boot says how many unfinished runs a changed workflow will fail**, and the runtime page has a runbook for deploying one.
+- **`loop.tool_choice: required`** holds every model turn of a loop to a tool call; `TUVL_LLM_MAX_CONNECTIONS` caps model connections.
+  [Loop and tools](internals/loop-and-tools.md)
+- **Google Cloud Storage works with HMAC keys.** [Blob storage](internals/storage.md)
+
+**Security and reliability.** A review of the engine before 2.1 closed these:
+
+- Wrong passwords are slowed per login and per address (`429` with `Retry-After`), and one password rule (8 to 72 bytes) holds everywhere.
+- A browser sign-in through a provider must finish in the browser that started it, and Google and Microsoft use PKCE.
+- Fields marked `secure: true` are left out of CRUD responses unless the token has `<model>:read_secure`, and are masked in prompts and tool results.
+- The `http` tool reads `${VAR}` only from the workflow's own text, cannot be sent to an inside host or the cloud-metadata address by input, and reads at most 10 MiB.
+- A JSON body over 1 MiB is `413`; a protected trigger answers `401` before it reads the body; an anonymous caller of a public trigger gets the kind of error, not its text.
+- Workers survive a failing database call, a run whose worker is lost is finished rather than stranded, lists page in a stable order, `PATCH` can set a field to `null`, and a refused write is `409` or `422`, not `500`.
+
 **Before you upgrade a production setup:** the REST IAM admin routes (`/auth/bootstrap`, `/auth/admin/*`) are no longer mounted
 in production by default (use `tuvl iam`, or add `iam` to `spec.api.expose`); the extras `tuvl[codegen]`, `[test]`, `[tui]`,
 `[review]` and `[pdf]` are gone (use `tuvl[standard]`); and tuvl's Python modules for the tooling moved to `tuvl_insight`.
+Clients also see the behaviour changes above: `429` on repeated wrong passwords, secure fields needing `read_secure`, `400` for an OAuth
+callback without its cookie, and no error text for an anonymous caller of a public trigger. New `tuvl_system_*` tables and four run
+indexes are created at the next boot; a project made by `tuvl init` on a beta should now depend on `tuvl[standard]>=2.1.0` and run `uv lock --upgrade`.
 
 The full list is in the [changelog](https://github.com/tuvl-io/tuvl/blob/main/CHANGELOG.md).
 

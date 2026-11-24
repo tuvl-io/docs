@@ -30,8 +30,15 @@ sequenceDiagram
     tuvl-->>Browser: 302 Redirect → TUVL_OAUTH_UI_REDIRECT_URL?token=<jwt>
 ```
 
-CSRF state tokens are stored in Redis (when configured) or in-process memory. In multi-worker
-deployments you **must** configure a Redis datasource to share state across workers.
+The one-time `state` is kept in Redis when a Redis datasource is deployed, otherwise in the primary database
+(`tuvl_system_oauth_states`), so a callback may land on any worker or replica; it is single-use and expires after
+10 minutes.
+
+**The callback belongs to the browser that started it (2.1).** `start` sets a short-lived `HttpOnly`,
+`SameSite=Lax` cookie holding a hash of the state, and the callback refuses a missing or different one with `400`.
+A link someone else started therefore cannot be finished in your browser. `TUVL_OAUTH_STATE_COOKIE=false` turns the
+check off for a client that cannot keep cookies. **PKCE** (S256) is on by default for Google and Microsoft; add
+`pkce: true` to a GitHub provider file to use it there.
 
 ---
 

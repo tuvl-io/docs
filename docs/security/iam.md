@@ -191,6 +191,25 @@ curl http://localhost:8885/auth/admin/users \
   -H "Authorization: Bearer <jwt>"
 ```
 
+!!! info "Wrong passwords are slowed (2.1)"
+    After 5 wrong passwords a login waits 2, 4, 8 ... seconds (up to 15 minutes) and `POST /auth/token` answers
+    `429` with a `Retry-After` header; an unknown login waits exactly like a known one. One client address may make
+    `TUVL_LOGIN_IP_FAILURES` (30, `0` turns it off) failures in 15 minutes. `tuvl iam users unlock <email>` releases a
+    login early. A client that retries a wrong password in a loop now gets `429`.
+
+    One password rule applies on every path: 8 characters at least and 72 bytes at most (`422` over REST).
+    Emails are case-insensitive: `Ann@X.com` and `ann@x.com` are one user.
+    [Details](../internals/auth.md#password-login)
+
+### Set-password links
+
+An administrator can invite a user instead of choosing their password: `POST /auth/admin/users/{id}/invite`
+(`iam:admin`) returns a one-time token that the user spends at the public `POST /auth/password/set`. The token is
+stored only as a hash, works once, expires (72 hours by default, up to 30 days), and a new one replaces the old.
+In production, where the `iam` group is not mounted, `tuvl iam users create <email> --no-password` and
+`tuvl iam users invite <email> --url 'https://app/#/set-password?token={token}'` do the same from inside the
+deployment. [Production IAM](../internals/auth.md#production-iam)
+
 ### Token Refresh
 
 Exchange the current token for a new one with a fresh TTL (the old token is immediately revoked):

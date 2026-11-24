@@ -62,8 +62,10 @@ async def issue_refund(inp: IssueRefundIn, ctx: Ctx) -> IssueRefundOut:
 | Signature | `async def f(inp: <Id>In, ctx: Ctx) -> <Id>Out` or `tuple[<Id>Out, str]`. `tuvl generate code` writes the decorator, signature and docstring; you write the body. |
 | Signals | Returning `Out` emits `default`; `(Out, "signal")` emits that signal (it must be routed); an exception emits `error` (`code_exception`). |
 | `ctx.db` | Unit of work restricted to `spec.models`; read-only when `effect: read` (a write raises). Writes commit with the step's checkpoint. |
-| `ctx` | `ctx.log` (structlog, bound to the run and agent), `ctx.run_id`, `ctx.principal`, `ctx.idempotency_key`, `ctx.http` (shared HTTP client), `ctx.artifact(ref)`, `ctx.params` (rendered `code.with`), `ctx.agent_id` |
+| `ctx` | `ctx.log` (structlog, bound to the run and agent), `ctx.run_id`, `ctx.principal`, `ctx.idempotency_key`, `ctx.http` (shared HTTP client), `ctx.artifact(ref)`, `ctx.params` (`code.with`: `${VAR}` / `${VAR:default}` read the environment, then `{{ }}` templates are rendered), `ctx.agent_id` |
 | `effect` | Declared, because it can't be derived from Python. It drives policy (`require_human_before`) and MCP annotations. |
+
+**Configuration and secrets.** A code agent never reads `os.environ` (rule C004). Pass what it needs through `code.with`: `with: { api_key: "${CRM_KEY}", base: "${CRM_URL:https://crm.example.com}" }` reaches the function as `ctx.params`. The references are expanded in the document's own text, before the templates are rendered, so a value that arrives through `{{ }}` is data and is never read as a variable. A variable with no default that is not set fails the agent.
 
 **Built-ins.** `run: tuvl.data_search` and `run: tuvl.data_ingest` are vector search and ingest with
 typed contracts, configured by `code.with` (`collection`, `query`/`document`, `top_k`, `filter`,
@@ -138,7 +140,16 @@ tool:
 `GET`/`HEAD` are `read`; other methods are `write` (override to `destructive` allowed). Without
 `map`, a single output receives the body. An unexpected status emits `http_<status>` when that
 signal is routed; otherwise `error` (`rate_limit` for 429 and `transient` for 5xx are retryable,
-`http_error` otherwise). `${VAR}` reads the environment.
+`http_error` otherwise). `${VAR}` in `url` and `headers` reads the environment from the workflow's own text; a value that
+arrives through `{{ }}` is data and is never read as a reference. The journal and error messages show the URL with `${VAR}`
+as written, not the value.
+
+`url` may carry a query string; `query:` is added to it. A **host written in the `url`** is trusted, so an in-cluster
+service (`http://orders.internal:8080/…`) is a fine target. A **host that arrives through `{{ }}`** (a caller or a model
+chose it) must resolve to a public address, and the request goes to the address that was checked; `allow_private: true`
+admits loopback, private and link-local ones for that host. The cloud-metadata address (`169.254.169.254` and its kin) is
+refused either way, with `destination_refused`. The response is read up to `TUVL_HTTP_TOOL_MAX_BYTES` (10 MiB); a larger
+one ends the step with `too_large` (route that signal, or it is an `error`).
 
 ### `use: storage`
 
@@ -216,7 +227,8 @@ calls get a stable `Idempotency-Key`; MCP calls are at-least-once, so give write
   only a preview. When the answer is then rejected (`parse_error`, a cut-off `budget_exceeded`, an error in the stream) or the agent runs
   again, the client receives `token_reset` and discards the draft. Not allowed together with `guardrails.output` (V039): the text would
   reach a user before a guardrail could refuse it. A model that reasons before it answers sends nothing until its answer starts.
-- Secure model fields can't be inputs unless `policy.allow_secure_to_llm: true` (V020).
+- Secure model fields can't be inputs unless `policy.allow_secure_to_llm: true` (V020); without it a value that
+  reaches the prompt or a tool result anyway (a `json` input, a row a tool returned) is replaced by `*****` at run time.
 
 ---
 
@@ -281,9 +293,10 @@ answer the `write` fields are stored (in the step's own transaction, once even i
   trigger answers `202` with the run descriptor and the request.
 - Answer with `POST /api/approvals/{id}` `{ values }` (or `POST /api/runs/{run_id}/human/{agent_id}`).
   Values are validated against `outputs`; the run is re-queued and continues on any worker.
-- Who may answer: with `required_group`, a holder of `approvals:decide` in that group who is not the
+- Who may answer: with `required_group` and/or `required_scope`, a holder of `approvals:decide`
+  who satisfies that group/scope (so a custom role granted the scope can also decide) and is not the
   triggering principal; otherwise the triggering principal or `iam:admin`. `iam:admin` bypasses the
-  group, never the no-self-approval rule.
+  group and scope, never the no-self-approval rule.
 - `expires` closes the request and takes the `expired` route; a late answer gets `409`.
 - `form` fields must equal `outputs`; `route_on` must be a bool or enum output (V016).
 
