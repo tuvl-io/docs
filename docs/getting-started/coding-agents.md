@@ -28,7 +28,9 @@ except the parts that need judgement.
   | `tuvl-test` | tests, mocks, fixtures, judges |
   | `tuvl-review` | reviewing the Python of code agents (the C-rules, then judgement) |
   | `tuvl-harden` | changing a working workflow safely |
-  | `tuvl-ship` | lock, CI gate, shipping (`tuvl ship` installs only the tuvl extras the project uses) |
+  | `tuvl-ship` | lock, CI gate, shipping (`tuvl ship` installs only the tuvl extras the project uses), production IAM, `EnvConfig`, probes |
+  | `tuvl-ui` | **always for a UI task** — building the user interface with `@tuvl/client`: specs, setup, same-origin proxy, one screen per workflow |
+  | `ui-run` / `ui-approve` / `ui-auth` / `ui-data` | UI screens that start and follow runs, answer people and approvals, sign in, and show model data, uploads and webhooks |
 
 - **`--json` on every read command** (`lint project`, `list tasks`, `show drift`, `run tests`, `list runs`, …), with
   documented schemas.
@@ -37,7 +39,7 @@ except the parts that need judgement.
 ## Connect `tuvl serve mcp`
 
 ```json title=".mcp.json"
-{ "mcpServers": { "tuvl": { "command": "tuvl", "args": ["mcp", "-d", "."] } } }
+{ "mcpServers": { "tuvl": { "command": "tuvl", "args": ["serve", "mcp", "-d", "."] } } }
 ```
 
 Read tools: `validate`, `spec_status`, `spec_diff`, `get_contract`, `list_agents`, `explain_error`,

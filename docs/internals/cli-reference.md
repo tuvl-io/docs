@@ -76,11 +76,30 @@ Package the project for production — validate, containerize, and emit a Helm c
 
 ### `tuvl deploy` *(toolchain)*
 
-Deploy to managed tuvl hosting (coming soon: prints a message and exits 1).
+Deploy this project to a tuvl cloud with a client token (cloud.tuvl.io by default).
 
 | Option | Value | Default | What it does |
 |---|---|---|---|
-| `--project-dir`, `-d` | PATH | `.` | Path to the tuvl project (not used yet). |
+| `--project-dir`, `-d` | DIRECTORY | `.` | Path to the tuvl project. |
+| `--archive` | FILE |  | Deploy this archive (made by `tuvl ship --format archive`) instead of packaging the project. |
+| `--url` | TEXT |  | The cloud to deploy to (default: $TUVL_CLOUD_URL, then https://cloud.tuvl.io). |
+| `--plan` | TEXT | `hobby` | The hosting plan for a new project (hobby or standard); its price is taken from your wallet. |
+| `--hostname` | TEXT |  | The name to serve a new deployment on (default: <project>.<the cloud's base domain>). |
+| `--set-hostname` | TEXT |  | Change the name the deployed app is served on, and nothing else: nothing is packaged or uploaded. The app restarts behind the new name; the old name stops working. |
+| `--check-dns` |  |  | Check that a name is available and points at the cloud (the name of --hostname or --set-hostname, else the project's default name). Nothing is deployed. |
+| `--project` | TEXT |  | The project to check or rename (default: the name in pyproject.toml). |
+| `--ui` | PATH |  | The folder holding the project's web UI (static files, index.html at its top). Default: ui/ in the project when it has an index.html. |
+| `--no-ui` |  |  | Deploy the backend only, even if the project has a ui/ folder. |
+| `--ui-only` |  |  | Deploy only the web UI of a project that is already running; the backend is not packaged or uploaded. |
+| `--admin-email` | TEXT |  | Create an administrator with this email in the new app; its password is made here, shown once, and kept nowhere. (`TUVL_ADMIN_EMAIL`) |
+| `--no-admin` |  |  | Do not create an administrator in the app. |
+| `--login` |  |  | Save a client token for this cloud (asked for with a hidden prompt) and exit. |
+| `--logout` |  |  | Forget the saved token for this cloud and exit. |
+| `--token-stdin` |  |  | Read the client token from standard input (for CI). It is never taken from an argument. |
+| `--no-follow` |  |  | Start the deployment and return; it continues on the cloud. |
+| `--allow-dirty` |  |  | Pass to `tuvl ship`: package although the working tree has uncommitted changes. |
+| `--allow-incomplete` |  |  | Pass to `tuvl ship`: package although some spec tasks are not done. |
+| `--strict` |  |  | Pass to `tuvl ship`: treat validation warnings as errors. |
 
 
 ## `tuvl create`
@@ -203,13 +222,16 @@ Register yourself at the team's collector and keep your token (it sends and read
 
 ### `tuvl register project`
 
-List this project in the public catalogue (shows the payload first).
+List this project in the public catalogue. Optional, open, no sign-in.
 
 | Option | Value | Default | What it does |
 |---|---|---|---|
 | `--project-dir`, `-d` | DIRECTORY | `.` | Project directory. |
 | `--nest` | TEXT |  | Registry URL (TUVL_NEST_URL). |
-| `--yes`, `-y` |  |  | Skip the confirmation. |
+| `--remote` | TEXT | `origin` | The git remote that holds the project's repository. |
+| `--no-verify` |  |  | List the project without pushing the one-time tag. |
+| `--keep-tag` |  |  | Leave the one-time tag on the remote. |
+| `--yes`, `-y` |  |  | Skip the confirmations. |
 
 
 ## `tuvl update`
@@ -906,6 +928,20 @@ Arguments: `<collection>`
 | `--project-dir`, `-d` | DIRECTORY | `.` | Project directory. |
 
 
+### `tuvl prune runs`
+
+Remove runs that ended before --older-than, with their journal, checkpoints, approvals, webhook deliveries and drafts. A run that is queued, running, waiting or paused is never removed. Uploaded files stay unless --with-uploads. Try --dry-run first.
+
+| Option | Value | Default | What it does |
+|---|---|---|---|
+| `--older-than` | TEXT |  | Remove runs that ended longer ago than this (30d, 12h). |
+| `--status`, `-s` | TEXT (repeatable) |  | Only runs that ended this way (repeatable): completed, failed, aborted, compensated. |
+| `--dry-run` |  |  | Say what would be removed and remove nothing. |
+| `--with-uploads` |  |  | Also delete the files the runs' triggers stored in a store. |
+| `--batch` | INTEGER RANGE | `500` | Runs removed per commit. |
+| `--project-dir`, `-d` | DIRECTORY | `.` | Project directory. |
+
+
 ### `tuvl prune traces`
 
 Delete trace files (prompts, agent output) older than N days. The ledger is kept.
@@ -914,3 +950,156 @@ Delete trace files (prompts, agent output) older than N days. The ledger is kept
 |---|---|---|---|
 | `--project-dir`, `-d` | PATH | `.` | tuvl project directory |
 | `--older-than` | FLOAT | `30` | Days; the trace only, never the ledger |
+
+
+## `tuvl iam`
+
+
+### `tuvl iam check`
+
+Is every scope this project enforces granted by an active role? Exits 1 if not.
+
+
+### `tuvl iam export`
+
+Write the live roles as a RoleSeed document for the next fresh database.
+
+| Option | Value | Default | What it does |
+|---|---|---|---|
+| `--out`, `-o` | PATH |  | Write to this file instead of stdout. |
+
+
+### `tuvl iam reset-admin`
+
+Break-glass: make EMAIL an active administrator with a new password. Asks for no login.
+
+Arguments: `<email>`
+
+
+### `tuvl iam roles add-user`
+
+Give a user a role.
+
+Arguments: `<name>` `<email>`
+
+
+### `tuvl iam roles create`
+
+Create a role.
+
+Arguments: `<name>`
+
+| Option | Value | Default | What it does |
+|---|---|---|---|
+| `--description` | TEXT |  | What the role is for. |
+| `--scope`, `-s` | TEXT (repeatable) |  | A scope to grant (repeatable). |
+
+
+### `tuvl iam roles delete`
+
+Delete a role (refused while it has members unless --force).
+
+Arguments: `<name>`
+
+| Option | Value | Default | What it does |
+|---|---|---|---|
+| `--force` |  |  | Delete even when users still hold the role. |
+| `--yes`, `-y` |  |  | Do not ask to confirm. |
+
+
+### `tuvl iam roles disable`
+
+Disable a role: it keeps its members and scopes but grants nothing until enabled.
+
+Arguments: `<name>`
+
+
+### `tuvl iam roles enable`
+
+Enable a role again.
+
+Arguments: `<name>`
+
+
+### `tuvl iam roles grant`
+
+Grant a scope to a role.
+
+Arguments: `<name>` `<scope>`
+
+
+### `tuvl iam roles list`
+
+List roles with their scopes and member counts.
+
+
+### `tuvl iam roles remove-user`
+
+Take a role away from a user (they are signed out).
+
+Arguments: `<name>` `<email>`
+
+
+### `tuvl iam roles revoke`
+
+Take a scope away from a role (its holders are signed out).
+
+Arguments: `<name>` `<scope>`
+
+
+### `tuvl iam scopes list`
+
+List the scopes this project enforces and what each guards.
+
+
+### `tuvl iam users create`
+
+Create a user. The password is prompted (or TUVL_IAM_NEW_PASSWORD) unless --no-password.
+
+Arguments: `<email>`
+
+| Option | Value | Default | What it does |
+|---|---|---|---|
+| `--first-name` | TEXT |  |  |
+| `--last-name` | TEXT |  |  |
+| `--phone` | TEXT |  |  |
+| `--role`, `-r` | TEXT (repeatable) |  | A role to give (repeatable). |
+| `--no-password` |  |  | Create the user with no password; give them `users invite`. |
+
+
+### `tuvl iam users disable`
+
+Stop a user signing in (their sessions end).
+
+Arguments: `<email>`
+
+
+### `tuvl iam users enable`
+
+Let a disabled user sign in again.
+
+Arguments: `<email>`
+
+
+### `tuvl iam users invite`
+
+Make a one-time link for a user to set their own password, and print it.
+
+Arguments: `<email>`
+
+| Option | Value | Default | What it does |
+|---|---|---|---|
+| `--url` | TEXT |  | Your app's set-password address with {token} where the token goes, for example 'https://app.example.com/#/set-password?token={token}'. Without it only the token is printed. |
+| `--hours` | INTEGER | `72` | How long the link works (1 to 720). |
+
+
+### `tuvl iam users list`
+
+List users with their roles.
+
+
+### `tuvl iam users unlock`
+
+Let a user who is made to wait after failed sign-ins try again now.
+
+Arguments: `<email>`

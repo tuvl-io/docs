@@ -22,7 +22,7 @@ Each verb makes one kind of promise, so the name tells you what a command will d
 | `serve` | Start a server | `app`, `mcp` |
 | `follow` / `pin` / `replay` | Work with runs | `run` / `run` / `runs` |
 | `use` / `set` / `upgrade` / `register` / `update` | Project setup | `agent` / `project` / `project` / `project` / `skills` |
-| `export` / `prune` | Admin | `audit`, `schema` / `traces`, `memory` |
+| `export` / `prune` | Admin | `audit`, `schema` / `traces`, `memory`, `runs` |
 | `init`, `dev`, `ship`, `deploy` | One action each | |
 
 ## Project
@@ -47,7 +47,7 @@ Each verb makes one kind of promise, so the name tells you what a command will d
 | `tuvl show dev-telemetry` / `check dev-telemetry` | `--json` / `--flush` | Whether it is on, who you are at the collector, what is queued and the last delivery; ask the collector who your token is (exit 1 when it does not accept it) and, with `--flush`, send everything queued |
 | `tuvl list team-activity` | `--actor`, `--entity`, `--kind`, `-n`, `--json` | What the team did on this project, from the collector |
 | `tuvl set project FIELD VALUE` | | Update `name`, `author`, `email`, `type`, `version`, `description`, `license` or `repo` (validated). The description is Markdown (up to 2000 characters): `VALUE` of `@about.md` reads a file, `-` reads stdin; `show project` renders it |
-| `tuvl register project` | `--nest URL`, `-y` | List the project in the public catalogue. Prints the exact payload first and asks; signs in with GitHub's device flow; the author and email are sent for contact and never shown publicly. Also available as Insight → Settings → Project → Register / Update listing (same payload preview and login) |
+| `tuvl register project` | `--nest URL`, `--remote NAME`, `--no-verify`, `--keep-tag`, `-y` | List the project in the public catalogue (optional, open, no sign-in; developer toolchain only). Prints the exact payload first and asks; then, after a second prompt, pushes a one-time tag to the git remote with your own credentials and removes it, so the listing becomes Verified (public repository) or Push confirmed (private). The author and email are sent for contact and never shown publicly. Also available as Insight → Settings → Project → Register / Update listing (same preview and consent) |
 | `tuvl update skills` | `--diff` | Refresh `AGENTS.md` and `.agents/skills/` to this tuvl version (removes retired skills; mirrors to `.claude/skills/`) |
 
 ## Specs
@@ -64,6 +64,7 @@ Each verb makes one kind of promise, so the name tells you what a command will d
 | `tuvl approve spec SPEC` / `reject spec SPEC --reason …` / `reopen spec SPEC` | `--force` (approve) | Approve a spec (by id, name or file): records who, when and a hash of the body in its front matter; refuses while `lint spec` has errors. Editing the body afterwards makes the approval stale (S017). `reject` sends it back to draft with a reason; `reopen` withdraws an approval |
 | `tuvl generate tasks SPEC` | `--dry-run` | Derive the task list from an **approved** spec, with no model: one task per new model, step and example, a manual task for each external-system step. Keeps ids, refreshes section hashes, marks removed ones `obsolete`; `--dry-run` previews a draft |
 | `tuvl list specs` | `--json` | Each spec's id, status (draft / approved / approved but changed), approver and ideas |
+| `tuvl prune runs --older-than 30d` | `-s/--status` (repeatable: `completed`, `failed`, `aborted`, `compensated`), `--dry-run`, `--with-uploads`, `--batch N`, `-d` | Removes runs that ended before the cutoff with their journal, checkpoints, approvals, webhook deliveries and drafts, in batches that each commit. Never a run that is queued, running, waiting or paused. Uploaded files stay unless `--with-uploads`; a run whose file cannot be deleted right now is kept for the next time. Try `--dry-run` first |
 | `tuvl prune memory COLLECTION` | `--key OWNER` or `--older-than 30d` (exactly one), `-d` | Erases what agents remember: every memory of one owner, or all older than an age, in one memory collection. Prints how many rows went and deletes nothing else (knowledge-base rows and other collections are untouched). See [Remembering across runs](engines.md#remembering-across-runs-llmmemory-loopmemory) |
 | `tuvl show audit` / `show event REF` / `verify audit` / `export audit` / `prune traces` | `--entity`, `--actor`, `--kind`, `--since 2d`, `-n`, `--follow`, `--json` (log); `--format json\|csv`, `-o` (export); `--older-than DAYS` (prune) | The local audit ledger `.tuvl/audit/<YYYY-MM>.jsonl` (git-ignored): one hash-chained event per action with side effects — init, agent choice, idea import, id renumber, spec create / approve / reject / reopen (refusals too, with the reason), task derivation. It holds ids, hashes and short details, never file contents, prompts or secrets (full prompts and agent output go to `.tuvl/trace/` by hash). `--entity` on an idea also shows its specs and tasks. `verify` finds an edited, removed or reordered line (exit 1); `prune` deletes old trace files, never the ledger. The ledger belongs to one machine and one developer: what the team shares through git is the spec's own approval fields |
 | `tuvl create spec NAME --idea IDEA-…` | | Also numbers the spec `SPEC-XX-NNNN-NN` after its first idea, links it to the idea(s) and records `status: draft` |
@@ -76,7 +77,7 @@ Each verb makes one kind of promise, so the name tells you what a command will d
 
 | Command | Options | |
 |---|---|---|
-| `tuvl dev` | `-p/--port` (8885), `--auto-login`, `--no-tui`, `--show-key`, `--no-browser`, `--no-tui`, `-H/--allow-host` | Dev server with Insight and the dev API, reloading on YAML changes. The session key is stored in `.tuvl/.dev-session` (0600); `--show-key` prints it. **On a terminal it also starts a terminal UI** (`tuvl[tui]`, part of `tuvl[standard]`): a tree of your ideas → specs → tasks (status, and live progress while `generate code` runs), the actions that apply to what you select (check, approve, derive tasks, scaffold, build with your agent, validate, test, ship…), and three logs: the command you ran, the engine, and the audit trail. Every action runs the same `tuvl` command you would type, so the gates and the audit trail are the same; anything that spends your agent's tokens or is hard to undo asks first (`Run it` / `Cancel`) and says so. The project's own actions (lint, test, check, review, run a workflow, import an idea, show the project and the audit log, ship) are listed under every selection. Each command ends with a `tokens ·` line: what your coding agent used (input, output, cost), or that none was. `q` quits and stops the engine, `r` refreshes, `x` stops a running command, `c` copies the last command's output (or the open log) to the clipboard. The logs are selectable too: drag with the mouse, or click in a log and use the keyboard, then copy with `ctrl+c`. `--no-tui`, or no terminal (CI, a pipe, ssh without a tty), runs the engine in this terminal with plain output |
+| `tuvl dev` | `-p/--port` (8885), `--auto-login`, `--no-tui`, `--show-key`, `--no-browser`, `--no-tui`, `-H/--allow-host` | Dev server with Insight and the dev API, reloading on YAML changes. The session key is stored in `.tuvl/.dev-session` (0600); `--show-key` prints it. **On a terminal it also starts a terminal UI** (part of `tuvl-insight`, so of `tuvl[standard]`): a tree of your ideas → specs → tasks (status, and live progress while `generate code` runs), the actions that apply to what you select (check, approve, derive tasks, scaffold, build with your agent, validate, test, ship…), and three logs: the command you ran, the engine, and the audit trail. Every action runs the same `tuvl` command you would type, so the gates and the audit trail are the same; anything that spends your agent's tokens or is hard to undo asks first (`Run it` / `Cancel`) and says so. The project's own actions (lint, test, check, review, run a workflow, import an idea, show the project and the audit log, ship) are listed under every selection. Each command ends with a `tokens ·` line: what your coding agent used (input, output, cost), or that none was. `q` quits and stops the engine, `r` refreshes, `x` stops a running command, `c` copies the last command's output (or the open log) to the clipboard. The logs are selectable too: drag with the mouse, or click in a log and use the keyboard, then copy with `ctrl+c`. `--no-tui`, or no terminal (CI, a pipe, ssh without a tty), runs the engine in this terminal with plain output |
 | `tuvl serve app` | `-p/--port`, `--host`, `-w/--workers`, `--role all\|api\|worker`, `-c/--concurrency` (8), `-H/--allow-host`, `--graceful-timeout`, `--drain-timeout`, `--forwarded-allow-ips`, `--limit-max-requests` | Production server (uvicorn, which replaces the `tuvl` process so it is PID 1 in a container and receives SIGTERM directly). `api` serves HTTP and runs synchronous requests inline; `worker` executes the queue. On SIGTERM it stops taking requests, lets open ones finish for `--graceful-timeout` seconds (20), then waits `--drain-timeout` seconds (20) for running runs; one still going is interrupted and another worker resumes it from its last checkpoint. `--forwarded-allow-ips` names the proxies whose `X-Forwarded-For` is trusted (an IP or CIDR list: set your ingress network so `--allow-host` and the logs see the real client; `*` lets a client spoof its address). `--limit-max-requests` restarts a worker after that many requests. The `Server` header is off. `tuvl run` with no subcommand does the same |
 | `tuvl serve mcp` | `--allow-write` | Dev tools for coding agents over MCP (stdio); `--allow-write` adds `codegen_write`, `run_workflow`, `pin_fixture`. Refuses production |
 
@@ -101,7 +102,7 @@ These talk to a running server: `-u/--url` (`TUVL_URL`, default `http://localhos
 | `tuvl deploy` | `-d/--project-dir` | Coming soon: deploy to a hosted, managed tuvl engine that runs your backend services. Today it prints a message, deploys nothing and exits 1 |
 | `tuvl generate key` | `-w/--write`, `-f/--force` | A persistent Ed25519 key for signing access tokens (`TUVL_SIGNING_KEY`) |
 | `tuvl generate rls` | `-o/--out` | Idempotent row-level-security SQL for tenant-scoped tables |
-| `tuvl verify rls` | | Exit 1 if a tenant-scoped table lacks its RLS policy |
+| `tuvl verify rls` | | Exit 1 if a tenant-scoped table lacks its RLS policy, or if the database role is a superuser or has `BYPASSRLS` (it ignores every policy) |
 
 ### Extras: what an image installs
 
@@ -114,9 +115,9 @@ installs `tuvl[<only those>]==<locked version>`:
 | `redis` | `redis` | a `kind: DataSource` with `type: redis`, or `agents/*.py` imports `redis` |
 | `vector` | `pgvector` | a Collection or Embedding document, `tuvl.data_search` / `tuvl.data_ingest`, or an import of `pgvector` |
 | `otel-grpc` | OTLP gRPC exporter | `.tuvl/telemetry.yaml` has `otlp_protocol: grpc` |
-| `generate code`, `run tests` | `libcst`, `aiosqlite` | never: `tuvl generate code`, `tuvl init --sample` and `tuvl run tests` are development tools |
+| the development tools | `libcst`, `aiosqlite`, ... | never: they are dependencies of `tuvl-insight`, not extras of `tuvl`, and are not part of a production image |
 
-`tuvl[standard]` installs Insight and every extra, so a development install needs nothing else. The
+`tuvl[standard]` installs `tuvl-insight` and every extra, so a development install needs nothing else. The
 model providers and blob storage (S3, Azure, GCS, local) are part of `tuvl` and need no extra.
 
 `tuvl ship` prints the extras it chose and why and records them as the image label `io.tuvl.extras`
@@ -129,8 +130,17 @@ model providers and blob storage (S3, Azure, GCS, local) are part of `tuvl` and 
 - A kept `deploy/Dockerfile` (no `--force`) that lacks an extra the project now needs stops the ship.
 - Using a feature without its extra fails with `pip install 'tuvl[name]'`; the same message appears for
   `tuvl generate code`, `tuvl run tests` and `tuvl serve mcp` on a bare install.
-- `tuvl deploy` is for managed hosting and is not available yet: it prints a message and exits 1.
-  Until then, install the chart `tuvl ship` writes with `helm`.
+- `tuvl deploy` ships the project as an archive and deploys it to a tuvl cloud (`https://cloud.tuvl.io` by default, or `--url` / `TUVL_CLOUD_URL`).
+  It needs a client token, which a cloud's operator makes for your account: set `TUVL_CLIENT_TOKEN`, pipe it with `--token-stdin` in CI, or save
+  it with `tuvl deploy --login`. The token is never an argument, is sent only over https (plain http only to localhost) and is never printed.
+  `--admin-email` creates an administrator in a new app; its password is made on your machine, sealed for the cloud and shown once.
+  `--check-dns` says whether a name is available and points at the cloud (nothing is deployed), and `--set-hostname NAME` changes the name a deployed app is served on
+  (nothing is packaged or uploaded; the app restarts behind the new name). Names must be under the cloud's base domain.
+  The backend is served at `api.<name>` (for example `https://api.shop.tuvl.app`). A project's **web UI** (a folder of static files with an `index.html` at its top, by
+  default `ui/`) is deployed after the backend and served on `<name>`; calls from the UI to `/api`, `/auth`, `/models` and `/health` on its own address reach the backend, so a UI
+  that uses its own origin needs no extra setup. `--ui FOLDER` names the folder, `--no-ui` skips it, `--ui-only` deploys just the UI of a project that is already running.
+  The folder is packed without hidden files, `serve.py`, `tests`, `specs`, `node_modules` and links; the cloud checks the archive again and refuses anything that looks like a secret.
+  To run the app yourself instead, install the chart `tuvl ship` writes with `helm`.
 
 ## The CI gate
 
