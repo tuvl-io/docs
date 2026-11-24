@@ -13,7 +13,7 @@
   // Outbound links: where do readers go next?
   var destinations = [
     ['try.tuvl.online', 'try'], ['nest.tuvl.io', 'nest'], ['github.com', 'github'],
-    ['pypi.org', 'pypi'], ['npmjs.com', 'npm'], ['discord.gg', 'discord'], ['tuvl.io', 'portal'],
+    ['pypi.org', 'pypi'], ['npmjs.com', 'npm'], ['discord.gg', 'discord'], ['tuvl.io', 'portal'], ['tuvl.org', 'portal'],
   ];
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a[href]');

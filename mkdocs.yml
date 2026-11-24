@@ -60,7 +60,8 @@ markdown_extensions:
 
 extra:
   footer_links:
-    - { title: Website, url: "https://tuvl.io" }
+    - { title: tuvl.io, url: "https://tuvl.io" }
+    - { title: tuvl.org, url: "https://tuvl.org" }
     - { title: Try it live, url: "https://try.tuvl.online" }
     - { title: GitHub, url: "https://github.com/tuvl-io/tuvl" }
     - { title: Examples, url: "https://github.com/tuvl-io/examples" }
@@ -82,6 +83,7 @@ nav:
   - What's New: whats-new.md
   - Why tuvl: why-tuvl.md
   - Main Website: https://tuvl.io
+  - Open Source ↗: https://tuvl.org
   - Try it Live ↗: https://try.tuvl.online
   - Nest ↗: https://nest.tuvl.io
   - Getting Started:
